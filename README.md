@@ -9,6 +9,9 @@ Mitra is [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) licensed, so 
 pipeline can be enabled and served without a usage restriction on the model itself. The
 training data carries its own licence — see [Data licence](#data-licence-governs-the-served-model).
 
+For platform-administrator setup and operations — resource profiles, weights delivery, network
+egress, enable, and monitoring — see [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ---
 
 ## The model: Mitra
@@ -26,8 +29,10 @@ structural causal models (SCM) with tree-based priors — gradient boosting, ran
 decision tree, and extra trees. Pretraining used 45 million synthetic datasets on eight A100
 GPUs over roughly 60 hours, with no real data seen. On the TabRepo, TabZilla, and AMLB
 benchmarks the authors report Mitra outperforming TabPFNv2 and TabICL on both classification
-and regression, with better sample efficiency. They also report that Mitra does not
-consistently beat TabPFNv2 on large-feature regression tasks.
+and regression, with better sample efficiency. They also report that Mitra does not consistently
+beat TabPFNv2 on large-feature regression tasks. Mitra was state of the art on these
+benchmarks (and TabArena) at its 2025 release; AutoGluon notes that newer tabular foundation
+models have since overtaken it.
 
 ### Checkpoints
 
@@ -54,14 +59,21 @@ baseline on a dense retail target (3.6% zeros) but lost to a predict-zero baseli
 intermittent one (84% zeros). Treat its benchmark results as evidence of strong performance
 where signal exists, not as a guarantee on any table.
 
-### Fine-tuning
+### Fine-tuning and zero-shot
 
-This pipeline runs Mitra in fine-tuning mode, the default for the `MITRA` model in AutoGluon,
-which adapts the pretrained weights to the uploaded table. One measured fit took about 164 s
-on a single GPU. AutoGluon also supports zero-shot inference (`fine_tune=False`) and a
-`fine_tune_steps` control; the pipeline can expose these as hyperparameters if you need them.
+Mitra supports two modes, both exposed as fine-tuning fields:
 
-Mitra runs on GPU or CPU. This pipeline targets GPU — see [Resource profile](#resource-profile).
+- **Fine-tune** (`fine_tune=true`, the default) adapts the pretrained weights to the uploaded
+  table. It requires a GPU. One measured fit took about 164 s on a single GPU.
+- **Zero-shot** (`fine_tune=false`) runs Mitra as an in-context learner with no weight update.
+  It is CPU-safe and faster, at some cost in accuracy.
+
+`fine_tune_steps` sets the number of fine-tuning steps; `0` uses AutoGluon's default.
+
+Fine-tuning Mitra requires a GPU — on CPU the backward pass uses a low-precision path that
+many CPUs do not support. On a CPU instance the pipeline therefore runs zero-shot
+automatically, regardless of the `fine_tune` setting, and records the effective mode in
+`result.json` under `metrics.mode`. See [CPU-only instances](#cpu-only-instances).
 
 ---
 
@@ -195,6 +207,8 @@ Fine-tuning (`modelFinetuning`):
 | `time_limit_seconds` | `600` | Fit time budget |
 | `seed` | `0` | RNG seed; pin it for reproducible runs |
 | `eval_metric` | `mean_absolute_error` | Metric optimized and reported |
+| `fine_tune` | `true` | Fine-tune weights (GPU) or run zero-shot; a CPU instance forces zero-shot |
+| `fine_tune_steps` | `0` | Fine-tuning steps; `0` uses AutoGluon's default. Ignored for zero-shot |
 
 ---
 
@@ -209,6 +223,7 @@ describing the run:
   "message": "Mitra fine-tuning succeeded on 6400 rows; holdout MAE 0.3470.",
   "metrics": {
     "trainedModels": ["Mitra"],
+    "mode": "fine-tune",
     "trainRows": 6400,
     "valRows": 1600,
     "mae": 0.347,
@@ -266,6 +281,20 @@ Minimum profile to request:
 Raise memory toward 16 Gi for datasets near the 10,000-row ceiling or with many feature
 columns. If you request less, the memory guard can skip the fit. The pipeline reports that as
 a failed run, never as a silent success.
+
+### CPU-only instances
+
+This pipeline runs on a DIMER instance with no GPU node, in **zero-shot mode**. Fine-tuning
+Mitra requires a GPU, so on a CPU device the pipeline automatically runs zero-shot in-context
+inference (`fine_tune=false`) and records `metrics.mode: "zero-shot"` in `result.json`.
+Zero-shot is faster but somewhat less accurate than a GPU fine-tune. Verified on CPU: a
+zero-shot fit produced a valid, reload-and-serve artifact.
+
+The fine-tuner ships a CPU image, `finetuner/Dockerfile.cpu`, which installs the CPU build of
+torch and omits the CUDA runtime. DIMER builds the repository's root `Dockerfile`, so to deploy
+on a no-GPU instance, make `Dockerfile.cpu` the root `Dockerfile` in the fine-tuner repository:
+rename the GPU `Dockerfile` aside, then rename `Dockerfile.cpu` to `Dockerfile`. The validator
+already runs on CPU and needs no change.
 
 ---
 
@@ -329,7 +358,7 @@ container image tag, this record forms a chain from data to served model.
   [*Mitra: Mixed Synthetic Priors for Enhancing Tabular Foundation Models*](https://arxiv.org/abs/2510.21204).
   NeurIPS 2025, pp. 17831–17876. https://doi.org/10.48550/arXiv.2510.21204 ·
   [OpenReview](https://openreview.net/forum?id=t8YRsWY6HM)
-- AutoGluon. [*Tabular Foundational Models*](https://auto.gluon.ai/dev/tutorials/tabular/tabular-foundational-models.html) tutorial.
+- AutoGluon. [*Tabular Foundational Models*](https://auto.gluon.ai/dev/tutorials/tabular/tabular-foundational-models.html) tutorial ([run in Colab](https://colab.research.google.com/github/autogluon/autogluon/blob/master/docs/tutorials/tabular/tabular-foundational-models.ipynb)).
 - [Mitra regressor model card](https://huggingface.co/autogluon/mitra-regressor) · [Mitra classifier model card](https://huggingface.co/autogluon/mitra-classifier), Hugging Face.
 - Amazon Science. [*Mitra: Mixed synthetic priors for enhancing tabular foundation models*](https://www.amazon.science/blog/mitra-mixed-synthetic-priors-for-enhancing-tabular-foundation-models).
 - [FreshRetailNet-50K](https://huggingface.co/datasets/Dingdong-Inc/FreshRetailNet-50K) dataset (CC BY 4.0), Dingdong Inc.
