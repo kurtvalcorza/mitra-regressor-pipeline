@@ -32,7 +32,7 @@ Each fine-tuning run is a Kubernetes job. Size its profile to the deployment:
 | Instance | GPU | Memory | Notes |
 |---|---|---|---|
 | GPU (default) | 1 | 12 Gi minimum, 16 Gi for large tables | Fine-tune mode. Mitra used ~8.7 GB on 6,400 rows; AutoGluon skips the model if the projected footprint exceeds ~90% of available memory |
-| CPU-only | 0 | 12 Gi minimum | Zero-shot mode — fine-tuning requires a GPU, so a CPU instance runs zero-shot automatically. Use the fine-tuner `Dockerfile.cpu` |
+| CPU-only | 0 | 12 Gi minimum | Zero-shot mode (fine-tuning needs a GPU). The default GPU image auto-falls-back to CPU, or use the lean `Dockerfile.cpu` |
 
 The validator is CPU-only and runs under a small profile.
 

@@ -71,9 +71,10 @@ Mitra supports two modes, both exposed as fine-tuning fields:
 `fine_tune_steps` sets the number of fine-tuning steps; `0` uses AutoGluon's default.
 
 Fine-tuning Mitra requires a GPU — on CPU the backward pass uses a low-precision path that
-many CPUs do not support. On a CPU instance the pipeline therefore runs zero-shot
-automatically, regardless of the `fine_tune` setting, and records the effective mode in
-`result.json` under `metrics.mode`. See [CPU-only instances](#cpu-only-instances).
+many CPUs do not support. The fine-tuner detects the GPU at runtime: with a GPU it fine-tunes;
+without one it runs zero-shot automatically, regardless of the `fine_tune` setting. Each run
+records the effective device and mode in `result.json` (`metrics.device`, `metrics.mode`).
+See [Container images](#container-images).
 
 ---
 
@@ -224,6 +225,7 @@ describing the run:
   "metrics": {
     "trainedModels": ["Mitra"],
     "mode": "fine-tune",
+    "device": "cuda",
     "trainRows": 6400,
     "valRows": 1600,
     "mae": 0.347,
@@ -282,19 +284,26 @@ Raise memory toward 16 Gi for datasets near the 10,000-row ceiling or with many 
 columns. If you request less, the memory guard can skip the fit. The pipeline reports that as
 a failed run, never as a silent success.
 
-### CPU-only instances
+### Container images
 
-This pipeline runs on a DIMER instance with no GPU node, in **zero-shot mode**. Fine-tuning
-Mitra requires a GPU, so on a CPU device the pipeline automatically runs zero-shot in-context
-inference (`fine_tune=false`) and records `metrics.mode: "zero-shot"` in `result.json`.
-Zero-shot is faster but somewhat less accurate than a GPU fine-tune. Verified on CPU: a
-zero-shot fit produced a valid, reload-and-serve artifact.
+The fine-tuner provides two images. Both run the same `train.py`, which detects the GPU at
+runtime and selects fine-tune (GPU) or zero-shot (CPU).
 
-The fine-tuner ships a CPU image, `finetuner/Dockerfile.cpu`, which installs the CPU build of
-torch and omits the CUDA runtime. DIMER builds the repository's root `Dockerfile`, so to deploy
-on a no-GPU instance, make `Dockerfile.cpu` the root `Dockerfile` in the fine-tuner repository:
-rename the GPU `Dockerfile` aside, then rename `Dockerfile.cpu` to `Dockerfile`. The validator
-already runs on CPU and needs no change.
+| Image | Base | Runs on | Notes |
+|---|---|---|---|
+| `Dockerfile` (default) | CUDA | GPU or CPU | Fine-tunes on a GPU; **auto-falls back to zero-shot on CPU** when no GPU is present. Large (~10 GB). |
+| `Dockerfile.cpu` | slim | CPU only | Zero-shot; small image, no CUDA runtime. |
+
+DIMER builds the repository's root `Dockerfile`. Choose per instance:
+
+- **GPU instance** — use the default `Dockerfile`.
+- **No-GPU instance, size not a concern** — use the default `Dockerfile`; it runs on the CPU
+  node and falls back to zero-shot.
+- **No-GPU instance, lean image wanted** — make `Dockerfile.cpu` the root `Dockerfile` (rename
+  the CUDA one aside, then rename `Dockerfile.cpu` to `Dockerfile`).
+
+Verified from the one default image: `--gpus all` → `device: cuda, mode: fine-tune`; without a
+GPU → `device: cpu, mode: zero-shot`. The validator is CPU-only and needs no change.
 
 ---
 
