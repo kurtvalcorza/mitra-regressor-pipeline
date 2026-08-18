@@ -6,3 +6,6 @@ __pycache__/
 desktop.ini
 *.egg-info/
 out/
+
+# Local Mitra weights (289MB) — never committed; for the DIMER wizard upload or a local bake.
+weights/

@@ -19,7 +19,9 @@ egress, enable, and monitoring — see [DEPLOYMENT.md](DEPLOYMENT.md).
 Mitra is a tabular foundation model built by the [AutoGluon](https://auto.gluon.ai) team at
 AWS and released with open weights under Apache-2.0. It is pretrained only on synthetic data
 and applies **in-context learning**: it reads a table of labelled examples as context and
-predicts on new rows, the same paradigm as TabPFN and TabICL.
+predicts on new rows, the same paradigm as TabPFN and TabICL. See
+[MODEL_CARD.md](MODEL_CARD.md) for provenance, checksums, licence, and how to supply the
+weights to DIMER.
 
 Mitra's distinguishing feature is its training mixture. According to
 [Zhang et al. (2025)](https://arxiv.org/abs/2510.21204), Mitra is pretrained on a curated
@@ -172,6 +174,9 @@ panel into a valid dataset zip:
 ```bash
 python examples/build_freshretailnet_dataset.py --src <train.parquet> --out ./out --horizon 7
 ```
+
+A ready-made 293 KB sample — [`examples/sample-data/freshretailnet-h7.zip`](examples/sample-data/freshretailnet-h7.zip)
+(see its [dataset card](examples/sample-data/DATASET_CARD.md)) — is included for smoke-testing.
 
 ### Data licence governs the served model
 
