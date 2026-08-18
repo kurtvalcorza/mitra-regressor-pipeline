@@ -117,9 +117,11 @@ predictor = TabularPredictor(
     eval_metric="mean_absolute_error",
     path=output_dir / "mitra_predictor",
 )
+# fine_tune=True (GPU) fine-tunes the weights; fine_tune=False runs zero-shot in-context
+# inference. The fine-tuner selects the mode from GPU availability at runtime.
 predictor.fit(
     train,
-    hyperparameters={"MITRA": {}},
+    hyperparameters={"MITRA": {"fine_tune": use_gpu}},
     fit_weighted_ensemble=False,
     time_limit=time_limit_seconds,
 )
@@ -131,7 +133,13 @@ assert any("mitra" in m.lower() for m in trained), f"expected Mitra, got {traine
 predictions = predictor.predict(val.drop(columns=[target_column]))
 ```
 
-The saved `TabularPredictor` directory is the model artifact. It reloads with
+**Fine-tune versus zero-shot.** Fine-tuning Mitra requires a GPU; on CPU its backward pass hits
+an unsupported low-precision path. When no GPU is available, the fine-tuner sets
+`fine_tune=False` and Mitra runs **zero-shot** — in-context inference with no weight update.
+Zero-shot is faster and CPU-safe, at some cost in accuracy. Each run records the effective
+`mode` (`fine-tune` or `zero-shot`) and `device` in its `result.json`.
+
+The saved `TabularPredictor` directory is the model artifact in either mode. It reloads with
 `TabularPredictor.load(path)` and predicts on new rows with matching columns.
 
 ## Worked Example

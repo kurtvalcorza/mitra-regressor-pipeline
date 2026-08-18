@@ -68,6 +68,11 @@ manually — the validator card for a validator change, the fine-tuner card for 
 
 ## Operations
 
+- **Fine-tune versus zero-shot.** Fine-tuning Mitra requires a GPU. On a GPU node the run
+  fine-tunes Mitra's weights; on a CPU node (or the GPU image run without a GPU) it runs Mitra
+  **zero-shot** — in-context inference with no weight update — automatically. Each run records
+  the effective `mode` (`fine-tune`/`zero-shot`) and `device` in `result.json`. Zero-shot is
+  faster and CPU-safe, at some cost in accuracy.
 - **Monitoring.** Each run writes `result.json` with metrics and a `provenance` block
   (base-model revision, dataset SHA-256, AutoGluon version). For a failed run, open the
   platform's diagnostics terminal for job status, pod exit codes, Kubernetes events, and the
