@@ -13,8 +13,8 @@ The administrator completes these before the pipeline can build or run.
    open the developers portal.
 2. **GitHub App.** Install the DIMER GitHub App on the account that holds the repositories
    (`kurtvalcorza`), so the portal can read:
-   - `dimer-dataset-validator-mitra-regressor`
-   - `dimer-finetuner-mitra-regressor`
+   - `mitra-regressor-dataset-validator`
+   - `mitra-regressor-finetuner`
 
    A repository outside the app's default organization is invisible to the portal until the
    app is installed on its account. The portal reports this only when a build fails.

@@ -94,8 +94,8 @@ root.
 
 | Container | Repository | Runs on |
 |---|---|---|
-| Validator | `dimer-dataset-validator-mitra-regressor` | CPU |
-| Fine-tuner | `dimer-finetuner-mitra-regressor` | GPU |
+| Validator | `mitra-regressor-dataset-validator` | CPU |
+| Fine-tuner | `mitra-regressor-finetuner` | GPU |
 
 ```
 validator/
@@ -123,8 +123,8 @@ GitHub App.
    |---|---|
    | Task Type | Custom / Other |
    | Base Model | `autogluon/mitra-regressor` |
-   | Validator repository | `dimer-dataset-validator-mitra-regressor` |
-   | Fine-tuner repository | `dimer-finetuner-mitra-regressor` |
+   | Validator repository | `mitra-regressor-dataset-validator` |
+   | Fine-tuner repository | `mitra-regressor-finetuner` |
 
 2. Build both images.
 3. Run the smoke test with a small dataset.
