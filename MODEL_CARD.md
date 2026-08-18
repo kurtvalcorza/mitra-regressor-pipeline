@@ -10,9 +10,9 @@ base_model: autogluon/mitra-regressor
 
 # Mitra regressor — model card (for the DIMER pipeline)
 
-**Not our model.** Mitra was pretrained by the AutoGluon team at AWS and is used here
-unmodified under Apache-2.0. This card records what the pipeline uses, where it comes from,
-and how it behaves — see the [README](README.md) for the pipeline itself.
+**This is not a model this project trained.** Mitra was pretrained by the AutoGluon team at
+AWS and is used here unmodified under Apache-2.0. This card records what the pipeline uses,
+where it comes from, and how it behaves; see the [README](README.md) for the pipeline itself.
 
 ## Summary
 
@@ -66,9 +66,9 @@ The fine-tuner selects the mode from GPU availability at runtime and records it 
 ## Applicability and limits
 
 Mitra is strongest on **small tabular data** (below ~5,000 samples and ~100 features). Hard
-limits: **10,000 training rows, 500 features, 10 classes** (classification). It needs roughly
-**8.5 GB of memory**; request a profile that clears that with headroom (see the README's
-resource profile).
+limits: **10,000 training rows, 500 features, 10 classes** (classification). It needs about
+**8.7 GB of memory** (measured on 6,400 rows); request a profile that clears that with
+headroom (see the README's resource profile).
 
 ## Measured behaviour in this pipeline
 
@@ -82,8 +82,9 @@ a universal improvement:
 | Intermittent demand panel | 84% | fine-tune (GPU) | 5.56 | **5.29 (predict-zero)** |
 
 On a dense target Mitra beats the naive baselines; on a highly intermittent one it does not
-beat predicting zero. Treat benchmark superiority as real where signal exists, not guaranteed
-on any table.
+beat predicting zero. These are small smoke-test runs — a few thousand rows, one seed, a random
+split — not a benchmark; read them as direction, not scores. Treat Mitra's published benchmark
+results as evidence of strong performance where signal exists, not a guarantee on any table.
 
 ## Licence
 
