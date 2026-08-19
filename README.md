@@ -226,19 +226,19 @@ describing the run:
 ```json
 {
   "successful": true,
-  "message": "Mitra fine-tune succeeded on 4806 rows; holdout mean_absolute_error 0.4217.",
+  "message": "Mitra fine-tune succeeded on 4180 rows; holdout mean_absolute_error 0.3692.",
   "metrics": {
     "trainedModels": ["Mitra"],
     "mode": "fine-tune",
     "device": "cuda",
-    "trainRows": 4806,
-    "valRows": 1597,
-    "mae": 0.4217,
-    "rmse": 0.7443,
+    "trainRows": 4180,
+    "valRows": 1600,
+    "mae": 0.3692,
+    "rmse": 0.7155,
     "evalMetric": "mean_absolute_error",
     "headlineMetric": "mean_absolute_error",
-    "headlineScore": 0.4217,
-    "test": { "rows": 1597, "mae": 0.4427, "rmse": 0.7503 },
+    "headlineScore": 0.3692,
+    "test": { "rows": 1600, "mae": 0.4290, "rmse": 0.8483 },
     "artifactPath": "…/mitra_predictor"
   },
   "provenance": {
@@ -281,7 +281,7 @@ you create the pipeline. The default is a starting point, not a ceiling; the HPC
 has capacity well beyond it.
 
 Mitra holds the training table in memory as in-context context, so its footprint grows with
-the number of rows and features. A run on ~4,800 rows and 17 features used about 10 GB, already
+the number of rows and features. A run on ~4,200 rows and 17 features used about 10 GB, already
 above the 8Gi default. AutoGluon also declines to train a model whose projected footprint
 exceeds roughly 90% of available memory, so the requested memory must clear the footprint with
 headroom rather than match it.

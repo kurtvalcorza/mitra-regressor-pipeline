@@ -74,27 +74,27 @@ The fine-tuner selects the mode from GPU availability at runtime and records it 
 
 Mitra is strongest on **small tabular data** (below ~5,000 samples and ~100 features). Hard
 limits: **10,000 training rows, 500 features, 10 classes** (classification). It needs about
-**~10 GB of memory** (measured on the ~4,800-row sample; it grows with rows and features);
+**~10 GB of memory** (measured on the ~4,200-row sample; it grows with rows and features);
 request a profile that clears that with headroom (see the README's resource profile).
 
 ## Measured behaviour in this pipeline
 
-Small smoke-test runs on the bundled sample (FreshRetailNet demand 7 days ahead; 4,806 train /
-1,597 val / 1,597 test rows, one seed, a **per-series chronological split**). Holdout MAE
-(lower is better), against a roll-7-mean naive forecast:
+Small smoke-test runs on the bundled sample (FreshRetailNet demand 7 days ahead; 4,180 train /
+1,600 val / 1,600 test rows, one seed, a **purged per-series chronological split** with a
+7-row embargo at each boundary). Holdout MAE (lower is better), against a roll-7-mean naive
+forecast:
 
 | Mode | Val MAE | Test MAE | Roll-7 naive (val / test) |
 |---|---|---|---|
-| fine-tune (GPU) | 0.42 | 0.44 | **0.38 / 0.41** |
-| zero-shot (CPU) | 0.51 | 0.53 | **0.38 / 0.41** |
+| fine-tune (GPU) | **0.369** | **0.429** | 0.389 / 0.438 |
+| zero-shot (CPU) | 0.413 | 0.436 | 0.389 / 0.438 |
 
-On this dense but genuinely forward-looking split the simple roll-7-mean forecast **beats**
-Mitra. That is the expected outcome of honest temporal evaluation on a strong-trend series, and
-a caution against assuming a foundation model wins by default: for a plain short-horizon
-forecast a lag/rolling baseline is hard to beat. Mitra is an in-context learner whose value
-shows on tabular problems where the features carry signal a naive rule misses — not on every
-table. These are direction, not scores; treat Mitra's published benchmarks as evidence of
-strong performance where signal exists, not a guarantee here.
+On this leak-free forward-looking split, fine-tuning Mitra **modestly beats** the roll-7-mean
+baseline on both val and test; zero-shot is about even with it. The margin is small — for a
+plain short-horizon forecast a lag/rolling baseline is a strong reference, and a foundation
+model does not win by default. Mitra's advantage grows on tabular problems where the features
+carry signal a naive rule misses. These are direction, not scores; treat Mitra's published
+benchmarks as evidence of strong performance where signal exists, not a guarantee here.
 
 ## Licence
 
