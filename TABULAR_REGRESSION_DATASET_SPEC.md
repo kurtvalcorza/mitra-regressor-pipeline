@@ -27,19 +27,27 @@ All CSVs in one dataset must share the same columns.
 
 ## Validation Checks
 
+All row-based checks count **usable rows** — rows whose target is a finite number, the exact
+population the fine-tuner trains on.
+
 | Check | Required? | Rule |
 |---|---|---|
 | `no_nested_zip` | YES | The archive must not contain another `.zip` |
+| `no_duplicate_tables` | YES | No two members may resolve to the same `train`/`val`/`test` table (e.g. `train.csv` and `dataset/train.csv`) |
 | `train_csv_present` | YES | A `train.csv` must exist in the archive |
 | `train_csv_parses` | YES | `train.csv` must parse as CSV |
 | `target_column_present` | YES | The configured target column must exist |
-| `target_is_numeric` | YES | The target column must be numeric |
-| `target_has_values` | YES | The target must have at least one non-null value |
+| `target_is_numeric` | YES | The target must yield finite numbers (an all-text column fails) |
+| `target_has_values` | YES | The target must have at least one usable (finite) value |
 | `feature_columns_present` | YES | At least one feature column must remain after removing target and `drop_columns` |
-| `minimum_rows` | YES | At least 50 training rows |
+| `feature_limit` | YES | At most 500 feature columns (Mitra's limit) |
+| `minimum_rows` | YES | At least 50 usable (finite-target) training rows |
 | `val_schema_matches_train` | YES if `val.csv` present | `val.csv` columns must equal `train.csv` columns |
 | `test_schema_matches_train` | YES if `test.csv` present | `test.csv` columns must equal `train.csv` columns |
 | `row_limit_advisory` | WARNING | Flags tables above the 10,000-row ceiling; the fine-tuner samples down |
+
+The archive is also rejected before any read if it is a zip bomb (a member's compression ratio
+or the total uncompressed size exceeds a safety bound).
 
 ## Row Ceiling
 
@@ -51,8 +59,9 @@ before fitting. `max_train_rows` may be lowered but not raised above 10,000.
 
 If `val.csv` is absent, the fine-tuner carves a deterministic holdout from `train.csv` using
 `validation_split` (default 0.2) and the configured seed, and reports the split in
-`result.json`. A dataset is never trained without a reported holdout unless it has fewer than
-20 rows.
+`result.json`. Setting `validation_split` to `0` explicitly disables the holdout: the run
+reports `valRows: 0`, records a note, and trains on all rows. Otherwise, a dataset with at
+least 20 rows is always trained with a reported holdout.
 
 ## Result JSON (validator output)
 

@@ -19,19 +19,20 @@ benchmark anything.
 
 ## Contents
 
-`freshretailnet-h7.zip` (293 KB) holds the pipeline's CSV contract:
+`freshretailnet-h7.zip` (272 KB) holds the pipeline's CSV contract:
 
 | file | rows | columns |
 |---|---|---|
-| `train.csv` | 6,400 | 17 features + `target` |
-| `val.csv` | 1,600 | 17 features + `target` |
+| `train.csv` | 4,806 | 17 features + `target` |
+| `val.csv` | 1,597 | 17 features + `target` |
+| `test.csv` | 1,597 | 17 features + `target` |
 
 - **Target** — daily `sale_amount` **7 days ahead** (a regression target).
 - **Features** — sales history (`lag_1/7/14`, `roll_7_mean`, `roll_28_mean`, `roll_7_std`),
   the stockout signal (`stockout_hours`, `roll_7_stockout`), and same-day covariates
   (`discount`, `holiday_flag`, `activity_flag`, `precpt`, `avg_temperature`, `avg_humidity`,
   `avg_wind_level`, `dow`, `month`).
-- Dense target: ~3.6% zeros.
+- Dense target: ~3.5% zeros.
 
 ## How it was built
 
@@ -43,8 +44,11 @@ python examples/build_freshretailnet_dataset.py --src <train.parquet> --out ./ou
   --horizon 7 --n-series 220 --max-rows 8000 --seed 0
 ```
 
-One row per store-product-day; 220 store-product series sampled, capped at 8,000 rows, split
-80/20 into train and val with seed 0.
+One row per store-product-day; 220 store-product series sampled, capped at 8,000 rows. The
+split is a **per-series chronological split**: within each store-product series the latest 20%
+of rows become `test`, the next 20% `val`, and the earlier rows `train`. Validation and test
+are strictly in the future of training within each series, which measures forecasting
+generalization rather than mixing adjacent periods across the split as a random holdout would.
 
 ## Provenance and licence
 

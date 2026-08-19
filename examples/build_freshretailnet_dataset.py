@@ -26,8 +26,32 @@ import argparse
 import zipfile
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
+
+
+def _temporal_splits(feat: pd.DataFrame, val_frac: float,
+                     test_frac: float) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Per-series chronological split into train / val / test. Within each store-product
+    series the latest test_frac of rows become test, the next val_frac validation, and the
+    earlier rows train. This measures forecasting generalization — val and test are strictly
+    in the future of training within each series — rather than mixing adjacent periods across
+    the split as a random holdout would."""
+    train_parts, val_parts, test_parts = [], [], []
+    for _, group in feat.groupby("_key", sort=False):
+        group = group.sort_values("_dt")
+        n = len(group)
+        n_test = min(max(int(round(n * test_frac)), 1 if n > 2 and test_frac > 0 else 0), n)
+        rest = n - n_test
+        n_val = min(max(int(round(n * val_frac)), 1 if rest > 1 else 0), max(rest - 1, 0))
+        n_train = rest - n_val
+        train_parts.append(group.iloc[:n_train])
+        val_parts.append(group.iloc[n_train:n_train + n_val])
+        test_parts.append(group.iloc[n_train + n_val:])
+    empty = feat.iloc[:0]
+    train = pd.concat(train_parts).reset_index(drop=True) if train_parts else empty
+    val = pd.concat(val_parts).reset_index(drop=True) if val_parts else empty
+    test = pd.concat(test_parts).reset_index(drop=True) if test_parts else empty
+    return train, val, test
 
 COLUMNS = [
     "store_id", "product_id", "dt", "sale_amount", "stock_hour6_22_cnt",
@@ -37,7 +61,7 @@ COLUMNS = [
 
 
 def build(src: Path, out: Path, horizon: int, n_series: int,
-          max_rows: int, val_frac: float, seed: int) -> Path:
+          max_rows: int, val_frac: float, seed: int, test_frac: float = 0.2) -> Path:
     df = pd.read_parquet(src, columns=COLUMNS)
     df["dt"] = pd.to_datetime(df["dt"])
 
@@ -68,26 +92,32 @@ def build(src: Path, out: Path, horizon: int, n_series: int,
         "dow": df["dt"].dt.dayofweek,
         "month": df["dt"].dt.month,
         "target": sales.shift(-horizon),
+        "_dt": df["dt"],
+        "_key": df["store_id"].astype(str) + "_" + df["product_id"].astype(str),
     }).dropna().reset_index(drop=True)
 
     if len(feat) > max_rows:
         feat = feat.sample(n=max_rows, random_state=seed).reset_index(drop=True)
-    val = feat.sample(frac=val_frac, random_state=seed)
-    train = feat.drop(index=val.index)
+
+    train, val, test = _temporal_splits(feat, val_frac, test_frac)
+    feature_cols = [c for c in feat.columns if not c.startswith("_")]
+    train, val, test = train[feature_cols], val[feature_cols], test[feature_cols]
 
     out.mkdir(parents=True, exist_ok=True)
-    train_p, val_p = out / "train.csv", out / "val.csv"
-    train.to_csv(train_p, index=False)
-    val.to_csv(val_p, index=False)
     zip_p = out / f"freshretailnet-h{horizon}.zip"
+    frames = {"train.csv": train, "val.csv": val}
+    if len(test) > 0:
+        frames["test.csv"] = test
     with zipfile.ZipFile(zip_p, "w", zipfile.ZIP_DEFLATED) as zf:
-        zf.write(train_p, "train.csv")
-        zf.write(val_p, "val.csv")
-    train_p.unlink()
-    val_p.unlink()
+        for arc, frame in frames.items():
+            path = out / arc
+            frame.to_csv(path, index=False)
+            zf.write(path, arc)
+            path.unlink()
 
-    print(f"series={n_series} horizon={horizon}")
-    print(f"train={len(train)} val={len(val)} features={train.shape[1] - 1}")
+    print(f"series={n_series} horizon={horizon} "
+          f"split=temporal(val_frac={val_frac}, test_frac={test_frac})")
+    print(f"train={len(train)} val={len(val)} test={len(test)} features={train.shape[1] - 1}")
     print(f"target: mean={train['target'].mean():.3f} "
           f"zeros={(train['target'] == 0).mean():.1%} max={train['target'].max():.1f}")
     print(f"wrote {zip_p} ({zip_p.stat().st_size // 1024} KiB)")
@@ -105,10 +135,12 @@ def main() -> None:
     ap.add_argument("--max-rows", type=int, default=8000,
                     help="Row cap (Mitra accepts at most 10000)")
     ap.add_argument("--val-frac", type=float, default=0.2)
+    ap.add_argument("--test-frac", type=float, default=0.2,
+                    help="Per-series chronological test tail (0 to omit test.csv)")
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
     build(args.src, args.out, args.horizon, args.n_series,
-          args.max_rows, args.val_frac, args.seed)
+          args.max_rows, args.val_frac, args.seed, args.test_frac)
 
 
 if __name__ == "__main__":

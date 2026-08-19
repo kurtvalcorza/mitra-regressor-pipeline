@@ -226,31 +226,39 @@ describing the run:
 ```json
 {
   "successful": true,
-  "message": "Mitra fine-tuning succeeded on 6400 rows; holdout MAE 0.3470.",
+  "message": "Mitra fine-tune succeeded on 4806 rows; holdout mean_absolute_error 0.4217.",
   "metrics": {
     "trainedModels": ["Mitra"],
     "mode": "fine-tune",
     "device": "cuda",
-    "trainRows": 6400,
-    "valRows": 1600,
-    "mae": 0.347,
-    "rmse": 0.665,
+    "trainRows": 4806,
+    "valRows": 1597,
+    "mae": 0.4217,
+    "rmse": 0.7443,
+    "evalMetric": "mean_absolute_error",
+    "headlineMetric": "mean_absolute_error",
+    "headlineScore": 0.4217,
+    "test": { "rows": 1597, "mae": 0.4427, "rmse": 0.7503 },
     "artifactPath": "…/mitra_predictor"
   },
   "provenance": {
     "baseModel": "autogluon/mitra-regressor",
     "baseModelRevision": "5f277aa8f69042d39d6ac3612aed18bb9279bd95",
     "baseModelRevisionExpected": "5f277aa8f69042d39d6ac3612aed18bb9279bd95",
-    "dataset": { "file": "dataset.zip", "sha256": "945e0d4d…" },
+    "weightsSha256": "d8e75c62…", "expectedSha256": "d8e75c62…",
+    "source": "huggingface", "enforced": true,
+    "dataset": { "file": "dataset.zip", "sha256": "…" },
     "autogluonVersion": "1.5.0"
   },
   "metadata": { "baseModel": "autogluon/mitra-regressor", "targetColumn": "target", "seed": 0 }
 }
 ```
 
-The saved artifact is an AutoGluon `TabularPredictor` directory. It reloads with
-`TabularPredictor.load(path)` and predicts on new rows with matching columns. Reload-and-serve
-was verified in a process separate from training.
+Predictions are reported as-is (no clipping to non-negative), so the reported error matches the
+served artifact's behaviour. When the dataset zip includes a `test.csv`, it is scored after
+fitting and its metrics appear under `test`. The saved artifact is an AutoGluon
+`TabularPredictor` directory. It reloads with `TabularPredictor.load(path)` and predicts on new
+rows with matching columns. Reload-and-serve was verified in a process separate from training.
 
 ---
 
@@ -273,7 +281,7 @@ you create the pipeline. The default is a starting point, not a ceiling; the HPC
 has capacity well beyond it.
 
 Mitra holds the training table in memory as in-context context, so its footprint grows with
-the number of rows and features. A run on 6,400 rows and 8 features used about 8.7 GB, already
+the number of rows and features. A run on ~4,800 rows and 17 features used about 10 GB, already
 above the 8Gi default. AutoGluon also declines to train a model whose projected footprint
 exceeds roughly 90% of available memory, so the requested memory must clear the footprint with
 headroom rather than match it.
@@ -322,12 +330,14 @@ The validator, fine-tuner, configuration, and documentation in this repository w
 with AI assistance (Anthropic Claude Opus 4.8, via Claude Code) and are pending human review
 before production deployment. The following were verified by execution, not only generated:
 
-- both container scripts byte-compile, and `dimer-pipeline.json` validates against the field
-  schema;
-- the validator passes its full check set on two independent real datasets;
+- both container scripts byte-compile, `dimer-pipeline.json` validates against the field
+  schema, and a unit-test suite covers the validator checks, usable-row accounting,
+  ambiguous-archive rejection, the 500-feature limit, and the uploaded-weights path;
+- the validator passes its full check set on the derived sample dataset;
 - the fine-tuner trains Mitra on GPU, writes a valid artifact, and that artifact reloads and
   serves predictions in a separate process;
-- naive-baseline comparisons were computed on the held-out set.
+- the same image run without a GPU falls back to zero-shot on CPU;
+- the base weights' SHA-256 is verified before fitting, and `test.csv` is scored when present.
 
 Not yet verified, and requiring human sign-off: the DIMER portal image build, the on-platform
 smoke test, the memory-profile request, and the platform's inference-serving integration.

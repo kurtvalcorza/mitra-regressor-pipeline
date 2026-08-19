@@ -39,8 +39,9 @@ Provide them to the pipeline in one of three ways:
 
 1. **HuggingFace Model ID (default).** Enter `autogluon/mitra-regressor` as the Base Model;
    AutoGluon downloads it at runtime. Requires egress to `huggingface.co`.
-2. **Upload weights (no egress).** Use the wizard's *upload your own model weights* box with
-   `model.safetensors`; DIMER stores it in S3 and the fine-tuner reads it at runtime.
+2. **Upload weights (no egress).** Mount an uploaded checkpoint directory (holding
+   `model.safetensors` and `config.json`) and set `DIMER_MODEL_DIR` to it. The fine-tuner
+   installs those exact bytes into the loader's cache and uses them verbatim — no egress.
 3. **Bake into the image.** Uncomment Option A in the fine-tuner `Dockerfile` to download the
    pinned revision at build time (needs egress at build), or `COPY` a local copy in.
 
@@ -51,8 +52,14 @@ hf download autogluon/mitra-regressor model.safetensors config.json \
   --revision 5f277aa8f69042d39d6ac3612aed18bb9279bd95 --local-dir .
 ```
 
-Every fine-tuning run records the revision it actually used in `result.json`
-(`provenance.baseModelRevision`) and compares it to the pinned value.
+**Weight verification.** AutoGluon 1.5.0's Mitra loader resolves a checkpoint by Hugging Face
+repo id and does not accept a revision argument, so the base weights cannot be pinned by
+revision through it. Instead, before fitting, the fine-tuner resolves the exact
+`model.safetensors` the loader will use and **verifies its SHA-256 against the expected value
+above**; a mismatch fails the run. `result.json`'s `provenance` block records the resolved
+revision, the loaded weights' SHA-256, and whether the check was enforced. Baking the pinned
+revision (option 3) makes the loaded bytes deterministic; option 2 (`DIMER_MODEL_DIR`) records
+the uploaded bytes' checksum but is not checked against the public pinned value.
 
 ## How the pipeline uses it
 
@@ -67,24 +74,27 @@ The fine-tuner selects the mode from GPU availability at runtime and records it 
 
 Mitra is strongest on **small tabular data** (below ~5,000 samples and ~100 features). Hard
 limits: **10,000 training rows, 500 features, 10 classes** (classification). It needs about
-**8.7 GB of memory** (measured on 6,400 rows); request a profile that clears that with
-headroom (see the README's resource profile).
+**~10 GB of memory** (measured on the ~4,800-row sample; it grows with rows and features);
+request a profile that clears that with headroom (see the README's resource profile).
 
 ## Measured behaviour in this pipeline
 
-Performance depends on whether the target carries signal — Mitra is an in-context learner, not
-a universal improvement:
+Small smoke-test runs on the bundled sample (FreshRetailNet demand 7 days ahead; 4,806 train /
+1,597 val / 1,597 test rows, one seed, a **per-series chronological split**). Holdout MAE
+(lower is better), against a roll-7-mean naive forecast:
 
-| Dataset | Zeros | Mode | Mitra MAE | Best naive baseline |
-|---|---|---|---|---|
-| FreshRetailNet-derived (dense) | 3.6% | fine-tune (GPU) | **0.35** | 0.38 (roll-7 mean) |
-| FreshRetailNet-derived (dense) | 3.6% | zero-shot (CPU) | 0.47 | 0.38 |
-| Intermittent demand panel | 84% | fine-tune (GPU) | 5.56 | **5.29 (predict-zero)** |
+| Mode | Val MAE | Test MAE | Roll-7 naive (val / test) |
+|---|---|---|---|
+| fine-tune (GPU) | 0.42 | 0.44 | **0.38 / 0.41** |
+| zero-shot (CPU) | 0.51 | 0.53 | **0.38 / 0.41** |
 
-On a dense target Mitra beats the naive baselines; on a highly intermittent one it does not
-beat predicting zero. These are small smoke-test runs — a few thousand rows, one seed, a random
-split — not a benchmark; read them as direction, not scores. Treat Mitra's published benchmark
-results as evidence of strong performance where signal exists, not a guarantee on any table.
+On this dense but genuinely forward-looking split the simple roll-7-mean forecast **beats**
+Mitra. That is the expected outcome of honest temporal evaluation on a strong-trend series, and
+a caution against assuming a foundation model wins by default: for a plain short-horizon
+forecast a lag/rolling baseline is hard to beat. Mitra is an in-context learner whose value
+shows on tabular problems where the features carry signal a naive rule misses — not on every
+table. These are direction, not scores; treat Mitra's published benchmarks as evidence of
+strong performance where signal exists, not a guarantee here.
 
 ## Licence
 
