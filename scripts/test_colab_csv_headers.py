@@ -35,6 +35,13 @@ def inference_cell(name):
     raise AssertionError(f"Could not locate inference CSV cell in {name}")
 
 
+def training_dataset_cell():
+    for source in notebook_code(MAIN_NOTEBOOK):
+        if "def read_csv_payload" in source and "SAMPLE_ZIP_URL" in source:
+            return source
+    raise AssertionError("Could not locate training dataset cell in the main notebook")
+
+
 def training_reader():
     for source in notebook_code(MAIN_NOTEBOOK):
         if "def read_csv_payload" not in source:
@@ -109,6 +116,16 @@ class CsvHeaderTests(unittest.TestCase):
             with self.subTest(payload=payload):
                 with self.assertRaisesRegex(ValueError, "duplicate column names"):
                     reader(payload, "uploaded CSV")
+
+    def test_sample_zip_members_use_raw_header_reader(self):
+        source = training_dataset_cell()
+        self.assertNotIn("pd.read_csv(z.open(", source)
+        for filename in ("train.csv", "val.csv", "test.csv"):
+            with self.subTest(filename=filename):
+                self.assertIn(
+                    f"read_csv_payload(z.read(names['{filename}']), '{filename}')",
+                    source,
+                )
 
     def test_valid_headers_and_feature_order_preserved(self):
         for name in NOTEBOOKS:
