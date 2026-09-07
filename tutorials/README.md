@@ -33,6 +33,8 @@ The tutorial covers:
 - finite numeric-target validation and training-target variation checks;
 - pretrained/in-context Mitra evaluation with conventional positive MAE/RMSE reporting (`mean_absolute_error`, `root_mean_squared_error`);
 - optional GPU fine-tuning with an explicit requested step count;
+- companion classical tree baselines (LightGBM and Random Forest) with holdout leaderboard and device latency;
+- in-memory post-hoc point-prediction blending with holdout RMSE minimization and generalization assessment;
 - scalar regression inference; and
 - export of run metadata plus a reusable AutoGluon predictor ZIP.
 
