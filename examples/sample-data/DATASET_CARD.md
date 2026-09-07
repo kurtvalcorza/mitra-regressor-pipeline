@@ -43,7 +43,7 @@ A fast, lightweight cross-sectional dataset for predicting individual medical ch
   - Categoricals: `sex` (`female`/`male`), `smoker` (`yes`/`no`), `region` (`southwest`, `southeast`, `northwest`, `northeast`).
   - Numerics: `age` (int), `bmi` (float), `children` (int).
 - **Split method:** Seeded random split (seed 42).
-- **Licence:** CC0 / Public Domain (Brett Lantz / Machine Learning with R).
+- **Licence:** CC0 1.0 Universal (Public Domain Dedication) (Brett Lantz / Machine Learning with R).
 
 ---
 
@@ -58,7 +58,7 @@ The classic real estate valuation benchmark for predicting residential property 
   - Categoricals: `MSZoning`, `Neighborhood`, `Condition1`, `BldgType`, `HouseStyle`, `OverallQual`, `OverallCond`, `ExterQual`, `HeatingQC`, `CentralAir`.
   - Numerics: `LotArea`, `YearBuilt`, `YearRemodAdd`, `1stFlrSF`, `2ndFlrSF`, `GrLivArea`, `FullBath`, `HalfBath`, `BedroomAbvGr`, `TotRmsAbvGrd`, `Fireplaces`, `GarageCars`, `GarageArea`, `WoodDeckSF`, `OpenPorchSF`.
 - **Split method:** Seeded random split (seed 42).
-- **Licence:** CC0 / Public Domain (Dean De Cock, 2011 / OpenML 42165).
+- **Licence:** CC0 1.0 Universal (Public Domain Dedication) (Dean De Cock, 2011 / OpenML 42165).
 
 ---
 
