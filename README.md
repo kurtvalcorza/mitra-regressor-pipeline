@@ -1,5 +1,11 @@
 # Mitra Regressor — DIMER Pipeline
 
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/kurtvalcorza/mitra-regressor-pipeline)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kurtvalcorza/mitra-regressor-pipeline/blob/main/tutorials/mitra_regressor_colab.ipynb)
+[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-autogluon%2Fmitra--regressor-ffcc4d?style=flat)](https://huggingface.co/autogluon/mitra-regressor)
+[![Upstream](https://img.shields.io/badge/Upstream-autogluon%2Fautogluon-181717?style=flat&logo=github&logoColor=white)](https://github.com/autogluon/autogluon)
+[![arXiv](https://img.shields.io/badge/arXiv-2510.21204-b31b1b.svg)](https://arxiv.org/abs/2510.21204)
+
 A DIMER pipeline that fine-tunes [Mitra](https://huggingface.co/autogluon/mitra-regressor), a
 pretrained tabular foundation model, on your own tabular-regression dataset. You supply a
 table of rows with one numeric target column. The pipeline validates the table, fine-tunes
