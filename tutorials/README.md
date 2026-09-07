@@ -68,19 +68,19 @@ predictions.csv
 
 That T4 execution predates the reviewer-hardening patch that added holdout-based predictor selection, predictor-ZIP trust/hash checks, row-drop reporting, and additional input guards. Those changes are covered by repository CI/static tests on the latest PR head; a byte-identical latest-head Colab rerun remains optional additional evidence rather than a prerequisite for understanding the earlier model/runtime measurements.
 
-## Bundled sample dataset
+## Bundled sample datasets
 
-The default data source is [`freshretailnet-h7.zip`](../examples/sample-data/freshretailnet-h7.zip), derived from FreshRetailNet-50K and redistributed under **CC BY 4.0**.
+Three pre-packaged sample datasets are bundled under `examples/sample-data/` for tutorial and smoke-test use (not benchmarking):
 
-Pinned sample revision: `5625a9eeca94b8c72b9ad1ec78d07ecbaa720903`.
+1. **FreshRetailNet continuous demand** ([`freshretailnet-h7.zip`](../examples/sample-data/freshretailnet-h7.zip)): Derived from FreshRetailNet-50K and redistributed under **CC BY 4.0**. Pinned sample revision: `5625a9eeca94b8c72b9ad1ec78d07ecbaa720903`.
+   - `train.csv`: 4,180 rows
+   - `val.csv`: 1,600 rows
+   - `test.csv`: 1,600 rows
+   - 17 numeric features plus continuous target: daily `sale_amount` seven days ahead. The supplied split is a purged per-series chronological split with a 7-row embargo.
+2. **Insurance Medical Charges** ([`insurance-medical-charges.zip`](../examples/sample-data/insurance-medical-charges.zip)): Derived from Medical Cost Personal Datasets (CC0 / Public Domain). 802 train, 268 val, 268 test rows. 6 mixed features (3 categorical strings: `sex`, `smoker`, `region`; 3 numeric: `age`, `bmi`, `children`) predicting healthcare expenses (`charges`). Runs Step 4b in ~10 seconds.
+3. **Ames Housing** ([`ames-housing.zip`](../examples/sample-data/ames-housing.zip)): Derived from the Ames Housing benchmark (CC0 / OpenML 42165). 876 train, 292 val, 292 test rows. 25 curated features (8 categorical strings, 17 numeric) predicting residential sales price (`SalePrice`).
 
-| split | rows |
-|---|---:|
-| `train.csv` | 4,180 |
-| `val.csv` | 1,600 |
-| `test.csv` | 1,600 |
-
-Each split has 17 features plus a continuous `target`: daily `sale_amount` seven days ahead. The supplied split is a purged per-series chronological split with a 7-row embargo. The sample is for tutorial/smoke-test use, **not benchmarking**.
+See the [sample dataset card](../examples/sample-data/DATASET_CARD.md) for provenance, feature schemas, and license details.
 
 ## BYOD split guidance
 
