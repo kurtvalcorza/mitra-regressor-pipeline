@@ -1,7 +1,8 @@
 # Mitra Regressor — DIMER Pipeline
 
 [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/kurtvalcorza/mitra-regressor-pipeline)
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kurtvalcorza/mitra-regressor-pipeline/blob/main/tutorials/mitra_regressor_colab.ipynb)
+[![Open Main Tutorial In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kurtvalcorza/mitra-regressor-pipeline/blob/main/tutorials/mitra_regressor_colab.ipynb)
+[![Open Predictor Inference In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kurtvalcorza/mitra-regressor-pipeline/blob/main/tutorials/mitra_regressor_predictor_inference_colab.ipynb)
 [![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-autogluon%2Fmitra--regressor-ffcc4d?style=flat)](https://huggingface.co/autogluon/mitra-regressor)
 [![Upstream](https://img.shields.io/badge/Upstream-autogluon%2Fautogluon-181717?style=flat&logo=github&logoColor=white)](https://github.com/autogluon/autogluon)
 [![arXiv](https://img.shields.io/badge/arXiv-2510.21204-b31b1b.svg)](https://arxiv.org/abs/2510.21204)
@@ -19,6 +20,17 @@ For platform-administrator setup and operations — resource profiles, weights d
 egress, enable, and monitoring — see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ---
+
+
+
+## Try Mitra yourself in Google Colab
+
+The standalone Colab tutorials let end users work with Mitra independently of DIMER Workbench:
+
+- **Build/evaluate/export tutorial (`mitra_regressor_colab.ipynb`)**: Download and verify the model, evaluate on sample or BYOD data, run tree baselines, optionally fine-tune on GPU, and export `mitra-predictor.zip`.<br>
+  [![Open Main Tutorial In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kurtvalcorza/mitra-regressor-pipeline/blob/main/tutorials/mitra_regressor_colab.ipynb)
+- **Predictor inference tutorial (`mitra_regressor_predictor_inference_colab.ipynb`)**: Reload an exported `mitra-predictor.zip`, validate a new CSV, run regression inference, and download `predictions.csv`.<br>
+  [![Open Predictor Inference In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kurtvalcorza/mitra-regressor-pipeline/blob/main/tutorials/mitra_regressor_predictor_inference_colab.ipynb)
 
 ## The model: Mitra
 
