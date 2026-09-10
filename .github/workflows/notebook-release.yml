@@ -1,0 +1,139 @@
+name: Notebook release execution
+
+on:
+  pull_request:
+    paths:
+      - "tutorials/**"
+      - "mitra_pipeline/**"
+      - "examples/sample-data/**"
+      - "examples/build_sample_datasets.py"
+      - "scripts/validate_colab_tutorial.py"
+      - "scripts/test_tutorial_api.py"
+      - ".github/workflows/notebook-release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  execute-notebooks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      DIMER_REPO_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12.14"
+
+      - name: Prepare notebook runtime
+        run: |
+          sudo mkdir -p /content
+          sudo chown -R "$USER":"$USER" /content
+          python -m pip install --upgrade pip==26.2.1
+          python -m pip install nbconvert==7.17.1 ipykernel==7.3.0
+
+      - name: Execute E2E default path from clean state
+        id: e2e
+        run: |
+          jupyter nbconvert \
+            --to notebook \
+            --execute tutorials/mitra_regressor_colab.ipynb \
+            --output executed-mitra-regressor-e2e.ipynb \
+            --output-dir /content \
+            --ExecutePreprocessor.timeout=2400 \
+            --ExecutePreprocessor.kernel_name=python3
+
+      - name: Prepare independent inference input and trusted archive digest
+        id: prepare-inference
+        run: |
+          python - <<'PY'
+          import zipfile
+          from pathlib import Path
+          import pandas as pd
+
+          sample = Path("examples/sample-data/freshretailnet-h7.zip")
+          with zipfile.ZipFile(sample) as zf:
+              test_name = next(name for name in zf.namelist() if Path(name).name == "test.csv")
+              with zf.open(test_name) as handle:
+                  frame = pd.read_csv(handle)
+          frame.drop(columns=["target"]).head(64).to_csv("/content/inference.csv", index=False)
+          PY
+          echo "MITRA_PREDICTOR_ZIP=/content/mitra-tutorial/mitra-predictor.zip" >> "$GITHUB_ENV"
+          echo "MITRA_INFERENCE_CSV=/content/inference.csv" >> "$GITHUB_ENV"
+          echo "MITRA_EXPECTED_ZIP_SHA256=$(sha256sum /content/mitra-tutorial/mitra-predictor.zip | awk '{print $1}')" >> "$GITHUB_ENV"
+
+      - name: Execute artifact-inference notebook against external producer artifact
+        id: artifact-inference
+        run: |
+          jupyter nbconvert \
+            --to notebook \
+            --execute tutorials/mitra_regressor_predictor_inference_colab.ipynb \
+            --output executed-mitra-regressor-artifact-inference.ipynb \
+            --output-dir /content \
+            --ExecutePreprocessor.timeout=1200 \
+            --ExecutePreprocessor.kernel_name=python3
+
+      - name: Upload executed notebooks and predictor artifact
+        id: upload-evidence
+        if: ${{ always() && steps.e2e.outcome == 'success' && steps.prepare-inference.outcome == 'success' && steps.artifact-inference.outcome == 'success' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: mitra-regressor-notebook-release-evidence
+          path: |
+            /content/executed-mitra-regressor-e2e.ipynb
+            /content/executed-mitra-regressor-artifact-inference.ipynb
+            /content/mitra-tutorial/mitra-predictor.zip
+            /content/mitra-inference/predictions.csv
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Record release evidence
+        if: always()
+        env:
+          E2E_OUTCOME: ${{ steps.e2e.outcome }}
+          PREPARE_OUTCOME: ${{ steps.prepare-inference.outcome }}
+          INFERENCE_OUTCOME: ${{ steps.artifact-inference.outcome }}
+          UPLOAD_OUTCOME: ${{ steps.upload-evidence.outcome }}
+        run: |
+          if [[ "$E2E_OUTCOME" == "success" && "$PREPARE_OUTCOME" == "success" && "$INFERENCE_OUTCOME" == "success" && "$UPLOAD_OUTCOME" == "success" ]]; then
+            RELEASE_STATUS="PASS"
+          else
+            RELEASE_STATUS="INCOMPLETE/FAIL"
+          fi
+          {
+            echo "## Mitra Regressor notebook release execution"
+            echo
+            echo "- Candidate SHA: \`${DIMER_REPO_REF}\`"
+            echo "- Runner: \`${RUNNER_OS}\`"
+            echo "- Python: \`$(python --version 2>&1)\`"
+            echo "- E2E clean execution outcome: \`${E2E_OUTCOME}\`"
+            echo "- External-artifact preparation outcome: \`${PREPARE_OUTCOME}\`"
+            echo "- Artifact-inference execution outcome: \`${INFERENCE_OUTCOME}\`"
+            echo "- Evidence upload outcome: \`${UPLOAD_OUTCOME}\`"
+            echo "- Release evidence status: **${RELEASE_STATUS}**"
+            echo "- A PASS means the inference notebook consumed the externally produced E2E artifact with its trusted SHA-256 and the complete evidence bundle was retained by Actions."
+            echo "- Static checks are separate and are not treated as execution evidence."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Assert release evidence is complete
+        if: always()
+        env:
+          E2E_OUTCOME: ${{ steps.e2e.outcome }}
+          PREPARE_OUTCOME: ${{ steps.prepare-inference.outcome }}
+          INFERENCE_OUTCOME: ${{ steps.artifact-inference.outcome }}
+          UPLOAD_OUTCOME: ${{ steps.upload-evidence.outcome }}
+        run: |
+          [[ "$E2E_OUTCOME" == "success" ]]
+          [[ "$PREPARE_OUTCOME" == "success" ]]
+          [[ "$INFERENCE_OUTCOME" == "success" ]]
+          [[ "$UPLOAD_OUTCOME" == "success" ]]

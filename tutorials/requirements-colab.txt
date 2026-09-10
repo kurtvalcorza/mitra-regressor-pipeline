@@ -1,0 +1,3 @@
+# Pinned direct dependencies for DIMER Mitra Regressor release-grade Colab tutorials.
+autogluon.tabular[mitra]==1.5.0
+lightgbm==4.6.0

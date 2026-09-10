@@ -1,121 +1,110 @@
-# Mitra Regressor standalone Colab tutorials
- 
+# Mitra Regressor tutorials
+
 [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/kurtvalcorza/mitra-regressor-pipeline)
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kurtvalcorza/mitra-regressor-pipeline/blob/main/tutorials/mitra_regressor_colab.ipynb)
 [![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-autogluon%2Fmitra--regressor-ffcc4d?style=flat)](https://huggingface.co/autogluon/mitra-regressor)
-[![Upstream](https://img.shields.io/badge/Upstream-autogluon%2Fautogluon-181717?style=flat&logo=github&logoColor=white)](https://github.com/autogluon/autogluon)
 [![arXiv](https://img.shields.io/badge/arXiv-2510.21204-b31b1b.svg)](https://arxiv.org/abs/2510.21204)
 
-There are two standalone Colab workflows:
+**DIMER Notebook Specification:** `1.0`
 
-| Notebook | Purpose |
-|---|---|
-| [`mitra_regressor_colab.ipynb`](mitra_regressor_colab.ipynb) | Acquire/verify Mitra, bring data, evaluate, optionally fine-tune, infer, and export `mitra-predictor.zip` |
-| [`mitra_regressor_predictor_inference_colab.ipynb`](mitra_regressor_predictor_inference_colab.ipynb) | Reload an exported `mitra-predictor.zip`, validate a new CSV, run regression inference, and download `predictions.csv` |
+These notebooks are the user-facing tutorial surface for the Mitra Regressor pipeline. They exercise the repository-owned public API in `mitra_pipeline/` for core regression validation, Mitra fit/predict operations, and artifact-boundary verification.
 
-Both CSV inference workflows reject duplicate raw headers before pandas can rename them. The BYOD training upload uses the same raw-header protection. Quoted column names and UTF-8 files with a byte-order mark are supported.
+| Notebook | Profile | Capability | Default runtime | Release status |
+|---|---|---|---|---|
+| [`mitra_regressor_colab.ipynb`](mitra_regressor_colab.ipynb) | `E2E` | acquire/verify model → validate data → evaluate/baselines → optional fine-tune → new-data inference → export → fresh reload | CPU; GPU only for optional fine-tuning | release-grade candidate; requires clean execution at release head |
+| [`mitra_regressor_predictor_inference_colab.ipynb`](mitra_regressor_predictor_inference_colab.ipynb) | `ARTIFACT-INFERENCE` | externally supplied predictor ZIP → archive/provenance validation → serving reconstruction → new-data regression inference | CPU | release-grade candidate; requires clean execution at release head |
 
-### Build/evaluate/export
+[Open E2E tutorial in Colab](https://colab.research.google.com/github/kurtvalcorza/mitra-regressor-pipeline/blob/main/tutorials/mitra_regressor_colab.ipynb)
 
-[![Open build/evaluate/export tutorial in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kurtvalcorza/mitra-regressor-pipeline/blob/main/tutorials/mitra_regressor_colab.ipynb)
+[Open artifact-inference tutorial in Colab](https://colab.research.google.com/github/kurtvalcorza/mitra-regressor-pipeline/blob/main/tutorials/mitra_regressor_predictor_inference_colab.ipynb)
 
-`mitra_regressor_colab.ipynb` is a standalone tutorial for the Mitra Regressor checkpoint distributed through the DIMER Model Repository. It does **not** depend on DIMER Workbench, DIMER APIs, or the DIMER validator/fine-tuner workers.
+## Conformance contract
 
-The tutorial covers:
+The E2E notebook:
 
-- DIMER ZIP upload or pinned-upstream checkpoint fallback;
-- SHA-256 verification of `model.safetensors` and `config.json`;
-- an explicit post-staging resolver check that refuses to continue unless Hugging Face resolves the verified offline snapshot;
-- a bundled FreshRetailNet regression sample;
-- preservation of the sample's provided `train.csv` / `val.csv` / `test.csv` partitions;
-- BYOD single-CSV inspection with a seeded random holdout for approximately IID data;
-- pre-split upload for temporal, grouped, embargoed, or leakage-sensitive workflows;
-- finite numeric-target validation and training-target variation checks;
-- pretrained/in-context Mitra evaluation with conventional positive MAE/RMSE reporting (`mean_absolute_error`, `root_mean_squared_error`);
-- optional GPU fine-tuning with an explicit requested step count;
-- companion classical tree baselines (LightGBM and Random Forest) with holdout leaderboard and device latency;
-- in-memory post-hoc point-prediction blending with holdout RMSE minimization and generalization assessment;
-- scalar regression inference; and
-- export of run metadata plus a reusable AutoGluon predictor ZIP.
+- imports the repository's public `mitra_pipeline` API instead of reimplementing core fit/inference and artifact checks;
+- installs pinned direct tutorial dependencies from [`requirements-colab.txt`](requirements-colab.txt);
+- reports Python, AutoGluon, PyTorch/CUDA, repository commit, model id, and immutable model revision;
+- supports a pinned upstream model path and a manifested DIMER offline-package path;
+- validates exact SHA-256 values for `model.safetensors` and `config.json`;
+- stages the verified files into an immutable offline Hugging Face snapshot;
+- preserves provided sample train/validation/test partitions; FreshRetailNet retains its leakage-aware chronological split while the two cross-sectional samples retain their seeded random partitions;
+- offers a seeded random-holdout BYOD path only for approximately IID rows and a pre-split path for leakage-sensitive data;
+- rejects duplicate raw CSV headers and validates finite numeric regression targets;
+- reports missing-target drops, feature/row ceilings, and deterministic row capping;
+- detects exact record overlap across supplied splits;
+- distinguishes in-context support from gradient fine-tuning;
+- reports MAE/RMSE/R² and computes mean/median `DummyRegressor`, LightGBM, and Random Forest baselines on the same partitions;
+- keeps independent test evidence out of model selection;
+- provides a separate, gated new-data inference path;
+- exports machine-readable metrics and provenance;
+- packages the actual AutoGluon predictor, including the preprocessing/support state required for inference;
+- writes `artifact_manifest.json` with every artifact file's size and SHA-256; and
+- reloads from the serialized ZIP in a fresh directory, validates the manifest/provenance before deserialization, and checks prediction equivalence with an explicit tolerance.
 
-When fine-tuning runs, the notebook recommends the predictor for inference/export using the configured `EVAL_METRIC` on the holdout split. The independent test split is kept out of model selection: it is reported only as evaluation evidence, and the notebook emits a warning when fine-tuning produces mixed or degraded independent-test metrics. The recommended predictor is the one packaged into `mitra-predictor.zip`.
+The artifact-inference notebook:
 
-### Use an exported predictor
+- requires an artifact supplied from outside its own execution;
+- requires a trusted whole-archive SHA-256 by default before Python deserialization, with only an explicit expert override for already-trusted local artifacts;
+- rejects absolute paths, traversal, backslash paths, symlinks, suspicious compression ratios, oversized members, and oversized total expansion;
+- requires `artifact_manifest.json` and `tutorial_run_metadata.json`;
+- verifies artifact format/version, model/revision, problem type, complete file inventory, sizes, and digests before `TabularPredictor.load(...)`;
+- refuses incompatible AutoGluon or Python major/minor versions;
+- restores the predictor's fitted preprocessing/support state from the artifact;
+- validates a genuinely new CSV and writes `predictions.csv`; and
+- explicitly identifies regression output as point predictions without calibrated per-row uncertainty.
 
-[![Open exported-predictor inference tutorial in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kurtvalcorza/mitra-regressor-pipeline/blob/main/tutorials/mitra_regressor_predictor_inference_colab.ipynb)
-
-The inference-only notebook starts from `mitra-predictor.zip`. It installs `autogluon.tabular[mitra]==1.5.0`, safely extracts the archive, optionally verifies the SHA-256 printed by the export step, loads it with `TabularPredictor.load(...)`, verifies that `problem_type` is regression, validates a new CSV, runs `predict()`, and downloads `predictions.csv`. Because AutoGluon deserializes Python model objects, load only predictor ZIPs you created yourself or received from a trusted source; safe ZIP extraction is not a trust guarantee for serialized model contents.
-
-It does **not** reacquire `model.safetensors` or `config.json`, call DIMER, train, fine-tune, or call `predict_proba()`.
-
-```text
-DIMER model.safetensors OR pinned upstream checkpoint
-        ↓
-mitra_regressor_colab.ipynb
-        ↓
-mitra-predictor.zip
-        ↓
-mitra_regressor_predictor_inference_colab.ipynb
-        ↓
-predictions.csv
-```
-
-## Runtime note
-
-`autogluon.tabular[mitra]==1.5.0` may replace the PyTorch version preinstalled by Google Colab. The notebooks report the installed PyTorch version, CUDA build, and CUDA availability. If PyTorch had already been imported and pip changes it, restart the session.
-
-`MAX_MEMORY_USAGE_RATIO=1.10` has completed an end-to-end Mitra Regressor run on a standard Tesla T4. The same run showed memory pressure and Mitra reduced `max_samples_support` from 8192 → 4096 → 2048, so 1.10 remains a cautious setting rather than a reason to raise the memory ratio further.
-
-That T4 execution predates the reviewer-hardening patch that added holdout-based predictor selection, predictor-ZIP trust/hash checks, row-drop reporting, and additional input guards. Those changes are covered by repository CI/static tests on the latest PR head; a byte-identical latest-head Colab rerun remains optional additional evidence rather than a prerequisite for understanding the earlier model/runtime measurements.
-
-## Bundled sample dataset
-
-The default data source is [`freshretailnet-h7.zip`](../examples/sample-data/freshretailnet-h7.zip), derived from FreshRetailNet-50K and redistributed under **CC BY 4.0**.
-
-Pinned sample revision: `5625a9eeca94b8c72b9ad1ec78d07ecbaa720903`.
-
-| split | rows |
-|---|---:|
-| `train.csv` | 4,180 |
-| `val.csv` | 1,600 |
-| `test.csv` | 1,600 |
-
-Each split has 17 features plus a continuous `target`: daily `sale_amount` seven days ahead. The supplied split is a purged per-series chronological split with a 7-row embargo. The sample is for tutorial/smoke-test use, **not benchmarking**.
-
-## BYOD split guidance
-
-The single-CSV path uses a seeded random holdout and assumes rows are approximately IID. For time-dependent, panel, grouped, lagged, rolling-window, or other leakage-sensitive data, prepare leakage-aware partitions externally and use **Upload pre-split train/val/test**.
-
-The tutorial requires a finite numeric target and non-zero target variation in training. A single uploaded training table, or `train.csv` in a pre-split upload, must retain at least 50 labelled rows after missing-target rows are dropped; `val.csv` and `test.csv` require at least 2 labelled rows. Missing-target drops are reported. Highly intermittent targets should be compared against strong naive baselines. Automatic pretrained-vs-fine-tuned artifact selection additionally requires at least 50 holdout rows; with a smaller holdout, metrics are still shown but the pretrained predictor remains the export default. If fine-tuning is not run, export provenance records `selection_basis=default:pretrained` rather than implying a holdout comparison occurred.
-
-## Model context
+## Model provenance
 
 - Model: `autogluon/mitra-regressor`
-- Task: tabular regression; one continuous numeric prediction per row
+- Task: tabular regression
 - AutoGluon: `1.5.0`
-- Revision: `5f277aa8f69042d39d6ac3612aed18bb9279bd95`
+- Immutable upstream revision: `5f277aa8f69042d39d6ac3612aed18bb9279bd95`
 - Weights SHA-256: `d8e75c62af0bec2fd404b0ad20a442d951d43ca6d331315cfcc0509b54f2c642`
 - Config SHA-256: `2bc1ed5047f7c25368245e8ad32540a5fa28940b1ec05d3f1f454a09ff5384c1`
-- Architecture: 12 Transformer layers, dimension 512, 4 heads, `dim_output: 1`
-- Pretraining: approximately 45 million synthetic tabular datasets; no real-world pretraining data reported
 - Supported ceiling: 10,000 training rows and 500 features
-- Particularly strong reported regime: roughly ≤5,000 samples and ≤100 features
-- Known caveat: Mitra does not consistently outperform TabPFNv2 on large-feature regression tasks
+- Output: one continuous point prediction per row; no calibrated per-prediction interval
 
-There is no single universal regression score for the foundation model. Evaluate on the downstream dataset with appropriate error metrics and baselines.
+The model repository supplies weights/configuration only; Mitra's executable integration comes from the pinned AutoGluon package. The notebooks do not execute Python code from the model repository.
 
-## Export provenance
+## Data and evaluation
 
-`tutorial_run_metadata.json` records checkpoint identity, runtime versions, row counts/capping, selected metric, requested fine-tuning schedule, memory ratio, and holdout/independent-test metrics. Error metrics are exported in conventional positive form.
+The tutorial sample portfolio is pinned to repository revision `f11bf59d1bb7e75de42145e311de9773fda1607a`, matching the `SAMPLE_REVISION` embedded in the E2E notebook. It contains:
+
+- `freshretailnet-h7.zip` — leakage-aware temporal demand regression derived from FreshRetailNet-50K;
+- `insurance-medical-charges.zip` — cross-sectional medical-cost regression; and
+- `ames-housing.zip` — cross-sectional residential-price regression.
+
+All are tutorial/sanity fixtures, not benchmark evidence. Their source/provenance and licence notes are documented in [`../examples/sample-data/DATASET_CARD.md`](../examples/sample-data/DATASET_CARD.md).
+
+For the default FreshRetailNet path, the literal CPU tutorial deterministically uses 512 training rows and 256 rows from each evaluation partition as a bounded smoke subset; users can raise the notebook controls to use more or all rows. BYOD paths are unaffected. A BYOD single-CSV path uses a deterministic random holdout and explicitly assumes approximately IID rows. Time-dependent, grouped, panel, embargoed, patient/device-level, spatial, or otherwise leakage-sensitive workflows should provide pre-split train/validation/test files.
+
+Regression evaluation includes executable constant baselines rather than quoted development-run numbers. MAE and RMSE remain in target units; R² is complementary. Sample values must not be generalized to other datasets.
+
+## Artifact contract
+
+The E2E tutorial exports `mitra-predictor.zip`. The archive contains the selected AutoGluon predictor plus:
+
+- `tutorial_run_metadata.json` — model/revision, runtime, data identity, selected variant, adaptation configuration, metrics, feature order, target, and provenance;
+- `artifact_manifest.json` — format/version and complete file inventory with size and SHA-256 for every other artifact file.
+
+Because Mitra inference uses support/training context and AutoGluon preprocessing state, the exported predictor may contain or encode information derived from source data. Apply the source dataset's confidentiality, licensing, disclosure, and retention rules to the artifact.
+
+Path safety and manifest consistency do not make Python serialization safe. Only load predictor ZIPs from trusted producers. The artifact-inference notebook requires a trusted whole-archive SHA-256 by default; bypassing that check is an explicit expert override.
+
+The optional DIMER offline model ZIP has its own normative manifest contract documented in [`DIMER_MODEL_PACKAGE.md`](DIMER_MODEL_PACKAGE.md).
+
+## Release verification
+
+Static checks run in ordinary CI:
+
+- notebook JSON/metadata checks, including exact sample-revision parity;
+- Python-cell compilation after notebook magics are stripped;
+- conformance markers and absence of placeholder text;
+- CSV/header regression checks;
+- public API archive/manifest and DIMER-package regression tests.
+
+A separate **Notebook release execution** workflow executes the current E2E default path in a clean hosted runner, produces a predictor artifact, derives new inference rows, and executes the `ARTIFACT-INFERENCE` notebook against that externally produced artifact with its trusted SHA-256. The workflow records actual step outcomes and fails closed unless the producer, digest preparation, and consumer execution all succeed. A release claim must cite the successful workflow/PR head; static CI alone is not execution evidence.
 
 ## AI use and provenance
 
-These tutorials were developed with substantial AI assistance using **GPT-5.6 Sol High** under human direction and review.
-
-- AI model/configuration: **GPT-5.6 Sol High**
-- Provider/client: **OpenAI / ChatGPT**
-- Agent Relay role: **Builder**
-- Base-model developer: **AutoGluon team, Amazon Web Services (AWS)**
-- DIMER role: distributor of the pinned `model.safetensors` artifact, not model developer
-
-AI attribution is **provenance, not sign-off** and does not independently verify correctness.
+These tutorials have been developed with substantial AI assistance under human direction and review. AI attribution is authorship provenance, not sign-off. Clean execution, static checks, and human review remain the evidence for a release.
