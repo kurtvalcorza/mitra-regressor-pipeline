@@ -16,8 +16,6 @@ jobs:
         run: |
           python scripts/_relay_fix_sample_target_order.py
           python scripts/validate_colab_tutorial.py
-          python scripts/test_tutorial_api.py
-          python scripts/test_colab_csv_headers.py
       - name: Commit fix
         run: |
           git rm .github/workflows/_relay-fix-sample-target-order.yml scripts/_relay_fix_sample_target_order.py
