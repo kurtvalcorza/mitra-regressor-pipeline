@@ -1,0 +1,28 @@
+name: Relay fix sample target order
+
+on:
+  push:
+    branches: [fix/notebook-spec-v1-conformance]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply and validate
+        run: |
+          python scripts/_relay_fix_sample_target_order.py
+          python scripts/validate_colab_tutorial.py
+          python scripts/test_tutorial_api.py
+          python scripts/test_colab_csv_headers.py
+      - name: Commit fix
+        run: |
+          git rm .github/workflows/_relay-fix-sample-target-order.yml scripts/_relay_fix_sample_target_order.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(tutorials): resolve sample target before dropped columns"
+          git push origin HEAD:fix/notebook-spec-v1-conformance
