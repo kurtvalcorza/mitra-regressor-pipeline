@@ -38,6 +38,12 @@ def load_notebook(path: Path) -> tuple[dict, str, list[str]]:
     require(payload.get("nbformat") == 4, f"{path.name}: nbformat must be 4")
     cells = payload.get("cells", [])
     require(bool(cells), f"{path.name}: no cells")
+    cell_ids = [cell.get("id") for cell in cells]
+    require(
+        all(isinstance(cell_id, str) and re.fullmatch(r"[A-Za-z0-9_-]{1,64}", cell_id) for cell_id in cell_ids),
+        f"{path.name}: every cell must have a valid nbformat cell id",
+    )
+    require(len(set(cell_ids)) == len(cell_ids), f"{path.name}: cell ids must be unique")
     full_text = "\n".join(source_text(cell) for cell in cells)
 
     code_cells: list[str] = []
