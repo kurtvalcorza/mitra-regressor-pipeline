@@ -16,11 +16,14 @@ jobs:
         run: python scripts/check_shared.py
       - name: DIMER contract
         run: python scripts/check_contract.py
-      - name: Standalone Colab tutorial
+      - name: Notebook Specification 1.0 static conformance
         run: python scripts/validate_colab_tutorial.py
+      - name: Public tutorial API tests
+        run: python scripts/test_tutorial_api.py
       - name: Colab CSV header regressions
         run: python scripts/test_colab_csv_headers.py
-      - name: Compile deployables
+      - name: Compile deployables and tutorial API
         run: |
           python -m py_compile validator/validator.py validator/validate.py validator/contract_hardening.py
           python -m py_compile finetuner/train.py finetuner/contract_entrypoint.py finetuner/contract_hardening.py
+          python -m py_compile mitra_pipeline/__init__.py mitra_pipeline/tutorial_api.py
