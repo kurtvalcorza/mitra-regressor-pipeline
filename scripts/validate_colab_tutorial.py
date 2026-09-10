@@ -156,6 +156,20 @@ def main_tutorial() -> None:
     require("lightgbm>=4.0,<4.8" not in text, "main notebook must not use floating LightGBM range")
     require("requirements-colab.txt" in text, "main notebook must install pinned tutorial requirements")
     require("DIMER_EXPECTED_ZIP_SHA256" in text, "main notebook must support non-interactive DIMER ZIP digest input")
+    code = "\n".join(code_cells)
+    require(code.count('TARGET_COLUMN = "target"') == 1,
+            "main notebook must define the generic BYOD target default exactly once and never reset sample targets")
+    target_resolution = 'TARGET_COLUMN = SAMPLE_CONFIGS[DATA_SOURCE]["target"]'
+    require(target_resolution in code, "main notebook must resolve the selected sample target from SAMPLE_CONFIGS")
+    require(code.index(target_resolution) < code.index("drop_columns ="),
+            "main notebook must resolve the selected sample target before DROP_COLUMNS filtering")
+    for selector, target in (
+        ("Sample: FreshRetailNet (temporal demand)", "target"),
+        ("Sample: Insurance Charges (medical cost)", "charges"),
+        ("Sample: Ames Housing (home valuation)", "SalePrice"),
+    ):
+        require(selector in code and f'"target": "{target}"' in code,
+                f"main notebook sample selector must preserve target mapping for {selector}")
 
 
 def inference_tutorial() -> None:

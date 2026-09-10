@@ -184,6 +184,32 @@ def test_dimer_model_package_contract() -> None:
         tutorial_api.CONFIG_SHA256 = old_config
 
 
+def test_sample_portfolio_contract() -> None:
+    samples = {
+        "freshretailnet-h7.zip": "target",
+        "insurance-medical-charges.zip": "charges",
+        "ames-housing.zip": "SalePrice",
+    }
+    root = ROOT / "examples" / "sample-data"
+    for archive_name, target in samples.items():
+        archive = root / archive_name
+        assert archive.is_file(), f"Missing sample archive: {archive}"
+        with zipfile.ZipFile(archive) as zf:
+            by_base = {Path(name).name: name for name in zf.namelist() if not name.endswith("/")}
+            assert {"train.csv", "val.csv", "test.csv"}.issubset(by_base), archive_name
+            columns = None
+            for split in ("train.csv", "val.csv", "test.csv"):
+                with zf.open(by_base[split]) as handle:
+                    frame = pd.read_csv(handle)
+                assert target in frame.columns, f"{archive_name}:{split} missing target {target!r}"
+                current = list(frame.columns)
+                if columns is None:
+                    columns = current
+                else:
+                    assert current == columns, f"{archive_name}: split schemas differ"
+            assert pd.read_csv(zf.open(by_base["train.csv"]))[target].nunique(dropna=True) > 1, (archive_name, target)
+
+
 def test_archive_path_and_expansion_guards() -> None:
     with tempfile.TemporaryDirectory() as td:
         td = Path(td)
@@ -229,6 +255,7 @@ def main() -> int:
     test_csv_and_regression_validation()
     test_artifact_manifest_roundtrip_and_tamper_detection()
     test_dimer_model_package_contract()
+    test_sample_portfolio_contract()
     test_archive_path_and_expansion_guards()
     print("Public tutorial API tests: OK")
     return 0
