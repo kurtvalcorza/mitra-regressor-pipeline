@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import sys
 import tempfile
+import warnings
 import zipfile
 from pathlib import Path
 
@@ -118,9 +119,11 @@ def test_archive_path_and_expansion_guards() -> None:
         assert sentinel.read_text(encoding="utf-8") == "keep"
 
         duplicate = td / "duplicate.zip"
-        with zipfile.ZipFile(duplicate, "w") as zf:
-            zf.writestr("same.txt", "first")
-            zf.writestr("same.txt", "second")
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message=r"Duplicate name: .*", category=UserWarning)
+            with zipfile.ZipFile(duplicate, "w") as zf:
+                zf.writestr("same.txt", "first")
+                zf.writestr("same.txt", "second")
         expect_raises(lambda: safe_extract_archive(duplicate, td / "out-duplicate"), "duplicate archive member")
 
         backslash = td / "backslash.zip"
