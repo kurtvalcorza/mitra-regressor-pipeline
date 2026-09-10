@@ -127,11 +127,18 @@ def main_tutorial() -> None:
             "np.allclose",
             "dimer-model-manifest.json",
             "tutorial_metrics.json",
+            "SAMPLE_TRAIN_ROWS",
+            "SAMPLE_EVAL_ROWS",
+            "Default smoke subset:",
             "If every default-path cell ran successfully",
             "It **does not** establish",
         ),
         MAIN.name,
     )
+    require(top_level_literal(code_cells, "SAMPLE_TRAIN_ROWS", 512),
+            "main notebook: SAMPLE_TRAIN_ROWS must default 512")
+    require(top_level_literal(code_cells, "SAMPLE_EVAL_ROWS", 256),
+            "main notebook: SAMPLE_EVAL_ROWS must default 256")
     require(top_level_literal(code_cells, "RUN_FINE_TUNING", False),
             "main notebook: RUN_FINE_TUNING must default False")
     require(top_level_literal(code_cells, "RUN_NEW_DATA_INFERENCE", False),
@@ -190,6 +197,8 @@ def docs_and_api() -> None:
             WEIGHTS_SHA256,
             CONFIG_SHA256,
             SAMPLE_REVISION,
+            "512 training rows",
+            "256 rows from each evaluation partition",
         ),
         "tutorials/README.md",
     )

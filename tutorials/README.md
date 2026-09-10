@@ -70,7 +70,7 @@ The model repository supplies weights/configuration only; Mitra's executable int
 
 The default sample is `freshretailnet-h7.zip`, pinned to repository revision `5625a9eeca94b8c72b9ad1ec78d07ecbaa720903`. It is derived from FreshRetailNet-50K and is used for tutorial/sanity evidence, not benchmarking.
 
-The provided sample partitions are preserved. A BYOD single-CSV path uses a deterministic random holdout and explicitly assumes approximately IID rows. Time-dependent, grouped, panel, embargoed, patient/device-level, spatial, or otherwise leakage-sensitive workflows should provide pre-split train/validation/test files.
+The provided sample partition membership is preserved. The literal default CPU tutorial deterministically uses 512 training rows and 256 rows from each evaluation partition as a bounded smoke subset; users can raise the notebook form controls to use more or all rows from the pinned convenience sample. This smoke-only cap does not apply to BYOD. A BYOD single-CSV path uses a deterministic random holdout and explicitly assumes approximately IID rows. Time-dependent, grouped, panel, embargoed, patient/device-level, spatial, or otherwise leakage-sensitive workflows should provide pre-split train/validation/test files.
 
 Regression evaluation includes executable constant baselines rather than quoting fixed development-run numbers. MAE and RMSE remain in target units; R² is complementary. Sample values must not be generalized to other datasets.
 
