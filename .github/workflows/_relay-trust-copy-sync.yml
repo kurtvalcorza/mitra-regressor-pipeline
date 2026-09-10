@@ -1,0 +1,61 @@
+name: Relay artifact trust copy sync
+
+on:
+  push:
+    branches:
+      - fix/notebook-spec-v1-conformance
+    paths:
+      - .github/workflows/_relay-trust-copy-sync.yml
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/notebook-spec-v1-conformance
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.12.14"
+      - name: Align trust copy with fail-closed behavior
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          path = Path("tutorials/mitra_regressor_predictor_inference_colab.ipynb")
+          nb = json.loads(path.read_text(encoding="utf-8"))
+          changed = False
+          for cell in nb["cells"]:
+              if cell.get("cell_type") != "markdown":
+                  continue
+              source = "".join(cell.get("source", [])) if isinstance(cell.get("source"), list) else str(cell.get("source", ""))
+              if source.startswith("# Mitra Regressor — DIMER exported-predictor inference tutorial"):
+                  source = source.replace(
+                      "- verify the uploaded archive's whole-file digest when one is supplied;",
+                      "- supply and verify a trusted whole-file digest before Python deserialization (the default);"
+                  )
+                  source = source.replace(
+                      "Load only artifacts from a trusted producer and verify the whole-archive SHA-256 through a trusted channel when available.",
+                      "Load only artifacts from a trusted producer. A trusted whole-archive SHA-256 is required by default; bypassing it requires the explicit unverified-artifact override and weakens substitution protection."
+                  )
+                  cell["source"] = source
+                  changed = True
+          if not changed:
+              raise RuntimeError("opening trust-copy anchor not found")
+          path.write_text(json.dumps(nb, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+          PY
+      - name: Validate notebook copy
+        run: |
+          python scripts/validate_colab_tutorial.py
+          git diff --check
+      - name: Commit copy sync
+        run: |
+          git config user.name "Kurt Valcorza"
+          git config user.email "102845719+kurtvalcorza@users.noreply.github.com"
+          git add tutorials/mitra_regressor_predictor_inference_colab.ipynb
+          git commit -m "docs(tutorials): align artifact trust copy with fail-closed behavior [relay-builder]"
+          git push origin HEAD:fix/notebook-spec-v1-conformance
