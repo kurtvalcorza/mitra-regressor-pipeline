@@ -110,7 +110,18 @@ def test_archive_path_and_expansion_guards() -> None:
         bad = td / "bad.zip"
         with zipfile.ZipFile(bad, "w") as zf:
             zf.writestr("../escape.txt", "no")
-        expect_raises(lambda: safe_extract_archive(bad, td / "out"), "unsafe archive member")
+        preserved = td / "out"
+        preserved.mkdir()
+        sentinel = preserved / "keep.txt"
+        sentinel.write_text("keep", encoding="utf-8")
+        expect_raises(lambda: safe_extract_archive(bad, preserved), "unsafe archive member")
+        assert sentinel.read_text(encoding="utf-8") == "keep"
+
+        duplicate = td / "duplicate.zip"
+        with zipfile.ZipFile(duplicate, "w") as zf:
+            zf.writestr("same.txt", "first")
+            zf.writestr("same.txt", "second")
+        expect_raises(lambda: safe_extract_archive(duplicate, td / "out-duplicate"), "duplicate archive member")
 
         backslash = td / "backslash.zip"
         with zipfile.ZipFile(backslash, "w") as zf:

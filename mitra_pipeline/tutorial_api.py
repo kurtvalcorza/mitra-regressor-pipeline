@@ -375,6 +375,7 @@ def _validate_zip_members(zf: zipfile.ZipFile, destination: Path) -> list[zipfil
     destination = destination.resolve()
     total = 0
     files: list[zipfile.ZipInfo] = []
+    seen_paths: set[str] = set()
     for info in zf.infolist():
         name = info.filename
         if not name or info.is_dir():
@@ -384,6 +385,10 @@ def _validate_zip_members(zf: zipfile.ZipFile, destination: Path) -> list[zipfil
         member = PurePosixPath(name)
         if member.is_absolute() or ".." in member.parts:
             raise RuntimeError(f"Unsafe archive member path: {name!r}")
+        normalized_name = member.as_posix()
+        if normalized_name in seen_paths:
+            raise RuntimeError(f"Duplicate archive member path is not allowed: {name!r}")
+        seen_paths.add(normalized_name)
         mode = (info.external_attr >> 16) & 0o170000
         if mode == stat.S_IFLNK:
             raise RuntimeError(f"Symlink entries are not allowed: {name!r}")
@@ -403,11 +408,14 @@ def _validate_zip_members(zf: zipfile.ZipFile, destination: Path) -> list[zipfil
 
 def safe_extract_archive(zip_path: str | Path, destination: str | Path) -> Path:
     destination_path = Path(destination)
-    if destination_path.exists():
-        shutil.rmtree(destination_path)
-    destination_path.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(zip_path) as zf:
+        # Validate the complete archive before making destructive changes to the destination.
         infos = _validate_zip_members(zf, destination_path)
+        if destination_path.is_symlink():
+            raise RuntimeError("Archive extraction destination must not be a symlink.")
+        if destination_path.exists():
+            shutil.rmtree(destination_path)
+        destination_path.mkdir(parents=True, exist_ok=True)
         for info in infos:
             member = PurePosixPath(info.filename)
             target = destination_path.joinpath(*member.parts)
