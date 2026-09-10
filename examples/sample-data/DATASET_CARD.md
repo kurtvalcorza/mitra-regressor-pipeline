@@ -10,12 +10,13 @@ tags:
   - sample
   - smoke-test
   - derived
-  - benchmark
 ---
 
 # Mitra Regressor — Sample Datasets
 
-This directory holds ready-to-upload datasets for smoke-testing and learning with the Mitra regressor pipeline. Each dataset exercises different tabular characteristics: leak-free temporal demand forecasting, ultra-fast healthcare cost regression with mixed nominals, and comprehensive real estate valuation.
+This directory holds ready-to-upload datasets for smoke-testing and learning with the Mitra regressor pipeline. Each dataset exercises different tabular characteristics: leakage-aware temporal demand regression, lightweight healthcare cost regression with mixed nominal/numeric features, and real-estate valuation.
+
+These datasets are tutorial/sanity fixtures. Metrics produced from them are **not benchmark evidence** and should not be generalized to production workloads.
 
 ---
 
@@ -27,7 +28,7 @@ A small, leakage-aware dataset derived from FreshRetailNet-50K for temporal pane
 - **Rows:** 4,180 train · 1,600 val · 1,600 test
 - **Target:** `target` — continuous daily `sale_amount` 7 days ahead.
 - **Features:** 17 numeric features: sales history (`lag_1/7/14`, `roll_7_mean`, `roll_28_mean`, `roll_7_std`), stockout signal (`stockout_hours`, `roll_7_stockout`), and weather/calendar covariates.
-- **Split method:** Purged chronological split with a 7-day embargo at split boundaries to prevent temporal leakage.
+- **Split method:** Purged chronological split with a 7-day embargo at split boundaries to reduce temporal leakage risk.
 - **Licence:** CC BY 4.0 (Dingdong Inc).
 
 ---
@@ -49,14 +50,14 @@ A fast, lightweight cross-sectional dataset for predicting individual medical ch
 
 ## 3. ames-housing (Real Estate Sales Price)
 
-The classic real estate valuation benchmark for predicting residential property sales prices in Ames, Iowa.
+A classic real-estate regression dataset for predicting residential property sales prices in Ames, Iowa.
 
 - **Archive:** `ames-housing.zip` (40 KB)
 - **Rows:** 876 train · 292 val · 292 test (full 1,460 rows, split 60% / 20% / 20%)
 - **Target:** `SalePrice` — continuous home sales price in dollars (mean ~$179,922, range $34,900–$625,000).
 - **Features:** 25 curated features (8 categorical strings, 17 numeric):
-  - Categoricals: `MSZoning`, `Neighborhood`, `Condition1`, `BldgType`, `HouseStyle`, `OverallQual`, `OverallCond`, `ExterQual`, `HeatingQC`, `CentralAir`.
-  - Numerics: `LotArea`, `YearBuilt`, `YearRemodAdd`, `1stFlrSF`, `2ndFlrSF`, `GrLivArea`, `FullBath`, `HalfBath`, `BedroomAbvGr`, `TotRmsAbvGrd`, `Fireplaces`, `GarageCars`, `GarageArea`, `WoodDeckSF`, `OpenPorchSF`.
+  - Categoricals: `MSZoning`, `Neighborhood`, `Condition1`, `BldgType`, `HouseStyle`, `ExterQual`, `HeatingQC`, `CentralAir`.
+  - Numerics: `LotArea`, `YearBuilt`, `YearRemodAdd`, `1stFlrSF`, `2ndFlrSF`, `GrLivArea`, `FullBath`, `HalfBath`, `BedroomAbvGr`, `TotRmsAbvGrd`, `Fireplaces`, `GarageCars`, `GarageArea`, `WoodDeckSF`, `OpenPorchSF`, `OverallQual`, `OverallCond`.
 - **Split method:** Seeded random split (seed 42).
 - **Licence:** CC0 1.0 Universal (Public Domain Dedication) (Dean De Cock, 2011 / OpenML 42165).
 
