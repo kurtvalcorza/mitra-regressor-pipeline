@@ -27,7 +27,7 @@ The E2E notebook:
 - supports a pinned upstream model path and a manifested DIMER offline-package path;
 - validates exact SHA-256 values for `model.safetensors` and `config.json`;
 - stages the verified files into an immutable offline Hugging Face snapshot;
-- preserves the bundled sample's provided chronological train/validation/test partitions;
+- preserves provided sample train/validation/test partitions; FreshRetailNet retains its leakage-aware chronological split while the two cross-sectional samples retain their seeded random partitions;
 - offers a seeded random-holdout BYOD path only for approximately IID rows and a pre-split path for leakage-sensitive data;
 - rejects duplicate raw CSV headers and validates finite numeric regression targets;
 - reports missing-target drops, feature/row ceilings, and deterministic row capping;
@@ -68,11 +68,17 @@ The model repository supplies weights/configuration only; Mitra's executable int
 
 ## Data and evaluation
 
-The default sample is `freshretailnet-h7.zip`, pinned to repository revision `5625a9eeca94b8c72b9ad1ec78d07ecbaa720903`. It is derived from FreshRetailNet-50K and is used for tutorial/sanity evidence, not benchmarking.
+The tutorial sample portfolio is pinned to repository revision `f02e0c38ce835d6b85b5a6f072d232f3cd306f54`, matching the `SAMPLE_REVISION` embedded in the E2E notebook. It contains:
 
-The provided sample partition membership is preserved. The literal default CPU tutorial deterministically uses 512 training rows and 256 rows from each evaluation partition as a bounded smoke subset; users can raise the notebook form controls to use more or all rows from the pinned convenience sample. This smoke-only cap does not apply to BYOD. A BYOD single-CSV path uses a deterministic random holdout and explicitly assumes approximately IID rows. Time-dependent, grouped, panel, embargoed, patient/device-level, spatial, or otherwise leakage-sensitive workflows should provide pre-split train/validation/test files.
+- `freshretailnet-h7.zip` — leakage-aware temporal demand regression derived from FreshRetailNet-50K;
+- `insurance-medical-charges.zip` — cross-sectional medical-cost regression; and
+- `ames-housing.zip` — cross-sectional residential-price regression.
 
-Regression evaluation includes executable constant baselines rather than quoting fixed development-run numbers. MAE and RMSE remain in target units; R² is complementary. Sample values must not be generalized to other datasets.
+All are tutorial/sanity fixtures, not benchmark evidence. Their source/provenance and licence notes are documented in [`../examples/sample-data/DATASET_CARD.md`](../examples/sample-data/DATASET_CARD.md).
+
+For the default FreshRetailNet path, the literal CPU tutorial deterministically uses 512 training rows and 256 rows from each evaluation partition as a bounded smoke subset; users can raise the notebook controls to use more or all rows. BYOD paths are unaffected. A BYOD single-CSV path uses a deterministic random holdout and explicitly assumes approximately IID rows. Time-dependent, grouped, panel, embargoed, patient/device-level, spatial, or otherwise leakage-sensitive workflows should provide pre-split train/validation/test files.
+
+Regression evaluation includes executable constant baselines rather than quoted development-run numbers. MAE and RMSE remain in target units; R² is complementary. Sample values must not be generalized to other datasets.
 
 ## Artifact contract
 
@@ -83,7 +89,7 @@ The E2E tutorial exports `mitra-predictor.zip`. The archive contains the selecte
 
 Because Mitra inference uses support/training context and AutoGluon preprocessing state, the exported predictor may contain or encode information derived from source data. Apply the source dataset's confidentiality, licensing, disclosure, and retention rules to the artifact.
 
-Path safety and manifest consistency do not make Python serialization safe. Only load predictor ZIPs from trusted producers.
+Path safety and manifest consistency do not make Python serialization safe. Only load predictor ZIPs from trusted producers. The artifact-inference notebook requires a trusted whole-archive SHA-256 by default; bypassing that check is an explicit expert override.
 
 The optional DIMER offline model ZIP has its own normative manifest contract documented in [`DIMER_MODEL_PACKAGE.md`](DIMER_MODEL_PACKAGE.md).
 
@@ -91,18 +97,14 @@ The optional DIMER offline model ZIP has its own normative manifest contract doc
 
 Static checks run in ordinary CI:
 
-- notebook JSON/metadata checks;
-- Python-cell compilation after notebook-magics are stripped;
+- notebook JSON/metadata checks, including exact sample-revision parity;
+- Python-cell compilation after notebook magics are stripped;
 - conformance markers and absence of placeholder text;
 - CSV/header regression checks;
-- public API archive/manifest unit tests.
+- public API archive/manifest and DIMER-package regression tests.
 
-A separate **Notebook release execution** workflow executes the current E2E default path in a clean hosted runner, produces a predictor artifact, derives new inference rows, and executes the `ARTIFACT-INFERENCE` notebook against that externally produced artifact. A release claim must cite the successful workflow/PR head; static CI alone is not execution evidence.
+A separate **Notebook release execution** workflow executes the current E2E default path in a clean hosted runner, produces a predictor artifact, derives new inference rows, and executes the `ARTIFACT-INFERENCE` notebook against that externally produced artifact with its trusted SHA-256. The workflow records actual step outcomes and fails closed unless the producer, digest preparation, and consumer execution all succeed. A release claim must cite the successful workflow/PR head; static CI alone is not execution evidence.
 
 ## AI use and provenance
 
 These tutorials have been developed with substantial AI assistance under human direction and review. AI attribution is authorship provenance, not sign-off. Clean execution, static checks, and human review remain the evidence for a release.
-
-## Sample portfolio
-
-The E2E notebook preserves the original FreshRetailNet temporal-demand sample and also exposes the sample portfolio from PR #19: Insurance Medical Charges (`charges`) and Ames Housing (`SalePrice`). These archives and their provenance/license details live under `examples/sample-data/`. The older `Sample dataset (FreshRetailNet)` selector remains accepted for backward compatibility. Sample metrics remain tutorial/sanity evidence, not benchmark claims.
