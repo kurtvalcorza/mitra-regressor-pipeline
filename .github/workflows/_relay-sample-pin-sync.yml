@@ -21,6 +21,10 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: "3.12.14"
+      - name: Prepare validation dependencies
+        run: |
+          python -m pip install --upgrade pip==26.2.1
+          python -m pip install pandas==3.0.5 numpy==2.5.3
       - name: Synchronize immutable sample revision
         run: |
           python - <<'PY'
