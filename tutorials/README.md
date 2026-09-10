@@ -102,3 +102,7 @@ A separate **Notebook release execution** workflow executes the current E2E defa
 ## AI use and provenance
 
 These tutorials have been developed with substantial AI assistance under human direction and review. AI attribution is authorship provenance, not sign-off. Clean execution, static checks, and human review remain the evidence for a release.
+
+## Sample portfolio
+
+The E2E notebook preserves the original FreshRetailNet temporal-demand sample and also exposes the sample portfolio from PR #19: Insurance Medical Charges (`charges`) and Ames Housing (`SalePrice`). These archives and their provenance/license details live under `examples/sample-data/`. The older `Sample dataset (FreshRetailNet)` selector remains accepted for backward compatibility. Sample metrics remain tutorial/sanity evidence, not benchmark claims.
