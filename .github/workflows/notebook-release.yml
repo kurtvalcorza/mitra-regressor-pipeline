@@ -5,6 +5,8 @@ on:
     paths:
       - "tutorials/**"
       - "mitra_pipeline/**"
+      - "examples/sample-data/**"
+      - "examples/build_sample_datasets.py"
       - "scripts/validate_colab_tutorial.py"
       - "scripts/test_tutorial_api.py"
       - ".github/workflows/notebook-release.yml"
@@ -81,14 +83,29 @@ jobs:
             --ExecutePreprocessor.timeout=1200 \
             --ExecutePreprocessor.kernel_name=python3
 
+      - name: Upload executed notebooks and predictor artifact
+        id: upload-evidence
+        if: ${{ always() && steps.e2e.outcome == 'success' && steps.prepare-inference.outcome == 'success' && steps.artifact-inference.outcome == 'success' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: mitra-regressor-notebook-release-evidence
+          path: |
+            /content/executed-mitra-regressor-e2e.ipynb
+            /content/executed-mitra-regressor-artifact-inference.ipynb
+            /content/mitra-tutorial/mitra-predictor.zip
+            /content/mitra-inference/predictions.csv
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Record release evidence
         if: always()
         env:
           E2E_OUTCOME: ${{ steps.e2e.outcome }}
           PREPARE_OUTCOME: ${{ steps.prepare-inference.outcome }}
           INFERENCE_OUTCOME: ${{ steps.artifact-inference.outcome }}
+          UPLOAD_OUTCOME: ${{ steps.upload-evidence.outcome }}
         run: |
-          if [[ "$E2E_OUTCOME" == "success" && "$PREPARE_OUTCOME" == "success" && "$INFERENCE_OUTCOME" == "success" ]]; then
+          if [[ "$E2E_OUTCOME" == "success" && "$PREPARE_OUTCOME" == "success" && "$INFERENCE_OUTCOME" == "success" && "$UPLOAD_OUTCOME" == "success" ]]; then
             RELEASE_STATUS="PASS"
           else
             RELEASE_STATUS="INCOMPLETE/FAIL"
@@ -102,23 +119,11 @@ jobs:
             echo "- E2E clean execution outcome: \`${E2E_OUTCOME}\`"
             echo "- External-artifact preparation outcome: \`${PREPARE_OUTCOME}\`"
             echo "- Artifact-inference execution outcome: \`${INFERENCE_OUTCOME}\`"
+            echo "- Evidence upload outcome: \`${UPLOAD_OUTCOME}\`"
             echo "- Release evidence status: **${RELEASE_STATUS}**"
-            echo "- A PASS means the inference notebook consumed the externally produced E2E artifact with its trusted SHA-256."
+            echo "- A PASS means the inference notebook consumed the externally produced E2E artifact with its trusted SHA-256 and the complete evidence bundle was retained by Actions."
             echo "- Static checks are separate and are not treated as execution evidence."
           } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload executed notebooks and predictor artifact
-        if: ${{ always() && steps.e2e.outcome == 'success' && steps.prepare-inference.outcome == 'success' && steps.artifact-inference.outcome == 'success' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: mitra-regressor-notebook-release-evidence
-          path: |
-            /content/executed-mitra-regressor-e2e.ipynb
-            /content/executed-mitra-regressor-artifact-inference.ipynb
-            /content/mitra-tutorial/mitra-predictor.zip
-            /content/mitra-inference/predictions.csv
-          if-no-files-found: error
-          retention-days: 30
 
       - name: Assert release evidence is complete
         if: always()
@@ -126,7 +131,9 @@ jobs:
           E2E_OUTCOME: ${{ steps.e2e.outcome }}
           PREPARE_OUTCOME: ${{ steps.prepare-inference.outcome }}
           INFERENCE_OUTCOME: ${{ steps.artifact-inference.outcome }}
+          UPLOAD_OUTCOME: ${{ steps.upload-evidence.outcome }}
         run: |
           [[ "$E2E_OUTCOME" == "success" ]]
           [[ "$PREPARE_OUTCOME" == "success" ]]
           [[ "$INFERENCE_OUTCOME" == "success" ]]
+          [[ "$UPLOAD_OUTCOME" == "success" ]]
