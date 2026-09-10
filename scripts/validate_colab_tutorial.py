@@ -19,7 +19,7 @@ MODEL_ID = "autogluon/mitra-regressor"
 PINNED_REVISION = "5f277aa8f69042d39d6ac3612aed18bb9279bd95"
 WEIGHTS_SHA256 = "d8e75c62af0bec2fd404b0ad20a442d951d43ca6d331315cfcc0509b54f2c642"
 CONFIG_SHA256 = "2bc1ed5047f7c25368245e8ad32540a5fa28940b1ec05d3f1f454a09ff5384c1"
-SAMPLE_REVISION = "5625a9eeca94b8c72b9ad1ec78d07ecbaa720903"
+SAMPLE_REVISION = "f02e0c38ce835d6b85b5a6f072d232f3cd306f54"
 PLACEHOLDERS = re.compile(r"\b(TODO|TBD|FIXME)\b")
 
 
@@ -141,6 +141,8 @@ def main_tutorial() -> None:
         ),
         MAIN.name,
     )
+    require(top_level_literal(code_cells, "SAMPLE_REVISION", SAMPLE_REVISION),
+            f"main notebook: SAMPLE_REVISION must match certified revision {SAMPLE_REVISION}")
     require(top_level_literal(code_cells, "SAMPLE_TRAIN_ROWS", 512),
             "main notebook: SAMPLE_TRAIN_ROWS must default 512")
     require(top_level_literal(code_cells, "SAMPLE_EVAL_ROWS", 256),
