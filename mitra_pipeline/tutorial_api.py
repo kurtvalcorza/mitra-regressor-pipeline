@@ -16,6 +16,7 @@ import os
 import random
 import shutil
 import stat
+import tempfile
 import urllib.request
 import zipfile
 from pathlib import Path, PurePosixPath
@@ -376,6 +377,7 @@ def _validate_zip_members(zf: zipfile.ZipFile, destination: Path) -> list[zipfil
     total = 0
     files: list[zipfile.ZipInfo] = []
     seen_paths: set[str] = set()
+    seen_parent_paths: set[str] = set()
     for info in zf.infolist():
         name = info.filename
         if not name or info.is_dir():
@@ -388,7 +390,11 @@ def _validate_zip_members(zf: zipfile.ZipFile, destination: Path) -> list[zipfil
         normalized_name = member.as_posix()
         if normalized_name in seen_paths:
             raise RuntimeError(f"Duplicate archive member path is not allowed: {name!r}")
+        parent_paths = {PurePosixPath(*member.parts[:i]).as_posix() for i in range(1, len(member.parts))}
+        if normalized_name in seen_parent_paths or parent_paths.intersection(seen_paths):
+            raise RuntimeError(f"Archive member path conflicts with a file/directory boundary: {name!r}")
         seen_paths.add(normalized_name)
+        seen_parent_paths.update(parent_paths)
         mode = (info.external_attr >> 16) & 0o170000
         if mode == stat.S_IFLNK:
             raise RuntimeError(f"Symlink entries are not allowed: {name!r}")
@@ -409,19 +415,25 @@ def _validate_zip_members(zf: zipfile.ZipFile, destination: Path) -> list[zipfil
 def safe_extract_archive(zip_path: str | Path, destination: str | Path) -> Path:
     destination_path = Path(destination)
     with zipfile.ZipFile(zip_path) as zf:
-        # Validate the complete archive before making destructive changes to the destination.
+        # Validate the complete archive before touching any prior extraction destination.
         infos = _validate_zip_members(zf, destination_path)
         if destination_path.is_symlink():
             raise RuntimeError("Archive extraction destination must not be a symlink.")
-        if destination_path.exists():
-            shutil.rmtree(destination_path)
-        destination_path.mkdir(parents=True, exist_ok=True)
-        for info in infos:
-            member = PurePosixPath(info.filename)
-            target = destination_path.joinpath(*member.parts)
-            target.parent.mkdir(parents=True, exist_ok=True)
-            with zf.open(info) as source, open(target, "wb") as sink:
-                shutil.copyfileobj(source, sink)
+        destination_path.parent.mkdir(parents=True, exist_ok=True)
+        staging = Path(tempfile.mkdtemp(prefix=f".{destination_path.name}.extract-", dir=destination_path.parent))
+        try:
+            for info in infos:
+                member = PurePosixPath(info.filename)
+                target = staging.joinpath(*member.parts)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                with zf.open(info) as source, open(target, "wb") as sink:
+                    shutil.copyfileobj(source, sink)
+            if destination_path.exists():
+                shutil.rmtree(destination_path)
+            staging.replace(destination_path)
+        except Exception:
+            shutil.rmtree(staging, ignore_errors=True)
+            raise
     return destination_path
 
 
@@ -475,7 +487,7 @@ def validate_dimer_model_package(
     actual_files = {
         path.relative_to(root).as_posix()
         for path in root.rglob("*")
-        if path.is_file() and path.name != DIMER_MODEL_MANIFEST
+        if path.is_file() and path != root / DIMER_MODEL_MANIFEST
     }
     if actual_files != set(entries):
         missing = sorted(set(entries) - actual_files)
@@ -500,7 +512,7 @@ def validate_dimer_model_package(
 
 def _artifact_inventory(root: Path) -> list[dict[str, Any]]:
     inventory = []
-    for path in sorted(p for p in root.rglob("*") if p.is_file() and p.name != ARTIFACT_MANIFEST):
+    for path in sorted(p for p in root.rglob("*") if p.is_file() and p != root / ARTIFACT_MANIFEST):
         rel = path.relative_to(root).as_posix()
         if "\\" in rel or PurePosixPath(rel).is_absolute() or ".." in PurePosixPath(rel).parts:
             raise RuntimeError(f"Unsafe artifact path: {rel!r}")
@@ -556,6 +568,8 @@ def validate_artifact_directory(
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     if manifest.get("schema_version") != 1:
         raise RuntimeError("Unsupported artifact manifest schema_version.")
+    if manifest.get("metadata_file") != RUN_METADATA:
+        raise RuntimeError(f"Artifact manifest metadata_file must be {RUN_METADATA!r}.")
     if manifest.get("artifact_format") != ARTIFACT_FORMAT or metadata.get("artifact_format") != ARTIFACT_FORMAT:
         raise RuntimeError("Predictor artifact_format is not the DIMER AutoGluon predictor format.")
     if (
@@ -592,7 +606,7 @@ def validate_artifact_directory(
     actual = {
         path.relative_to(root).as_posix()
         for path in root.rglob("*")
-        if path.is_file() and path.name != ARTIFACT_MANIFEST
+        if path.is_file() and path != root / ARTIFACT_MANIFEST
     }
     if actual != set(entries):
         missing_files = sorted(set(entries) - actual)

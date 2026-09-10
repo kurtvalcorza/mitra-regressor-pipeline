@@ -40,6 +40,6 @@ The archive may additionally be verified against a whole-ZIP SHA-256 supplied th
 
 ## Security boundary
 
-The package reader rejects absolute paths, `..` traversal, backslash-based ambiguous paths, symlinks, oversized members, suspicious compression ratios, and excessive total expanded size. These checks protect extraction and integrity; they do not establish sender authenticity. Obtain a whole-archive digest through a trusted distribution channel when authenticity/substitution risk matters.
+The package reader rejects absolute paths, `..` traversal, backslash-based ambiguous paths, duplicate or file/directory-conflicting members, symlinks, oversized members, suspicious compression ratios, and excessive total expanded size. Extraction is staged before replacing any existing destination. These checks protect extraction and integrity; they do not establish sender authenticity. Obtain a whole-archive digest through a trusted distribution channel when authenticity/substitution risk matters.
 
 Legacy weight-only ZIPs intentionally fail this contract. Use the pinned-upstream path or rebuild the DIMER package with the v1 manifest rather than weakening verification.

@@ -101,6 +101,21 @@ def test_artifact_manifest_roundtrip_and_tamper_detection() -> None:
         assert manifest["artifact_format"] == ARTIFACT_FORMAT
         assert metadata["base_model_revision"] == PINNED_REVISION
 
+        manifest_path = root / "artifact_manifest.json"
+        original_manifest = manifest_path.read_text(encoding="utf-8")
+        tampered_manifest = json.loads(original_manifest)
+        tampered_manifest["metadata_file"] = "elsewhere.json"
+        manifest_path.write_text(json.dumps(tampered_manifest), encoding="utf-8")
+        expect_raises(lambda: validate_artifact_directory(root), "metadata_file")
+        manifest_path.write_text(original_manifest, encoding="utf-8")
+
+        nested_control = root / "nested" / "artifact_manifest.json"
+        nested_control.parent.mkdir()
+        nested_control.write_text("unexpected", encoding="utf-8")
+        expect_raises(lambda: validate_artifact_directory(root), "inventory mismatch")
+        nested_control.unlink()
+        nested_control.parent.rmdir()
+
         (root / "model.bin").write_bytes(b"tampered")
         expect_raises(lambda: validate_artifact_directory(root), "size mismatch")
 
@@ -125,6 +140,12 @@ def test_archive_path_and_expansion_guards() -> None:
                 zf.writestr("same.txt", "first")
                 zf.writestr("same.txt", "second")
         expect_raises(lambda: safe_extract_archive(duplicate, td / "out-duplicate"), "duplicate archive member")
+
+        conflict = td / "conflict.zip"
+        with zipfile.ZipFile(conflict, "w") as zf:
+            zf.writestr("node", "file")
+            zf.writestr("node/child.txt", "child")
+        expect_raises(lambda: safe_extract_archive(conflict, td / "out-conflict"), "file/directory boundary")
 
         backslash = td / "backslash.zip"
         with zipfile.ZipFile(backslash, "w") as zf:
