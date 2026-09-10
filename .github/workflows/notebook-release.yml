@@ -41,6 +41,7 @@ jobs:
           python -m pip install nbconvert==7.17.1 ipykernel==7.3.0
 
       - name: Execute E2E default path from clean state
+        id: e2e
         run: |
           jupyter nbconvert \
             --to notebook \
@@ -51,6 +52,7 @@ jobs:
             --ExecutePreprocessor.kernel_name=python3
 
       - name: Prepare independent inference input and trusted archive digest
+        id: prepare-inference
         run: |
           python - <<'PY'
           import zipfile
@@ -69,6 +71,7 @@ jobs:
           echo "MITRA_EXPECTED_ZIP_SHA256=$(sha256sum /content/mitra-tutorial/mitra-predictor.zip | awk '{print $1}')" >> "$GITHUB_ENV"
 
       - name: Execute artifact-inference notebook against external producer artifact
+        id: artifact-inference
         run: |
           jupyter nbconvert \
             --to notebook \
@@ -80,20 +83,32 @@ jobs:
 
       - name: Record release evidence
         if: always()
+        env:
+          E2E_OUTCOME: ${{ steps.e2e.outcome }}
+          PREPARE_OUTCOME: ${{ steps.prepare-inference.outcome }}
+          INFERENCE_OUTCOME: ${{ steps.artifact-inference.outcome }}
         run: |
+          if [[ "$E2E_OUTCOME" == "success" && "$PREPARE_OUTCOME" == "success" && "$INFERENCE_OUTCOME" == "success" ]]; then
+            RELEASE_STATUS="PASS"
+          else
+            RELEASE_STATUS="INCOMPLETE/FAIL"
+          fi
           {
             echo "## Mitra Regressor notebook release execution"
             echo
             echo "- Candidate SHA: \`${DIMER_REPO_REF}\`"
             echo "- Runner: \`${RUNNER_OS}\`"
             echo "- Python: \`$(python --version 2>&1)\`"
-            echo "- E2E notebook: executed from a clean hosted runner in this job"
-            echo "- Artifact-inference notebook: consumes the externally produced E2E artifact with trusted SHA-256"
-            echo "- Static checks are separate and are not treated as execution evidence"
+            echo "- E2E clean execution outcome: \`${E2E_OUTCOME}\`"
+            echo "- External-artifact preparation outcome: \`${PREPARE_OUTCOME}\`"
+            echo "- Artifact-inference execution outcome: \`${INFERENCE_OUTCOME}\`"
+            echo "- Release evidence status: **${RELEASE_STATUS}**"
+            echo "- A PASS means the inference notebook consumed the externally produced E2E artifact with its trusted SHA-256."
+            echo "- Static checks are separate and are not treated as execution evidence."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload executed notebooks and predictor artifact
-        if: always()
+        if: ${{ always() && steps.e2e.outcome == 'success' && steps.prepare-inference.outcome == 'success' && steps.artifact-inference.outcome == 'success' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: mitra-regressor-notebook-release-evidence
@@ -104,3 +119,14 @@ jobs:
             /content/mitra-inference/predictions.csv
           if-no-files-found: error
           retention-days: 30
+
+      - name: Assert release evidence is complete
+        if: always()
+        env:
+          E2E_OUTCOME: ${{ steps.e2e.outcome }}
+          PREPARE_OUTCOME: ${{ steps.prepare-inference.outcome }}
+          INFERENCE_OUTCOME: ${{ steps.artifact-inference.outcome }}
+        run: |
+          [[ "$E2E_OUTCOME" == "success" ]]
+          [[ "$PREPARE_OUTCOME" == "success" ]]
+          [[ "$INFERENCE_OUTCOME" == "success" ]]
