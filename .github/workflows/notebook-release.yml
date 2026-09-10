@@ -1,0 +1,97 @@
+name: Notebook release execution
+
+on:
+  pull_request:
+    paths:
+      - "tutorials/**"
+      - "mitra_pipeline/**"
+      - "scripts/validate_colab_tutorial.py"
+      - "scripts/test_tutorial_api.py"
+      - ".github/workflows/notebook-release.yml"
+  workflow_dispatch:
+
+jobs:
+  execute-notebooks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      DIMER_REPO_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Prepare notebook runtime
+        run: |
+          sudo mkdir -p /content
+          sudo chown -R "$USER":"$USER" /content
+          python -m pip install --upgrade pip
+          python -m pip install nbconvert ipykernel
+
+      - name: Execute E2E default path from clean state
+        run: |
+          jupyter nbconvert \
+            --to notebook \
+            --execute tutorials/mitra_regressor_colab.ipynb \
+            --output executed-mitra-regressor-e2e.ipynb \
+            --output-dir /content \
+            --ExecutePreprocessor.timeout=2400 \
+            --ExecutePreprocessor.kernel_name=python3
+
+      - name: Prepare independent inference input and trusted archive digest
+        run: |
+          python - <<'PY'
+          import zipfile
+          from pathlib import Path
+          import pandas as pd
+
+          sample = Path("examples/sample-data/freshretailnet-h7.zip")
+          with zipfile.ZipFile(sample) as zf:
+              test_name = next(name for name in zf.namelist() if Path(name).name == "test.csv")
+              with zf.open(test_name) as handle:
+                  frame = pd.read_csv(handle)
+          frame.drop(columns=["target"]).head(64).to_csv("/content/inference.csv", index=False)
+          PY
+          echo "MITRA_PREDICTOR_ZIP=/content/mitra-tutorial/mitra-predictor.zip" >> "$GITHUB_ENV"
+          echo "MITRA_INFERENCE_CSV=/content/inference.csv" >> "$GITHUB_ENV"
+          echo "MITRA_EXPECTED_ZIP_SHA256=$(sha256sum /content/mitra-tutorial/mitra-predictor.zip | awk '{print $1}')" >> "$GITHUB_ENV"
+
+      - name: Execute artifact-inference notebook against external producer artifact
+        run: |
+          jupyter nbconvert \
+            --to notebook \
+            --execute tutorials/mitra_regressor_predictor_inference_colab.ipynb \
+            --output executed-mitra-regressor-artifact-inference.ipynb \
+            --output-dir /content \
+            --ExecutePreprocessor.timeout=1200 \
+            --ExecutePreprocessor.kernel_name=python3
+
+      - name: Record release evidence
+        if: always()
+        run: |
+          {
+            echo "## Mitra Regressor notebook release execution"
+            echo
+            echo "- Candidate SHA: \`${DIMER_REPO_REF}\`"
+            echo "- Runner: \`${RUNNER_OS}\`"
+            echo "- Python: \`$(python --version 2>&1)\`"
+            echo "- E2E notebook: executed from a clean hosted runner in this job"
+            echo "- Artifact-inference notebook: consumes the externally produced E2E artifact with trusted SHA-256"
+            echo "- Static checks are separate and are not treated as execution evidence"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload executed notebooks and predictor artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mitra-regressor-notebook-release-evidence
+          path: |
+            /content/executed-mitra-regressor-e2e.ipynb
+            /content/executed-mitra-regressor-artifact-inference.ipynb
+            /content/mitra-tutorial/mitra-predictor.zip
+            /content/mitra-inference/predictions.csv
+          if-no-files-found: warn
+          retention-days: 30
