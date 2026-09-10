@@ -1,0 +1,163 @@
+name: Relay reviewer remediation
+
+on:
+  push:
+    branches:
+      - fix/notebook-spec-v1-conformance
+    paths:
+      - .github/workflows/_relay-review-fixes.yml
+
+permissions:
+  contents: write
+
+jobs:
+  remediate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/notebook-spec-v1-conformance
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.12.14"
+      - name: Apply reviewer fixes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          # P2: require AutoGluon's predictor.pkl at the artifact root.
+          api = Path("mitra_pipeline/tutorial_api.py")
+          text = api.read_text(encoding="utf-8")
+          old = '''    if not any(path.name == "predictor.pkl" for path in root.rglob("predictor.pkl")):\n        raise RuntimeError("Artifact does not contain an AutoGluon predictor.pkl.")\n'''
+          new = '''    if not (root / "predictor.pkl").is_file():\n        raise RuntimeError("Artifact does not contain the required root-level AutoGluon predictor.pkl.")\n'''
+          if old not in text:
+              raise RuntimeError("root predictor validation anchor not found")
+          api.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          # P2: add root-topology and manifested DIMER package regression coverage.
+          tests = Path("scripts/test_tutorial_api.py")
+          text = tests.read_text(encoding="utf-8")
+          text = text.replace("import json\n", "import hashlib\nimport json\n", 1)
+          text = text.replace(
+              "from mitra_pipeline import (\n",
+              "import mitra_pipeline.tutorial_api as tutorial_api\n\nfrom mitra_pipeline import (\n",
+              1,
+          )
+          text = text.replace(
+              "    validate_artifact_directory,\n",
+              "    validate_artifact_directory,\n    validate_dimer_model_package,\n",
+              1,
+          )
+          marker = '''        (root / "model.bin").write_bytes(b"tampered")\n        expect_raises(lambda: validate_artifact_directory(root), "size mismatch")\n\n\ndef test_archive_path_and_expansion_guards() -> None:\n'''
+          replacement = '''        (root / "model.bin").write_bytes(b"tampered")\n        expect_raises(lambda: validate_artifact_directory(root), "size mismatch")\n\n        nested_root = Path(td) / "nested-only-predictor"\n        (nested_root / "nested").mkdir(parents=True)\n        (nested_root / "nested" / "predictor.pkl").write_bytes(b"not-root")\n        (nested_root / "tutorial_run_metadata.json").write_text(json.dumps(base_metadata()), encoding="utf-8")\n        write_artifact_manifest(nested_root)\n        expect_raises(lambda: validate_artifact_directory(nested_root), "root-level")\n\n\ndef test_dimer_model_package_contract() -> None:\n    weights = b"test-weights"\n    config = b"{\\"model\\": \\"test\\"}"\n    weights_digest = hashlib.sha256(weights).hexdigest()\n    config_digest = hashlib.sha256(config).hexdigest()\n    old_weights = tutorial_api.WEIGHTS_SHA256\n    old_config = tutorial_api.CONFIG_SHA256\n    tutorial_api.WEIGHTS_SHA256 = weights_digest\n    tutorial_api.CONFIG_SHA256 = config_digest\n    try:\n        with tempfile.TemporaryDirectory() as td:\n            td = Path(td)\n\n            def make_package(path: Path, *, revision: str = PINNED_REVISION, add_unlisted: bool = False) -> Path:\n                manifest = {\n                    "schema_version": 1,\n                    "model_id": MODEL_ID,\n                    "revision": revision,\n                    "files": [\n                        {"path": "model.safetensors", "size": len(weights), "sha256": weights_digest},\n                        {"path": "config.json", "size": len(config), "sha256": config_digest},\n                    ],\n                }\n                with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as zf:\n                    zf.writestr("dimer-model-manifest.json", json.dumps(manifest))\n                    zf.writestr("model.safetensors", weights)\n                    zf.writestr("config.json", config)\n                    if add_unlisted:\n                        zf.writestr("unexpected.txt", "unexpected")\n                return path\n\n            good = make_package(td / "good.zip")\n            trusted_digest = hashlib.sha256(good.read_bytes()).hexdigest()\n            resolved_weights, resolved_config, manifest = validate_dimer_model_package(\n                good, td / "good-out", expected_archive_sha256=trusted_digest\n            )\n            assert resolved_weights.read_bytes() == weights\n            assert resolved_config.read_bytes() == config\n            assert manifest["revision"] == PINNED_REVISION\n\n            expect_raises(\n                lambda: validate_dimer_model_package(good, td / "wrong-digest", expected_archive_sha256="0" * 64),\n                "checksum mismatch",\n            )\n            bad_revision = make_package(td / "bad-revision.zip", revision="deadbeef")\n            expect_raises(lambda: validate_dimer_model_package(bad_revision, td / "bad-revision"), "revision")\n            unlisted = make_package(td / "unlisted.zip", add_unlisted=True)\n            expect_raises(lambda: validate_dimer_model_package(unlisted, td / "unlisted"), "inventory mismatch")\n    finally:\n        tutorial_api.WEIGHTS_SHA256 = old_weights\n        tutorial_api.CONFIG_SHA256 = old_config\n\n\ndef test_archive_path_and_expansion_guards() -> None:\n'''
+          if marker not in text:
+              raise RuntimeError("test insertion anchor not found")
+          text = text.replace(marker, replacement, 1)
+          text = text.replace(
+              "    test_artifact_manifest_roundtrip_and_tamper_detection()\n    test_archive_path_and_expansion_guards()\n",
+              "    test_artifact_manifest_roundtrip_and_tamper_detection()\n    test_dimer_model_package_contract()\n    test_archive_path_and_expansion_guards()\n",
+              1,
+          )
+          tests.write_text(text, encoding="utf-8")
+
+          # P1/P2: fail closed for unverified pickle artifacts and wire DIMER digest env input.
+          inference = Path("tutorials/mitra_regressor_predictor_inference_colab.ipynb")
+          nb = json.loads(inference.read_text(encoding="utf-8"))
+          for cell in nb["cells"]:
+              source = "".join(cell.get("source", [])) if isinstance(cell.get("source"), list) else str(cell.get("source", ""))
+              if cell.get("cell_type") == "markdown" and "## 2. Supply and validate `mitra-predictor.zip`" in source:
+                  source = source.replace("- optional whole-archive SHA-256;", "- trusted whole-archive SHA-256 required by default;")
+                  source = source.replace(
+                      "The manifest proves internal consistency. It does not prove who created the archive; a malicious sender could replace both payload and manifest. Whole-archive digest verification is meaningful only when the expected digest is obtained through a trusted channel.",
+                      "The manifest proves internal consistency. It does not prove who created the archive; a malicious sender could replace both payload and manifest. The notebook therefore refuses Python deserialization without a trusted whole-archive SHA-256 by default. `ALLOW_UNVERIFIED_ARTIFACT=True` is an explicit expert override for already-trusted local workflows and weakens this substitution check."
+                  )
+                  cell["source"] = source
+              if cell.get("cell_type") == "code" and 'EXPECTED_ZIP_SHA256 = ""' in source:
+                  source = source.replace(
+                      'EXPECTED_ZIP_SHA256 = ""  # @param {type:"string"}\n',
+                      'EXPECTED_ZIP_SHA256 = ""  # @param {type:"string"}\nALLOW_UNVERIFIED_ARTIFACT = False  # @param {type:"boolean"}\n',
+                      1,
+                  )
+                  old_block = '''else:\n    print("⚠ No expected whole-archive digest supplied; integrity is limited to internal manifest checks.")\n'''
+                  new_block = '''else:\n    env_override = os.environ.get("MITRA_ALLOW_UNVERIFIED_ARTIFACT", "").strip().lower()\n    allow_unverified = ALLOW_UNVERIFIED_ARTIFACT or env_override in {"1", "true", "yes"}\n    if not allow_unverified:\n        raise RuntimeError(\n            "A trusted whole-archive SHA-256 is required before loading this Python-serialized artifact. "\n            "Supply MITRA_EXPECTED_ZIP_SHA256 / EXPECTED_ZIP_SHA256, or explicitly set "\n            "ALLOW_UNVERIFIED_ARTIFACT=True only for an already-trusted local artifact."\n        )\n    print("⚠ Explicit unverified-artifact override enabled; sender authenticity/substitution is not checked.")\n'''
+                  if old_block not in source:
+                      raise RuntimeError("inference trust anchor not found")
+                  cell["source"] = source.replace(old_block, new_block, 1)
+          inference.write_text(json.dumps(nb, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+
+          main_nb_path = Path("tutorials/mitra_regressor_colab.ipynb")
+          nb = json.loads(main_nb_path.read_text(encoding="utf-8"))
+          changed = False
+          for cell in nb["cells"]:
+              source = "".join(cell.get("source", [])) if isinstance(cell.get("source"), list) else str(cell.get("source", ""))
+              if cell.get("cell_type") == "code" and "expected_archive_sha256=EXPECTED_DIMER_ZIP_SHA256 or None" in source:
+                  source = source.replace(
+                      "    weights_path, config_path, package_manifest = mp.validate_dimer_model_package(\n",
+                      "    expected_dimer_digest = os.environ.get(\"DIMER_EXPECTED_ZIP_SHA256\", \"\").strip() or EXPECTED_DIMER_ZIP_SHA256.strip()\n    weights_path, config_path, package_manifest = mp.validate_dimer_model_package(\n",
+                      1,
+                  )
+                  source = source.replace(
+                      "        expected_archive_sha256=EXPECTED_DIMER_ZIP_SHA256 or None,\n",
+                      "        expected_archive_sha256=expected_dimer_digest or None,\n",
+                      1,
+                  )
+                  cell["source"] = source
+                  changed = True
+          if not changed:
+              raise RuntimeError("DIMER digest env anchor not found")
+          main_nb_path.write_text(json.dumps(nb, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+
+          # Documentation: exact trust and non-interactive inputs.
+          dimer_doc = Path("tutorials/DIMER_MODEL_PACKAGE.md")
+          text = dimer_doc.read_text(encoding="utf-8")
+          text = text.replace(
+              "The archive may additionally be verified against a whole-ZIP SHA-256 supplied through `EXPECTED_DIMER_ZIP_SHA256` or the corresponding non-interactive environment input.",
+              "The archive may additionally be verified against a whole-ZIP SHA-256 supplied through the Colab `EXPECTED_DIMER_ZIP_SHA256` field or the non-interactive `DIMER_EXPECTED_ZIP_SHA256` environment variable."
+          )
+          dimer_doc.write_text(text, encoding="utf-8")
+
+          readme = Path("tutorials/README.md")
+          text = readme.read_text(encoding="utf-8")
+          text = text.replace(
+              "- optionally verifies a trusted whole-archive SHA-256;",
+              "- requires a trusted whole-archive SHA-256 by default before Python deserialization, with only an explicit expert override for already-trusted local artifacts;"
+          )
+          readme.write_text(text, encoding="utf-8")
+
+          validator = Path("scripts/validate_colab_tutorial.py")
+          text = validator.read_text(encoding="utf-8")
+          text = text.replace(
+              '            "MITRA_INFERENCE_CSV",\n',
+              '            "MITRA_INFERENCE_CSV",\n            "MITRA_EXPECTED_ZIP_SHA256",\n            "ALLOW_UNVERIFIED_ARTIFACT",\n',
+              1,
+          )
+          anchor = '''    require("fit(" not in "\\n".join(code_cells), "artifact-inference notebook must not fit/train")\n'''
+          replacement = '''    require(top_level_literal(code_cells, "ALLOW_UNVERIFIED_ARTIFACT", False),\n            "artifact-inference notebook must fail closed unless unverified loading is explicitly enabled")\n    require("fit(" not in "\\n".join(code_cells), "artifact-inference notebook must not fit/train")\n'''
+          if anchor not in text:
+              raise RuntimeError("validator inference anchor not found")
+          text = text.replace(anchor, replacement, 1)
+          text = text.replace(
+              '    require("requirements-colab.txt" in text, "main notebook must install pinned tutorial requirements")\n',
+              '    require("requirements-colab.txt" in text, "main notebook must install pinned tutorial requirements")\n    require("DIMER_EXPECTED_ZIP_SHA256" in text, "main notebook must support non-interactive DIMER ZIP digest input")\n',
+              1,
+          )
+          validator.write_text(text, encoding="utf-8")
+          PY
+      - name: Validate reviewer fixes
+        run: |
+          python -m pip install --upgrade pip==26.2.1
+          python -m pip install pandas==3.0.5 numpy==2.5.3
+          python scripts/test_tutorial_api.py
+          python scripts/validate_colab_tutorial.py
+          python scripts/test_colab_csv_headers.py
+          python -m py_compile mitra_pipeline/tutorial_api.py scripts/test_tutorial_api.py scripts/validate_colab_tutorial.py
+          git diff --check
+      - name: Commit reviewer fixes
+        run: |
+          git config user.name "Kurt Valcorza"
+          git config user.email "102845719+kurtvalcorza@users.noreply.github.com"
+          git add mitra_pipeline/tutorial_api.py scripts/test_tutorial_api.py scripts/validate_colab_tutorial.py tutorials/DIMER_MODEL_PACKAGE.md tutorials/README.md tutorials/mitra_regressor_colab.ipynb tutorials/mitra_regressor_predictor_inference_colab.ipynb
+          git commit -m "fix(tutorials): address notebook release review findings [relay-builder]"
+          git push origin HEAD:fix/notebook-spec-v1-conformance
