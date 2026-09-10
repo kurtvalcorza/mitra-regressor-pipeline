@@ -68,7 +68,7 @@ The model repository supplies weights/configuration only; Mitra's executable int
 
 ## Data and evaluation
 
-The tutorial sample portfolio is pinned to repository revision `f02e0c38ce835d6b85b5a6f072d232f3cd306f54`, matching the `SAMPLE_REVISION` embedded in the E2E notebook. It contains:
+The tutorial sample portfolio is pinned to repository revision `f11bf59d1bb7e75de42145e311de9773fda1607a`, matching the `SAMPLE_REVISION` embedded in the E2E notebook. It contains:
 
 - `freshretailnet-h7.zip` — leakage-aware temporal demand regression derived from FreshRetailNet-50K;
 - `insurance-medical-charges.zip` — cross-sectional medical-cost regression; and
