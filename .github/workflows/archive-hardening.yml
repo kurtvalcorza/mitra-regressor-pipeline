@@ -1,0 +1,72 @@
+name: Archive safety hardening
+
+on:
+  push:
+    branches:
+      - fix/notebook-spec-v1-conformance
+    paths:
+      - .github/workflows/archive-hardening.yml
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: fix/notebook-spec-v1-conformance
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12.14"
+      - name: Apply archive safety fixes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          api = Path("mitra_pipeline/tutorial_api.py")
+          text = api.read_text(encoding="utf-8")
+
+          old = '''    total = 0\n    files: list[zipfile.ZipInfo] = []\n    for info in zf.infolist():\n'''
+          new = '''    total = 0\n    files: list[zipfile.ZipInfo] = []\n    seen_paths: set[str] = set()\n    for info in zf.infolist():\n'''
+          if old not in text:
+              raise RuntimeError("zip-member prelude marker not found")
+          text = text.replace(old, new, 1)
+
+          old = '''        member = PurePosixPath(name)\n        if member.is_absolute() or ".." in member.parts:\n            raise RuntimeError(f"Unsafe archive member path: {name!r}")\n'''
+          new = '''        member = PurePosixPath(name)\n        if member.is_absolute() or ".." in member.parts:\n            raise RuntimeError(f"Unsafe archive member path: {name!r}")\n        normalized_name = member.as_posix()\n        if normalized_name in seen_paths:\n            raise RuntimeError(f"Duplicate archive member path is not allowed: {name!r}")\n        seen_paths.add(normalized_name)\n'''
+          if old not in text:
+              raise RuntimeError("zip-member path marker not found")
+          text = text.replace(old, new, 1)
+
+          old = '''def safe_extract_archive(zip_path: str | Path, destination: str | Path) -> Path:\n    destination_path = Path(destination)\n    if destination_path.exists():\n        shutil.rmtree(destination_path)\n    destination_path.mkdir(parents=True, exist_ok=True)\n    with zipfile.ZipFile(zip_path) as zf:\n        infos = _validate_zip_members(zf, destination_path)\n        for info in infos:\n            member = PurePosixPath(info.filename)\n            target = destination_path.joinpath(*member.parts)\n            target.parent.mkdir(parents=True, exist_ok=True)\n            with zf.open(info) as source, open(target, "wb") as sink:\n                shutil.copyfileobj(source, sink)\n    return destination_path\n'''
+          new = '''def safe_extract_archive(zip_path: str | Path, destination: str | Path) -> Path:\n    destination_path = Path(destination)\n    with zipfile.ZipFile(zip_path) as zf:\n        # Validate the complete archive before making destructive changes to the destination.\n        infos = _validate_zip_members(zf, destination_path)\n        if destination_path.is_symlink():\n            raise RuntimeError("Archive extraction destination must not be a symlink.")\n        if destination_path.exists():\n            shutil.rmtree(destination_path)\n        destination_path.mkdir(parents=True, exist_ok=True)\n        for info in infos:\n            member = PurePosixPath(info.filename)\n            target = destination_path.joinpath(*member.parts)\n            target.parent.mkdir(parents=True, exist_ok=True)\n            with zf.open(info) as source, open(target, "wb") as sink:\n                shutil.copyfileobj(source, sink)\n    return destination_path\n'''
+          if old not in text:
+              raise RuntimeError("safe_extract_archive marker not found")
+          api.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          tests = Path("scripts/test_tutorial_api.py")
+          text = tests.read_text(encoding="utf-8")
+          old = '''        bad = td / "bad.zip"\n        with zipfile.ZipFile(bad, "w") as zf:\n            zf.writestr("../escape.txt", "no")\n        expect_raises(lambda: safe_extract_archive(bad, td / "out"), "unsafe archive member")\n\n        backslash = td / "backslash.zip"\n'''
+          new = '''        bad = td / "bad.zip"\n        with zipfile.ZipFile(bad, "w") as zf:\n            zf.writestr("../escape.txt", "no")\n        preserved = td / "out"\n        preserved.mkdir()\n        sentinel = preserved / "keep.txt"\n        sentinel.write_text("keep", encoding="utf-8")\n        expect_raises(lambda: safe_extract_archive(bad, preserved), "unsafe archive member")\n        assert sentinel.read_text(encoding="utf-8") == "keep"\n\n        duplicate = td / "duplicate.zip"\n        with zipfile.ZipFile(duplicate, "w") as zf:\n            zf.writestr("same.txt", "first")\n            zf.writestr("same.txt", "second")\n        expect_raises(lambda: safe_extract_archive(duplicate, td / "out-duplicate"), "duplicate archive member")\n\n        backslash = td / "backslash.zip"\n'''
+          if old not in text:
+              raise RuntimeError("archive regression test marker not found")
+          tests.write_text(text.replace(old, new, 1), encoding="utf-8")
+          PY
+      - name: Validate safety boundary
+        run: |
+          python -m pip install --upgrade pip==26.2.1
+          python -m pip install pandas==3.0.5 numpy==2.5.3
+          python scripts/test_tutorial_api.py
+          python scripts/validate_colab_tutorial.py
+          python -m py_compile mitra_pipeline/tutorial_api.py scripts/test_tutorial_api.py
+          git diff --check
+      - name: Commit safety fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mitra_pipeline/tutorial_api.py scripts/test_tutorial_api.py
+          git commit -m "fix: validate archives before destructive extraction"
+          git push origin HEAD:fix/notebook-spec-v1-conformance
