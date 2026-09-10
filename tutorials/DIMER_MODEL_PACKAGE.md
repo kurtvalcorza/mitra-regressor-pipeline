@@ -36,7 +36,7 @@ No additional files are permitted unless they are listed in the manifest.
 
 `size` must contain the actual byte size of each packaged file. The notebook verifies each declared size and digest, rejects missing or unlisted files, and then independently confirms that both files match the repository's pinned Mitra Regressor digests.
 
-The archive may additionally be verified against a whole-ZIP SHA-256 supplied through `EXPECTED_DIMER_ZIP_SHA256` or the corresponding non-interactive environment input.
+The archive may additionally be verified against a whole-ZIP SHA-256 supplied through the Colab `EXPECTED_DIMER_ZIP_SHA256` field or the non-interactive `DIMER_EXPECTED_ZIP_SHA256` environment variable.
 
 ## Security boundary
 

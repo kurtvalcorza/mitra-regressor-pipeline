@@ -624,6 +624,6 @@ def validate_artifact_directory(
         if sha256_file(path) != expected_digest:
             raise RuntimeError(f"Artifact file digest mismatch: {rel}")
 
-    if not any(path.name == "predictor.pkl" for path in root.rglob("predictor.pkl")):
-        raise RuntimeError("Artifact does not contain an AutoGluon predictor.pkl.")
+    if not (root / "predictor.pkl").is_file():
+        raise RuntimeError("Artifact does not contain the required root-level AutoGluon predictor.pkl.")
     return manifest, metadata

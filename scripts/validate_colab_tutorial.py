@@ -153,6 +153,7 @@ def main_tutorial() -> None:
     require("predict_proba" not in text, "main regression notebook must not call predict_proba")
     require("lightgbm>=4.0,<4.8" not in text, "main notebook must not use floating LightGBM range")
     require("requirements-colab.txt" in text, "main notebook must install pinned tutorial requirements")
+    require("DIMER_EXPECTED_ZIP_SHA256" in text, "main notebook must support non-interactive DIMER ZIP digest input")
 
 
 def inference_tutorial() -> None:
@@ -165,6 +166,8 @@ def inference_tutorial() -> None:
             "**Notebook specification:** `1.0`",
             "MITRA_PREDICTOR_ZIP",
             "MITRA_INFERENCE_CSV",
+            "MITRA_EXPECTED_ZIP_SHA256",
+            "ALLOW_UNVERIFIED_ARTIFACT",
             "artifact_manifest.json",
             "tutorial_run_metadata.json",
             "validate_artifact_directory",
@@ -178,6 +181,8 @@ def inference_tutorial() -> None:
         ),
         INFERENCE.name,
     )
+    require(top_level_literal(code_cells, "ALLOW_UNVERIFIED_ARTIFACT", False),
+            "artifact-inference notebook must fail closed unless unverified loading is explicitly enabled")
     require("fit(" not in "\n".join(code_cells), "artifact-inference notebook must not fit/train")
     require("model.safetensors" not in "\n".join(code_cells),
             "artifact-inference notebook must not reacquire base weights")

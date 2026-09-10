@@ -44,7 +44,7 @@ The E2E notebook:
 The artifact-inference notebook:
 
 - requires an artifact supplied from outside its own execution;
-- optionally verifies a trusted whole-archive SHA-256;
+- requires a trusted whole-archive SHA-256 by default before Python deserialization, with only an explicit expert override for already-trusted local artifacts;
 - rejects absolute paths, traversal, backslash paths, symlinks, suspicious compression ratios, oversized members, and oversized total expansion;
 - requires `artifact_manifest.json` and `tutorial_run_metadata.json`;
 - verifies artifact format/version, model/revision, problem type, complete file inventory, sizes, and digests before `TabularPredictor.load(...)`;

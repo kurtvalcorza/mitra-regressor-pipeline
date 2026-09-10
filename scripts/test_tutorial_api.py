@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 import tempfile
@@ -16,6 +17,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+import mitra_pipeline.tutorial_api as tutorial_api
+
 from mitra_pipeline import (
     ARTIFACT_FORMAT,
     ARTIFACT_FORMAT_VERSION,
@@ -26,6 +29,7 @@ from mitra_pipeline import (
     read_csv_bytes,
     safe_extract_archive,
     validate_artifact_directory,
+    validate_dimer_model_package,
     validate_inference_frame,
     validate_labeled_frame,
     write_artifact_manifest,
@@ -119,6 +123,66 @@ def test_artifact_manifest_roundtrip_and_tamper_detection() -> None:
         (root / "model.bin").write_bytes(b"tampered")
         expect_raises(lambda: validate_artifact_directory(root), "size mismatch")
 
+        nested_root = Path(td) / "nested-only-predictor"
+        (nested_root / "nested").mkdir(parents=True)
+        (nested_root / "nested" / "predictor.pkl").write_bytes(b"not-root")
+        (nested_root / "tutorial_run_metadata.json").write_text(json.dumps(base_metadata()), encoding="utf-8")
+        write_artifact_manifest(nested_root)
+        expect_raises(lambda: validate_artifact_directory(nested_root), "root-level")
+
+
+def test_dimer_model_package_contract() -> None:
+    weights = b"test-weights"
+    config = b"{\"model\": \"test\"}"
+    weights_digest = hashlib.sha256(weights).hexdigest()
+    config_digest = hashlib.sha256(config).hexdigest()
+    old_weights = tutorial_api.WEIGHTS_SHA256
+    old_config = tutorial_api.CONFIG_SHA256
+    tutorial_api.WEIGHTS_SHA256 = weights_digest
+    tutorial_api.CONFIG_SHA256 = config_digest
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+
+            def make_package(path: Path, *, revision: str = PINNED_REVISION, add_unlisted: bool = False) -> Path:
+                manifest = {
+                    "schema_version": 1,
+                    "model_id": MODEL_ID,
+                    "revision": revision,
+                    "files": [
+                        {"path": "model.safetensors", "size": len(weights), "sha256": weights_digest},
+                        {"path": "config.json", "size": len(config), "sha256": config_digest},
+                    ],
+                }
+                with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+                    zf.writestr("dimer-model-manifest.json", json.dumps(manifest))
+                    zf.writestr("model.safetensors", weights)
+                    zf.writestr("config.json", config)
+                    if add_unlisted:
+                        zf.writestr("unexpected.txt", "unexpected")
+                return path
+
+            good = make_package(td / "good.zip")
+            trusted_digest = hashlib.sha256(good.read_bytes()).hexdigest()
+            resolved_weights, resolved_config, manifest = validate_dimer_model_package(
+                good, td / "good-out", expected_archive_sha256=trusted_digest
+            )
+            assert resolved_weights.read_bytes() == weights
+            assert resolved_config.read_bytes() == config
+            assert manifest["revision"] == PINNED_REVISION
+
+            expect_raises(
+                lambda: validate_dimer_model_package(good, td / "wrong-digest", expected_archive_sha256="0" * 64),
+                "checksum mismatch",
+            )
+            bad_revision = make_package(td / "bad-revision.zip", revision="deadbeef")
+            expect_raises(lambda: validate_dimer_model_package(bad_revision, td / "bad-revision"), "revision")
+            unlisted = make_package(td / "unlisted.zip", add_unlisted=True)
+            expect_raises(lambda: validate_dimer_model_package(unlisted, td / "unlisted"), "inventory mismatch")
+    finally:
+        tutorial_api.WEIGHTS_SHA256 = old_weights
+        tutorial_api.CONFIG_SHA256 = old_config
+
 
 def test_archive_path_and_expansion_guards() -> None:
     with tempfile.TemporaryDirectory() as td:
@@ -164,6 +228,7 @@ def test_archive_path_and_expansion_guards() -> None:
 def main() -> int:
     test_csv_and_regression_validation()
     test_artifact_manifest_roundtrip_and_tamper_detection()
+    test_dimer_model_package_contract()
     test_archive_path_and_expansion_guards()
     print("Public tutorial API tests: OK")
     return 0
