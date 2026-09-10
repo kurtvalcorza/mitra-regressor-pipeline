@@ -1,0 +1,96 @@
+name: Relay fix sample selectors
+
+on:
+  push:
+    branches:
+      - fix/notebook-spec-v1-conformance
+    paths:
+      - .github/workflows/_relay-fix-sample-selectors.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/notebook-spec-v1-conformance
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.12.14"
+      - name: Prepare validation dependencies
+        run: |
+          python -m pip install --upgrade pip==26.2.1
+          python -m pip install pandas==3.0.5 numpy==2.5.3
+      - name: Fix selector target handling and add regressions
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          notebook_path = Path("tutorials/mitra_regressor_colab.ipynb")
+          nb = json.loads(notebook_path.read_text(encoding="utf-8"))
+          changed = False
+          for cell in nb["cells"]:
+              if cell.get("cell_type") != "code":
+                  continue
+              src = cell.get("source", "")
+              text = "".join(src) if isinstance(src, list) else str(src)
+              if "SAMPLE_CONFIGS = {" not in text or "deterministic_smoke_subset" not in text:
+                  continue
+              bad = '    TARGET_COLUMN = "target"\n    print("✓ Loaded pinned FreshRetailNet tutorial sample.")'
+              if bad not in text:
+                  raise RuntimeError("expected stale target reset block not found")
+              text = text.replace(
+                  bad,
+                  '    print("✓ Loaded pinned tutorial sample:", DATA_SOURCE)',
+                  1,
+              )
+              cell["source"] = text
+              changed = True
+              break
+          if not changed:
+              raise RuntimeError("tutorial data cell not found")
+          notebook_path.write_text(json.dumps(nb, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+
+          validator = Path("scripts/validate_colab_tutorial.py")
+          text = validator.read_text(encoding="utf-8")
+          anchor = '    require("DIMER_EXPECTED_ZIP_SHA256" in text, "main notebook must support non-interactive DIMER ZIP digest input")\n'
+          addition = '''    code = "\\n".join(code_cells)\n    require(code.count('TARGET_COLUMN = "target"') == 1,\n            "main notebook must define the generic BYOD target default exactly once and never reset sample targets")\n    target_resolution = 'TARGET_COLUMN = SAMPLE_CONFIGS[DATA_SOURCE]["target"]'\n    require(target_resolution in code, "main notebook must resolve the selected sample target from SAMPLE_CONFIGS")\n    require(code.index(target_resolution) < code.index("drop_columns ="),\n            "main notebook must resolve the selected sample target before DROP_COLUMNS filtering")\n    for selector, target in (\n        ("Sample: FreshRetailNet (temporal demand)", "target"),\n        ("Sample: Insurance Charges (medical cost)", "charges"),\n        ("Sample: Ames Housing (home valuation)", "SalePrice"),\n    ):\n        require(selector in code and f'"target": "{target}"' in code,\n                f"main notebook sample selector must preserve target mapping for {selector}")\n'''
+          if addition not in text:
+              if anchor not in text:
+                  raise RuntimeError("validator insertion anchor not found")
+              text = text.replace(anchor, anchor + addition, 1)
+          validator.write_text(text, encoding="utf-8")
+
+          api_test = Path("scripts/test_tutorial_api.py")
+          text = api_test.read_text(encoding="utf-8")
+          function_anchor = "\ndef test_archive_path_and_expansion_guards() -> None:\n"
+          function = '''\ndef test_sample_portfolio_contract() -> None:\n    samples = {\n        "freshretailnet-h7.zip": "target",\n        "insurance-medical-charges.zip": "charges",\n        "ames-housing.zip": "SalePrice",\n    }\n    root = ROOT / "examples" / "sample-data"\n    for archive_name, target in samples.items():\n        archive = root / archive_name\n        assert archive.is_file(), f"Missing sample archive: {archive}"\n        with zipfile.ZipFile(archive) as zf:\n            by_base = {Path(name).name: name for name in zf.namelist() if not name.endswith("/")}\n            assert {"train.csv", "val.csv", "test.csv"}.issubset(by_base), archive_name\n            columns = None\n            for split in ("train.csv", "val.csv", "test.csv"):\n                with zf.open(by_base[split]) as handle:\n                    frame = pd.read_csv(handle)\n                assert target in frame.columns, f"{archive_name}:{split} missing target {target!r}"\n                current = list(frame.columns)\n                if columns is None:\n                    columns = current\n                else:\n                    assert current == columns, f"{archive_name}: split schemas differ"\n            assert pd.read_csv(zf.open(by_base["train.csv"]))[target].nunique(dropna=True) > 1, (archive_name, target)\n\n'''
+          if "def test_sample_portfolio_contract()" not in text:
+              if function_anchor not in text:
+                  raise RuntimeError("API test function insertion anchor not found")
+              text = text.replace(function_anchor, function + function_anchor, 1)
+          call_anchor = "    test_dimer_model_package_contract()\n"
+          if "    test_sample_portfolio_contract()\n" not in text:
+              if call_anchor not in text:
+                  raise RuntimeError("API test call insertion anchor not found")
+              text = text.replace(call_anchor, call_anchor + "    test_sample_portfolio_contract()\n", 1)
+          api_test.write_text(text, encoding="utf-8")
+          PY
+      - name: Validate remediation
+        run: |
+          python scripts/validate_colab_tutorial.py
+          python scripts/test_tutorial_api.py
+          python scripts/test_colab_csv_headers.py
+          git diff --check
+      - name: Commit remediation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tutorials/mitra_regressor_colab.ipynb scripts/validate_colab_tutorial.py scripts/test_tutorial_api.py
+          git commit -m "fix(tutorials): repair sample selector target handling [relay-builder]"
+          git push origin HEAD:fix/notebook-spec-v1-conformance
