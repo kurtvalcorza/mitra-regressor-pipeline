@@ -49,3 +49,5 @@ jobs:
           git diff --cached --check
           git commit -m "feat(tutorials): materialize Notebook Spec 1.0 migration"
           git push origin HEAD:fix/notebook-spec-v1-conformance
+
+# retry after test harness path fix
