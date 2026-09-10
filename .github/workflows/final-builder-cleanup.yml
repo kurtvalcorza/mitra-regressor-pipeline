@@ -1,0 +1,105 @@
+name: Final builder cleanup
+
+on:
+  push:
+    branches:
+      - fix/notebook-spec-v1-conformance
+    paths:
+      - .github/workflows/final-builder-cleanup.yml
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: fix/notebook-spec-v1-conformance
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Apply final cleanup
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          notebooks = [
+              Path("tutorials/mitra_regressor_colab.ipynb"),
+              Path("tutorials/mitra_regressor_predictor_inference_colab.ipynb"),
+          ]
+          for path in notebooks:
+              payload = json.loads(path.read_text(encoding="utf-8"))
+              seen = set()
+              for index, cell in enumerate(payload.get("cells", [])):
+                  source = cell.get("source", "")
+                  if isinstance(source, list):
+                      source = "".join(source)
+                  cell_id = cell.get("id")
+                  if not isinstance(cell_id, str) or not cell_id:
+                      seed = f"{path.as_posix()}:{index}:{cell.get('cell_type','')}:{source}"
+                      cell_id = hashlib.sha256(seed.encode("utf-8")).hexdigest()[:16]
+                      cell["id"] = cell_id
+                  if cell_id in seen:
+                      raise RuntimeError(f"{path}: duplicate cell id {cell_id}")
+                  seen.add(cell_id)
+              path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+          validator = Path("scripts/validate_colab_tutorial.py")
+          text = validator.read_text(encoding="utf-8")
+          marker = '    require(bool(cells), f"{path.name}: no cells")\n'
+          addition = '''    cell_ids = [cell.get("id") for cell in cells]\n    require(\n        all(isinstance(cell_id, str) and re.fullmatch(r"[A-Za-z0-9_-]{1,64}", cell_id) for cell_id in cell_ids),\n        f"{path.name}: every cell must have a valid nbformat cell id",\n    )\n    require(len(set(cell_ids)) == len(cell_ids), f"{path.name}: cell ids must be unique")\n'''
+          if addition not in text:
+              if marker not in text:
+                  raise RuntimeError("validator insertion marker not found")
+              text = text.replace(marker, marker + addition, 1)
+              validator.write_text(text, encoding="utf-8")
+
+          replacements = {
+              "actions/checkout@v4": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1",
+              "actions/setup-python@v5": "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0",
+              "actions/upload-artifact@v4": "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1",
+          }
+          for filename in [Path(".github/workflows/ci.yml"), Path(".github/workflows/notebook-release.yml")]:
+              text = filename.read_text(encoding="utf-8")
+              for old, new in replacements.items():
+                  text = text.replace(old, new)
+              filename.write_text(text, encoding="utf-8")
+
+          release = Path(".github/workflows/notebook-release.yml")
+          text = release.read_text(encoding="utf-8")
+          text = text.replace("runs-on: ubuntu-latest", "runs-on: ubuntu-24.04")
+          text = text.replace("python -m pip install --upgrade pip\n          python -m pip install nbconvert ipykernel", "python -m pip install --upgrade pip==26.2.1\n          python -m pip install nbconvert==7.17.1 ipykernel==7.3.0")
+          release.write_text(text, encoding="utf-8")
+          PY
+      - name: Validate cleanup
+        run: |
+          python scripts/validate_colab_tutorial.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for name in [
+              "tutorials/mitra_regressor_colab.ipynb",
+              "tutorials/mitra_regressor_predictor_inference_colab.ipynb",
+          ]:
+              nb = json.loads(Path(name).read_text(encoding="utf-8"))
+              ids = [cell.get("id") for cell in nb["cells"]]
+              assert all(ids)
+              assert len(ids) == len(set(ids))
+          PY
+          git diff --check
+      - name: Remove one-shot workflow and commit
+        run: |
+          rm .github/workflows/final-builder-cleanup.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          if git diff --cached --quiet; then
+            echo "No cleanup changes required."
+            exit 0
+          fi
+          git commit -m "chore: finalize notebook release hygiene"
+          git push origin HEAD:fix/notebook-spec-v1-conformance
