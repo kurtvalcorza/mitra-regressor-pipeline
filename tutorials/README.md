@@ -74,6 +74,8 @@ The tutorial sample portfolio is pinned to repository revision `f11bf59d1bb7e75d
 - `insurance-medical-charges.zip` — cross-sectional medical-cost regression; and
 - `ames-housing.zip` — cross-sectional residential-price regression.
 
+Each archive's SHA-256 is recorded in the notebook's `SAMPLE_CONFIGS` registry and verified after download; `scripts/test_sample_registry.py` loads every registry variant offline against the committed archives.
+
 All are tutorial/sanity fixtures, not benchmark evidence. Their source/provenance and licence notes are documented in [`../examples/sample-data/DATASET_CARD.md`](../examples/sample-data/DATASET_CARD.md).
 
 For the default FreshRetailNet path, the literal CPU tutorial deterministically uses 512 training rows and 256 rows from each evaluation partition as a bounded smoke subset; users can raise the notebook controls to use more or all rows. BYOD paths are unaffected. A BYOD single-CSV path uses a deterministic random holdout and explicitly assumes approximately IID rows. Time-dependent, grouped, panel, embargoed, patient/device-level, spatial, or otherwise leakage-sensitive workflows should provide pre-split train/validation/test files.
