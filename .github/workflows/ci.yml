@@ -36,6 +36,8 @@ jobs:
         run: python scripts/test_tutorial_api.py
       - name: Colab CSV header regressions
         run: python scripts/test_colab_csv_headers.py
+      - name: Sample dataset registry regressions
+        run: python scripts/test_sample_registry.py
       - name: Compile deployables and tutorial API
         run: |
           python -m py_compile validator/validator.py validator/validate.py validator/contract_hardening.py
