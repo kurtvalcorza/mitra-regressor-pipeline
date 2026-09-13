@@ -182,7 +182,7 @@ def docs_and_api() -> None:
     require_markers(
         readme,
         (
-            "DIMER Notebook Specification 1.1",
+            "DIMER Notebook Specification 2.0",
             "`E2E`",
             "`ARTIFACT-INFERENCE`",
             "standalone (generated)",
