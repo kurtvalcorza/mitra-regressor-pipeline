@@ -190,7 +190,7 @@ There is no single universal regression score that characterizes the foundation 
 
 ## Performance Measures
 
-Appropriate downstream regression metrics may include:
+The standalone tutorials write `mae`, `rmse` and `r2` through the package's public `evaluation_report` helper (`outputs/<stem>_evaluation_report.json`, verdict `sample-sanity` with the `training_mean_baseline` comparison, or `not-measurable` when no labelled rows exist). Appropriate downstream regression metrics may include:
 
 - mean absolute error (MAE);
 - root mean squared error (RMSE);
@@ -268,7 +268,7 @@ Mitra is a general-purpose tabular foundation model and was not specifically dev
 
 ### Mitigations
 
-Appropriate downstream mitigations include dataset provenance checks, data-quality validation, leakage prevention, comparison against strong baselines, subgroup evaluation, robust error metrics, distribution-shift assessment, independent testing, human review for material decisions, and post-deployment monitoring.
+In the standalone tutorials the public `validate_inputs` helper applies the table checks and records the verdict and any rejection finding in an input manifest before any model execution. Appropriate downstream mitigations include dataset provenance checks, data-quality validation, leakage prevention, comparison against strong baselines, subgroup evaluation, robust error metrics, distribution-shift assessment, independent testing, human review for material decisions, and post-deployment monitoring.
 
 ### Risks and Harms
 

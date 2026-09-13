@@ -1,0 +1,20 @@
+{
+  "format": "dimer_hf_snapshot",
+  "formatVersion": 1,
+  "modelKey": "mitra-regressor",
+  "modelId": "autogluon/mitra-regressor",
+  "revision": "5f277aa8f69042d39d6ac3612aed18bb9279bd95",
+  "files": [
+    {
+      "path": "model.safetensors",
+      "bytes": 302683140,
+      "sha256": "d8e75c62af0bec2fd404b0ad20a442d951d43ca6d331315cfcc0509b54f2c642"
+    },
+    {
+      "path": "config.json",
+      "bytes": 81,
+      "sha256": "2bc1ed5047f7c25368245e8ad32540a5fa28940b1ec05d3f1f454a09ff5384c1"
+    }
+  ],
+  "totalBytes": 302683221
+}

@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
-"""Static Notebook Specification 1.0 checks for Mitra Regressor tutorials."""
+"""Repository-specific static checks for the standalone Mitra Regressor tutorials (NOTEBOOK_SPEC 1.1).
 
+The carrier, parity, hygiene and profile checks live in ``tools/validate_release_assets.py`` (run first). This
+script keeps the invariants specific to this repository's contract: the notebooks exercise the public API in
+``mitra_pipeline`` (never reimplementing fit/inference/archive checks), the fine-tuning and inference gates default
+off, the artifact-inference notebook fails closed without a trusted digest, and the tutorial requirements mirror the
+``pyproject.toml`` pins the notebooks carry. It claims no runtime execution evidence.
+"""
+# ruff: noqa: E501  -- rule messages name the requirement in full; they are kept on one line
 from __future__ import annotations
 
 import ast
@@ -14,18 +21,18 @@ INFERENCE = ROOT / "tutorials" / "mitra_regressor_predictor_inference_colab.ipyn
 TUTORIAL_README = ROOT / "tutorials" / "README.md"
 PUBLIC_API = ROOT / "mitra_pipeline" / "tutorial_api.py"
 REQUIREMENTS = ROOT / "tutorials" / "requirements-colab.txt"
+PYPROJECT = ROOT / "pyproject.toml"
 
 MODEL_ID = "autogluon/mitra-regressor"
 PINNED_REVISION = "5f277aa8f69042d39d6ac3612aed18bb9279bd95"
 WEIGHTS_SHA256 = "d8e75c62af0bec2fd404b0ad20a442d951d43ca6d331315cfcc0509b54f2c642"
 CONFIG_SHA256 = "2bc1ed5047f7c25368245e8ad32540a5fa28940b1ec05d3f1f454a09ff5384c1"
-SAMPLE_REVISION = "f11bf59d1bb7e75de42145e311de9773fda1607a"
 PLACEHOLDERS = re.compile(r"\b(TODO|TBD|FIXME)\b")
 
 
 def require(condition: bool, message: str) -> None:
     if not condition:
-        raise RuntimeError(message)
+        raise AssertionError(message)
 
 
 def source_text(cell: dict) -> str:
@@ -33,45 +40,37 @@ def source_text(cell: dict) -> str:
     return "".join(source) if isinstance(source, list) else str(source)
 
 
-def load_notebook(path: Path) -> tuple[dict, str, list[str]]:
+def load_notebook(path: Path) -> tuple[dict, str, list[str], list[str]]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     require(payload.get("nbformat") == 4, f"{path.name}: nbformat must be 4")
     cells = payload.get("cells", [])
     require(bool(cells), f"{path.name}: no cells")
     cell_ids = [cell.get("id") for cell in cells]
-    require(
-        all(isinstance(cell_id, str) and re.fullmatch(r"[A-Za-z0-9_-]{1,64}", cell_id) for cell_id in cell_ids),
-        f"{path.name}: every cell must have a valid nbformat cell id",
-    )
+    require(all(isinstance(cell_id, str) and cell_id.strip() for cell_id in cell_ids), f"{path.name}: every cell needs a stable id")
     require(len(set(cell_ids)) == len(cell_ids), f"{path.name}: cell ids must be unique")
-    full_text = "\n".join(source_text(cell) for cell in cells)
-
-    code_cells: list[str] = []
+    code_cells, own_cells = [], []
     for index, cell in enumerate(cells):
         if cell.get("cell_type") != "code":
             continue
-        source = source_text(cell)
-        stripped = "\n".join(
-            line
-            for line in source.splitlines()
-            if not line.lstrip().startswith(("%", "!"))
-        )
-        if stripped.strip():
-            ast.parse(stripped, filename=f"{path.name}:cell-{index}")
-        code_cells.append(stripped)
-
+        code = source_text(cell)
+        try:
+            ast.parse(code)
+        except SyntaxError as exc:
+            raise AssertionError(f"{path.name}: cell {index} does not compile: {exc}") from exc
+        code_cells.append(code)
+        if not cell.get("metadata", {}).get("dimer", {}).get("embedded_module"):
+            own_cells.append(code)
+    full_text = "\n".join(source_text(cell) for cell in cells)
     require(not PLACEHOLDERS.search(full_text), f"{path.name}: placeholder marker survives")
-    require(all(cell.get("execution_count") is None for cell in cells if cell.get("cell_type") == "code"),
-            f"{path.name}: execution counts must be cleared")
-    require(all(not cell.get("outputs") for cell in cells if cell.get("cell_type") == "code"),
-            f"{path.name}: persisted outputs must be cleared")
-    return payload, full_text, code_cells
+    require(all(cell.get("execution_count") is None for cell in cells if cell.get("cell_type") == "code"), f"{path.name}: execution counts must be cleared")
+    require(all(not cell.get("outputs") for cell in cells if cell.get("cell_type") == "code"), f"{path.name}: outputs must be cleared")
+    return payload, full_text, code_cells, own_cells
 
 
 def require_profile(payload: dict, filename: str, expected: str) -> None:
     dimer = payload.get("metadata", {}).get("dimer", {})
     require(dimer.get("notebook_profile") == expected, f"{filename}: metadata profile must be {expected}")
-    require(str(dimer.get("notebook_spec")) == "1.0", f"{filename}: notebook spec must be 1.0")
+    require(str(dimer.get("notebook_spec")) == "1.1" and dimer.get("standalone") is True, f"{filename}: must be standalone spec 1.1")
 
 
 def require_markers(text: str, markers: tuple[str, ...], label: str) -> None:
@@ -80,164 +79,125 @@ def require_markers(text: str, markers: tuple[str, ...], label: str) -> None:
 
 
 def top_level_literal(code_cells: list[str], name: str, expected) -> bool:
-    found = False
-    for source in code_cells:
-        if not source.strip():
-            continue
-        tree = ast.parse(source)
+    for code in code_cells:
+        tree = ast.parse(code)
         for node in tree.body:
-            if not isinstance(node, ast.Assign):
-                continue
-            if not any(isinstance(target, ast.Name) and target.id == name for target in node.targets):
-                continue
-            found = True
-            if not isinstance(node.value, ast.Constant) or node.value.value != expected:
-                return False
-    return found
-
-
-def called_attribute(code_cells: list[str], name: str) -> bool:
-    for source in code_cells:
-        if not source.strip():
-            continue
-        for node in ast.walk(ast.parse(source)):
-            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == name:
-                return True
+            if isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+                if node.targets[0].id == name and isinstance(node.value, ast.Constant):
+                    return node.value.value == expected
     return False
 
 
 def main_tutorial() -> None:
-    payload, text, code_cells = load_notebook(MAIN)
+    payload, text, _code_cells, own = load_notebook(MAIN)
     require_profile(payload, MAIN.name, "E2E")
     require_markers(
         text,
         (
             "**Profile:** `E2E`",
-            "**Notebook specification:** `1.0`",
-            "mitra_pipeline",
-            "fit_mitra_predictor",
-            "validate_labeled_frame",
-            "split_overlap_report",
+            "**This notebook is standalone.**",
+            "validate_inputs(",
+            "validate_labeled_frame(",
+            "split_overlap_report(",
+            "cap_training_rows(",
+            "training_mean_baseline(",
             "DummyRegressor",
-            "mean",
-            "median",
-            "mean_absolute_error",
-            "root_mean_squared_error",
+            "LGBMRegressor",
+            "RandomForestRegressor",
+            "evaluation_report(",
+            "no weight is gradient-updated",
             "point estimate",
             "no calibrated per-prediction interval",
             "artifact_manifest.json",
             "tutorial_run_metadata.json",
-            "write_artifact_manifest",
-            "validate_artifact_directory",
-            "safe_extract_archive",
-            "np.allclose",
-            "dimer-model-manifest.json",
-            "tutorial_metrics.json",
-            "SAMPLE_TRAIN_ROWS",
-            "SAMPLE_EVAL_ROWS",
-            "Default smoke subset:",
-            "If every default-path cell ran successfully",
-            "It **does not** establish",
+            "write_artifact_manifest(",
+            "validate_artifact_directory(",
+            "safe_extract_archive(",
+            "np.testing.assert_allclose(",
+            "## Interpretation and limits",
+            "It does **not** establish",
         ),
         MAIN.name,
     )
-    require(top_level_literal(code_cells, "SAMPLE_REVISION", SAMPLE_REVISION),
-            f"main notebook: SAMPLE_REVISION must match certified revision {SAMPLE_REVISION}")
-    require(top_level_literal(code_cells, "SAMPLE_TRAIN_ROWS", 512),
-            "main notebook: SAMPLE_TRAIN_ROWS must default 512")
-    require(top_level_literal(code_cells, "SAMPLE_EVAL_ROWS", 256),
-            "main notebook: SAMPLE_EVAL_ROWS must default 256")
-    require(top_level_literal(code_cells, "RUN_FINE_TUNING", False),
-            "main notebook: RUN_FINE_TUNING must default False")
-    require(top_level_literal(code_cells, "RUN_NEW_DATA_INFERENCE", False),
-            "main notebook: RUN_NEW_DATA_INFERENCE must default False")
-    require("mp.predict_regression" in "\n".join(code_cells), "main notebook must exercise repository prediction API")
+    own_text = "\n".join(own)
+    require(top_level_literal(own, "RUN_FINE_TUNING", False), "fine-tuning must be gated off by default")
+    require(top_level_literal(own, "RUN_NEW_DATA_INFERENCE", False), "new-data inference must be gated off by default")
+    require(top_level_literal(own, "USE_BYOD", False), "BYOD must be gated off by default")
+    require(top_level_literal(own, "MIN_SELECTION_HOLDOUT_ROWS", 50), "selection evidence guard missing")
+    require("pipe.fit(" in own_text and "ACTIVE_MODEL.predict(" in own_text, "main notebook must exercise the carried pipeline API")
+    require("TabularPredictor(" not in own_text and "hyperparameters=" not in own_text, "main notebook must not construct AutoGluon predictors outside the carried API")
     require("predict_proba" not in text, "main regression notebook must not call predict_proba")
-    require("lightgbm>=4.0,<4.8" not in text, "main notebook must not use floating LightGBM range")
-    require("requirements-colab.txt" in text, "main notebook must install pinned tutorial requirements")
-    require("DIMER_EXPECTED_ZIP_SHA256" in text, "main notebook must support non-interactive DIMER ZIP digest input")
-    code = "\n".join(code_cells)
-    require(code.count('TARGET_COLUMN = "target"') == 1,
-            "main notebook must define the generic BYOD target default exactly once and never reset sample targets")
-    target_resolution = 'TARGET_COLUMN = SAMPLE_CONFIGS[DATA_SOURCE]["target"]'
-    require(target_resolution in code, "main notebook must resolve the selected sample target from SAMPLE_CONFIGS")
-    require(code.index(target_resolution) < code.index("drop_columns ="),
-            "main notebook must resolve the selected sample target before DROP_COLUMNS filtering")
-    for selector, target in (
-        ("Sample: FreshRetailNet (temporal demand)", "target"),
-        ("Sample: Insurance Charges (medical cost)", "charges"),
-        ("Sample: Ames Housing (home valuation)", "SalePrice"),
-    ):
-        require(selector in code and f'"target": "{target}"' in code,
-                f"main notebook sample selector must preserve target mapping for {selector}")
+    require("github.com/kurtvalcorza" not in "\n".join(_code_cells), "main notebook must not reach this repository (ST1)")
+    require("from mitra_pipeline" not in own_text and "import mitra_pipeline" not in own_text, "main notebook must not import the repository package (ST1)")
 
 
 def inference_tutorial() -> None:
-    payload, text, code_cells = load_notebook(INFERENCE)
+    payload, text, code_cells, own = load_notebook(INFERENCE)
     require_profile(payload, INFERENCE.name, "ARTIFACT-INFERENCE")
     require_markers(
         text,
         (
             "**Profile:** `ARTIFACT-INFERENCE`",
-            "**Notebook specification:** `1.0`",
-            "MITRA_PREDICTOR_ZIP",
-            "MITRA_INFERENCE_CSV",
-            "MITRA_EXPECTED_ZIP_SHA256",
+            "**This notebook is standalone.**",
+            "ARTIFACT_ZIP_PATH",
+            "NEW_DATA_PATH",
+            "EXPECTED_ZIP_SHA256",
             "ALLOW_UNVERIFIED_ARTIFACT",
-            "artifact_manifest.json",
-            "tutorial_run_metadata.json",
-            "validate_artifact_directory",
-            "safe_extract_archive",
-            "TabularPredictor.load",
+            "artifact_manifest",
+            "run_metadata",
+            "validate_artifact_directory(",
+            "safe_extract_archive(",
+            "TabularPredictor.load(",
+            "validate_inputs(",
             "point estimate",
-            "No per-prediction uncertainty interval",
-            "predictions.csv",
+            "no per-prediction uncertainty",
+            "_predictions.csv",
             "A successful run proves",
             "It does **not** prove",
         ),
         INFERENCE.name,
     )
-    require(top_level_literal(code_cells, "ALLOW_UNVERIFIED_ARTIFACT", False),
-            "artifact-inference notebook must fail closed unless unverified loading is explicitly enabled")
-    require("fit(" not in "\n".join(code_cells), "artifact-inference notebook must not fit/train")
-    require("model.safetensors" not in "\n".join(code_cells),
-            "artifact-inference notebook must not reacquire base weights")
-    require(called_attribute(code_cells, "load"), "artifact-inference notebook must load predictor state")
-    require(called_attribute(code_cells, "to_csv"), "artifact-inference notebook must export CSV")
+    own_text = "\n".join(own)
+    require(top_level_literal(own, "ALLOW_UNVERIFIED_ARTIFACT", False), "artifact-inference notebook must fail closed unless unverified loading is explicitly enabled")
+    require(".fit(" not in own_text, "artifact-inference notebook must not fit/train")
+    require("shutil.make_archive(" not in own_text and "write_artifact_manifest(" not in own_text, "artifact-inference notebook must not create an artifact")
+    require(own_text.index("validate_artifact_directory(") < own_text.index("TabularPredictor.load("), "manifest/provenance must be verified before deserialization")
+    require("AUTOGLUON_VERSION:" in own_text and "runtime_python_mm" in own_text, "runtime compatibility must be checked before deserialization")
+    require("to_csv(" in own_text, "artifact-inference notebook must export CSV")
+    require("github.com/kurtvalcorza" not in "\n".join(code_cells), "artifact notebook must not reach this repository (ST1)")
 
 
 def docs_and_api() -> None:
     readme = TUTORIAL_README.read_text(encoding="utf-8")
     api = PUBLIC_API.read_text(encoding="utf-8")
-    req = REQUIREMENTS.read_text(encoding="utf-8")
+    req = [line.strip() for line in REQUIREMENTS.read_text(encoding="utf-8").splitlines() if line.strip() and not line.startswith("#")]
+    pyproject = PYPROJECT.read_text(encoding="utf-8")
+    deps_block = re.search(r"^dependencies\s*=\s*\[(.*?)^\]", pyproject, re.M | re.S)
+    require(deps_block is not None, "pyproject.toml must declare [project].dependencies (the notebooks' PINS)")
+    pins = re.findall(r'"([^"]+)"', deps_block.group(1))
+    require(all("==" in p for p in pins), "pyproject runtime deps must be == pinned")
+    require(req == pins, f"tutorials/requirements-colab.txt must mirror the pyproject pins: {req} != {pins}")
+    require("autogluon.tabular[mitra]==1.5.0" in pins and "lightgbm==4.6.0" in pins, "pins must keep AutoGluon 1.5.0 and LightGBM 4.6.0")
 
     require_markers(
         readme,
         (
-            "DIMER Notebook Specification:** `1.0`",
+            "DIMER Notebook Specification 1.1",
             "`E2E`",
             "`ARTIFACT-INFERENCE`",
-            "release-grade candidate",
-            "Notebook release execution",
+            "standalone (generated)",
+            "release-verification",
             MODEL_ID,
             PINNED_REVISION,
-            WEIGHTS_SHA256,
-            CONFIG_SHA256,
-            SAMPLE_REVISION,
-            "512 training rows",
-            "256 rows from each evaluation partition",
         ),
         "tutorials/README.md",
     )
-    require("autogluon.tabular[mitra]==1.5.0" in req, "tutorial requirements must pin AutoGluon")
-    require("lightgbm==4.6.0" in req, "tutorial requirements must pin LightGBM")
-    require(">=" not in req and "<" not in req, "tutorial direct requirements must not float")
-
     require_markers(
         api,
         (
             f'MODEL_ID = "{MODEL_ID}"',
-            f'PINNED_REVISION = "{PINNED_REVISION}"',
+            f'MODEL_REVISION = "{PINNED_REVISION}"',
+            "PINNED_REVISION = MODEL_REVISION",
             f'WEIGHTS_SHA256 = "{WEIGHTS_SHA256}"',
             f'CONFIG_SHA256 = "{CONFIG_SHA256}"',
             'ARTIFACT_FORMAT = "dimer-autogluon-predictor"',
@@ -245,11 +205,16 @@ def docs_and_api() -> None:
             "MAX_ARCHIVE_MEMBER_BYTES",
             "MAX_ARCHIVE_EXPANDED_BYTES",
             "MAX_COMPRESSION_RATIO",
-            "validate_dimer_model_package",
-            "write_artifact_manifest",
-            "validate_artifact_directory",
-            "safe_extract_archive",
-            "fit_mitra_predictor",
+            "def validate_dimer_model_package",
+            "def write_artifact_manifest",
+            "def validate_artifact_directory",
+            "def safe_extract_archive",
+            "def fit_mitra_predictor",
+            "def verify_snapshot",
+            "def stage_missing_files",
+            "class MitraRegressionPipeline",
+            "def validate_inputs",
+            "def evaluation_report",
         ),
         "mitra_pipeline/tutorial_api.py",
     )
@@ -259,7 +224,8 @@ def main() -> int:
     main_tutorial()
     inference_tutorial()
     docs_and_api()
-    print("Mitra Regressor Notebook Specification 1.0 static conformance: OK")
+    print("Mitra Regressor repository-specific Notebook Specification 1.1 static conformance: OK")
+    print("NOTE: static validation is not clean-runtime execution evidence.")
     return 0
 
 

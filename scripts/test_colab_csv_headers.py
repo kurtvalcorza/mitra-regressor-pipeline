@@ -52,16 +52,17 @@ class CsvHeaderTests(unittest.TestCase):
         self.assertEqual(extra, ["amount.1"])
 
     def test_both_notebooks_use_repository_csv_reader(self):
+        # The standalone notebooks carry the package module, so the calls are unqualified kernel globals.
         for name in NOTEBOOKS:
             with self.subTest(notebook=name):
                 text = notebook_text(name)
-                self.assertIn("mp.read_csv_bytes", text)
-                self.assertIn("mp.validate_inference_frame", text)
+                self.assertIn("read_csv_bytes(", text)
+                self.assertIn("validate_inference_frame(", text)
 
-    def test_main_sample_uses_repository_reader(self):
+    def test_main_presplit_upload_uses_repository_reader(self):
         text = notebook_text("mitra_regressor_colab.ipynb")
         for filename in ("train.csv", "val.csv", "test.csv"):
-            self.assertIn(f'mp.read_csv_bytes(zf.read(names["{filename}"])', text)
+            self.assertIn(f"read_csv_bytes(payloads['{filename}'], '{filename}')", text)
 
 
 if __name__ == "__main__":
