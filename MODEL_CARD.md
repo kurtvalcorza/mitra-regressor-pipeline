@@ -1,12 +1,14 @@
 ---
 license: apache-2.0
-model_card_spec: "1.0"
+model_card_spec: "1.1"
 pipeline_tag: tabular-regression
 tags:
   - tabular-regression
   - tabular-foundation-model
   - in-context-learning
 base_model: autogluon/mitra-regressor
+date_published: "2025-06-22"
+date_published_source: "Hugging Face Hub repository creation date of the exact hosted checkpoint (`createdAt`, https://huggingface.co/api/models/autogluon/mitra-regressor)"
 ---
 
 # Mitra Regressor
@@ -17,7 +19,7 @@ base_model: autogluon/mitra-regressor
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 
-###### Description
+#### Description
 
 Mitra Regressor packages the `autogluon/mitra-regressor` checkpoint expected at Hugging Face revision `5f277aa8f69042d39d6ac3612aed18bb9279bd95`, a pretrained tabular foundation model developed by the AutoGluon team at Amazon Web Services for supervised regression on structured datasets. The model is a Transformer specialised for tables: it applies row-wise and column-wise attention so that relationships across observations and across features are both represented. It was pretrained across roughly 45 million synthetically generated datasets drawn from structural causal models and tree-based priors; the developers report that no real-world dataset was used directly in pretraining.
 

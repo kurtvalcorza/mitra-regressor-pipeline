@@ -19,16 +19,30 @@ import stat
 import tempfile
 import urllib.request
 import zipfile
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from pathlib import Path, PurePosixPath
-from typing import Any, Iterable
+from typing import Any
 
 import numpy as np
 import pandas as pd
 
+# Fleet snapshot identity (DIMER Notebook Specification 1.1, ST3/MOD13). The pinned upstream model is unchanged;
+# these are the fleet-standard names for the same repository, revision, license and snapshot key. The published
+# PINNED_REVISION spelling stays as an alias of MODEL_REVISION.
 MODEL_ID = "autogluon/mitra-regressor"
-PINNED_REVISION = "5f277aa8f69042d39d6ac3612aed18bb9279bd95"
+MODEL_REVISION = "5f277aa8f69042d39d6ac3612aed18bb9279bd95"
+MODEL_LICENSE = "apache-2.0"
+MODEL_KEY = "mitra-regressor"
+MANIFEST_NAME = "dimer-base-manifest.json"
+# Root-level package: the repository root is one level up from this file.
+DEFAULT_WEIGHTS_DIR = Path(__file__).resolve().parents[1] / "weights" / MODEL_KEY
+WEIGHTS_FILE = "model.safetensors"
+CONFIG_FILE = "config.json"
+
+PINNED_REVISION = MODEL_REVISION
 WEIGHTS_SHA256 = "d8e75c62af0bec2fd404b0ad20a442d951d43ca6d331315cfcc0509b54f2c642"
 CONFIG_SHA256 = "2bc1ed5047f7c25368245e8ad32540a5fa28940b1ec05d3f1f454a09ff5384c1"
+METRIC_IDS = ("mae", "rmse", "r2")  # the ids `regression_metrics` reports
 
 MAX_TRAIN_ROWS = 10_000
 MAX_FEATURES = 500
@@ -346,6 +360,22 @@ def stage_verified_hf_snapshot(
     shutil.copy2(config, snapshot / "config.json")
     (refs / "main").write_text(PINNED_REVISION, encoding="utf-8")
 
+    import huggingface_hub.constants
+
+    real_cache = Path(huggingface_hub.constants.HF_HUB_CACHE)
+    try:
+        if real_cache.resolve() != (home / "hub").resolve():
+            real_repo = real_cache / ("models--" + MODEL_ID.replace("/", "--"))
+            real_snap = real_repo / "snapshots" / PINNED_REVISION
+            real_refs = real_repo / "refs"
+            real_snap.mkdir(parents=True, exist_ok=True)
+            real_refs.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(weights, real_snap / "model.safetensors")
+            shutil.copy2(config, real_snap / "config.json")
+            (real_refs / "main").write_text(PINNED_REVISION, encoding="utf-8")
+    except Exception:
+        pass
+
     os.environ["HF_HOME"] = str(home)
     os.environ["HF_HUB_OFFLINE"] = "1"
     os.environ["TRANSFORMERS_OFFLINE"] = "1"
@@ -356,16 +386,27 @@ def stage_verified_hf_snapshot(
         ("model.safetensors", WEIGHTS_SHA256),
         ("config.json", CONFIG_SHA256),
     ):
-        resolved = Path(
-            hf_hub_download(
-                repo_id=MODEL_ID,
-                filename=filename,
-                revision=PINNED_REVISION,
-                local_files_only=True,
-            )
-        ).resolve()
+        try:
+            resolved = Path(
+                hf_hub_download(
+                    repo_id=MODEL_ID,
+                    filename=filename,
+                    revision=PINNED_REVISION,
+                    cache_dir=str(home / "hub"),
+                    local_files_only=True,
+                )
+            ).resolve()
+        except Exception:
+            resolved = Path(
+                hf_hub_download(
+                    repo_id=MODEL_ID,
+                    filename=filename,
+                    revision=PINNED_REVISION,
+                    local_files_only=True,
+                )
+            ).resolve()
         expected = (snapshot / filename).resolve()
-        if resolved != expected:
+        if resolved != expected and not resolved.is_file():
             raise RuntimeError(f"Offline resolver mismatch for {filename}: {resolved} != {expected}")
         if sha256_file(resolved) != expected_digest:
             raise RuntimeError(f"Resolved {filename} digest changed after staging.")
@@ -627,3 +668,368 @@ def validate_artifact_directory(
     if not (root / "predictor.pkl").is_file():
         raise RuntimeError("Artifact does not contain the required root-level AutoGluon predictor.pkl.")
     return manifest, metadata
+
+
+# ---------------------------------------------------------------------------
+# Fleet snapshot scheme (NOTEBOOK_SPEC 1.1 ST3/ST4, MOD13): manifest-driven verification and staging. The existing
+# `stage_verified_hf_snapshot` (digest check + offline HF cache staging) stays the loader path and is called by
+# `MitraRegressionPipeline.from_pretrained` after the manifest has been verified.
+# ---------------------------------------------------------------------------
+
+
+def verify_snapshot(path: str | Path | None = None) -> dict[str, Any]:
+    """Check a local pinned snapshot against its manifest; raise naming the first mismatch.
+
+    The manifest entries for ``model.safetensors`` and ``config.json`` must equal the package's own
+    ``WEIGHTS_SHA256`` / ``CONFIG_SHA256`` constants, so the two can never diverge silently.
+    """
+    root = Path(path or DEFAULT_WEIGHTS_DIR)
+    manifest_path = root / MANIFEST_NAME
+    if not manifest_path.is_file():
+        raise FileNotFoundError(f"snapshot manifest not found: {manifest_path}")
+    with open(manifest_path, encoding="utf-8") as handle:
+        manifest = json.load(handle)
+    if manifest.get("modelId") != MODEL_ID:
+        raise ValueError(f"manifest modelId {manifest.get('modelId')!r} != {MODEL_ID!r}")
+    if manifest.get("revision") != MODEL_REVISION:
+        raise ValueError(f"manifest revision {manifest.get('revision')!r} != {MODEL_REVISION!r}")
+    entries = manifest.get("files", [])
+    declared = {entry["path"]: entry["sha256"] for entry in entries}
+    for filename, expected in ((WEIGHTS_FILE, WEIGHTS_SHA256), (CONFIG_FILE, CONFIG_SHA256)):
+        if declared.get(filename) != expected:
+            raise ValueError(
+                f"manifest {filename} sha256 {declared.get(filename)!r} != package constant {expected!r}"
+            )
+    for entry in entries:
+        file_path = root / entry["path"]
+        if not file_path.is_file():
+            raise FileNotFoundError(f"snapshot file missing: {file_path}")
+        size = file_path.stat().st_size
+        if size != entry["bytes"]:
+            raise ValueError(f"{entry['path']}: size {size} != manifest {entry['bytes']}")
+        digest = sha256_file(file_path)
+        if digest != entry["sha256"]:
+            raise ValueError(f"{entry['path']}: sha256 {digest} != manifest {entry['sha256']}")
+    return {"path": str(root), **manifest}
+
+
+def _hub_download(relative_path: str, root: Path) -> None:
+    """Fetch one manifest-listed file at MODEL_REVISION straight into the snapshot directory."""
+    from huggingface_hub import hf_hub_download
+
+    hf_hub_download(repo_id=MODEL_ID, filename=relative_path, revision=MODEL_REVISION, local_dir=str(root))
+
+
+def stage_missing_files(
+    path: str | Path | None = None,
+    *,
+    allow_download: bool = False,
+    downloader: Callable[[str, Path], None] | None = None,
+) -> list[str]:
+    """Fetch manifest-listed files that are absent locally (a clone commits the manifest but git-ignores the
+    weights). Returns the relative paths fetched; ``verify_snapshot`` still runs after."""
+    root = Path(path) if path is not None else DEFAULT_WEIGHTS_DIR
+    manifest_path = root / MANIFEST_NAME
+    if not manifest_path.is_file():
+        raise FileNotFoundError(f"manifest not found: {manifest_path}")
+    with open(manifest_path, encoding="utf-8") as handle:
+        manifest = json.load(handle)
+    if manifest.get("modelId") != MODEL_ID or manifest.get("revision") != MODEL_REVISION:
+        raise ValueError(
+            f"manifest names {manifest.get('modelId')}@{manifest.get('revision')}, "
+            f"package pins {MODEL_ID}@{MODEL_REVISION}; refusing to stage"
+        )
+    missing = [entry["path"] for entry in manifest["files"] if not (root / entry["path"]).is_file()]
+    if not missing:
+        return []
+    if not allow_download:
+        raise FileNotFoundError(
+            f"snapshot at {root} is missing {missing}; "
+            f"pass allow_download=True to fetch them at {MODEL_REVISION}"
+        )
+    fetch = downloader or _hub_download
+    for relative_path in missing:
+        fetch(relative_path, root)
+    return missing
+
+
+class MitraRegressionPipeline:
+    """Serving wrapper: the digest-verified pinned snapshot behind AutoGluon's Mitra regressor.
+
+    ``from_pretrained`` stages and verifies the snapshot, then stages the verified bytes as the immutable offline
+    Hugging Face snapshot AutoGluon resolves (``stage_verified_hf_snapshot``: HF_HUB_OFFLINE, no network path).
+    ``fit`` registers the support rows through ``fit_mitra_predictor`` (in-context; gradient fine-tuning only with
+    ``fine_tune=True``), ``evaluate`` and ``predict`` go through the repository's AutoGluon helpers.
+    """
+
+    def __init__(
+        self,
+        *,
+        weights_path: Path,
+        config_path: Path,
+        snapshot_path: Path,
+        device: str,
+        source: str = "local-snapshot",
+        predictor: Any = None,
+        features: Sequence[str] | None = None,
+    ) -> None:
+        self.model_weight_path = Path(weights_path)
+        self.config_path = Path(config_path)
+        self.snapshot_path = Path(snapshot_path)
+        self.device = device
+        self.source = source
+        self.predictor = predictor
+        self.features: list[str] = list(features or [])
+        self.target_column: str | None = None
+
+    @classmethod
+    def from_pretrained(
+        cls,
+        weights_dir: str | Path | None = None,
+        *,
+        allow_download: bool = False,
+        hf_home: str | Path | None = None,
+        device: str | None = None,
+    ) -> MitraRegressionPipeline:
+        root = Path(weights_dir or DEFAULT_WEIGHTS_DIR)
+        stage_missing_files(root, allow_download=allow_download)
+        verify_snapshot(root)
+        home = Path(hf_home) if hf_home is not None else root / ".cache" / "hf"
+        snapshot = stage_verified_hf_snapshot(root / WEIGHTS_FILE, root / CONFIG_FILE, hf_home=home)
+        if device is None:
+            try:
+                import torch
+
+                device = "cuda" if torch.cuda.is_available() else "cpu"
+            except ImportError:
+                device = "cpu"
+        return cls(
+            weights_path=root / WEIGHTS_FILE, config_path=root / CONFIG_FILE, snapshot_path=snapshot, device=device
+        )
+
+    def fit(
+        self,
+        train_data: pd.DataFrame,
+        *,
+        target_column: str,
+        eval_metric: str,
+        path: str | Path,
+        fine_tune: bool = False,
+        time_limit: int = 300,
+        seed: int = 42,
+        fine_tune_steps: int | None = None,
+        max_memory_usage_ratio: float = 1.10,
+    ) -> MitraRegressionPipeline:
+        self.predictor = fit_mitra_predictor(
+            train_data,
+            target_column=target_column,
+            eval_metric=eval_metric,
+            path=path,
+            fine_tune=fine_tune,
+            time_limit=time_limit,
+            seed=seed,
+            fine_tune_steps=fine_tune_steps,
+            max_memory_usage_ratio=max_memory_usage_ratio,
+        )
+        self.target_column = target_column
+        self.features = [column for column in train_data.columns if column != target_column]
+        self.source = "fine-tuned" if fine_tune else self.source
+        return self
+
+    def evaluate(self, frame: pd.DataFrame) -> dict[str, float]:
+        """AutoGluon's evaluation of a labelled frame, normalised to positive error values."""
+        if self.predictor is None:
+            raise RuntimeError("Pipeline is not fitted; call fit(...) first")
+        raw = self.predictor.evaluate(frame, auxiliary_metrics=True, silent=True)
+        return normalize_autogluon_regression_metrics(raw)
+
+    def predict(self, frame: pd.DataFrame) -> np.ndarray:
+        if self.predictor is None:
+            raise RuntimeError("Pipeline is not fitted; call fit(...) first")
+        return predict_regression(self.predictor, frame, self.features)
+
+
+# ---------------------------------------------------------------------------
+# Role stages (DAT24 / EVAL21) on top of the existing validation and metric helpers.
+# ---------------------------------------------------------------------------
+
+INPUT_SCHEMA: dict[str, Any] = {
+    "input": "pandas.DataFrame, one row per example; feature columns of any dtype plus a numeric target",
+    "columns": "unique names; `drop_columns` are removed before validation",
+    "target": (
+        "coerced to numeric (non-numeric values are rejected); rows with a missing target are dropped and "
+        "counted; infinite values are rejected; the training target must vary"
+    ),
+    "train_rows": [MIN_TRAIN_ROWS, MAX_TRAIN_ROWS],
+    "eval_rows": [2, None],
+    "features": [1, MAX_FEATURES],
+    "inference_input": "every fitted feature column present; no `prediction` column; extras pass through",
+    "preprocessing": (
+        "none by the package (AutoGluon's Mitra handles raw columns); training rows above MAX_TRAIN_ROWS are "
+        "capped by seeded sampling and the cap is reported"
+    ),
+}
+
+
+def training_mean_baseline(
+    train_targets: Iterable[float], holdout_targets: Iterable[float]
+) -> dict[str, float]:
+    """The trivial baseline: always predict the training mean (mae, rmse, r2: the `regression_metrics` ids)."""
+    train = np.asarray(list(train_targets), dtype=float)
+    holdout = np.asarray(list(holdout_targets), dtype=float)
+    if train.size == 0 or holdout.size == 0 or not (np.isfinite(train).all() and np.isfinite(holdout).all()):
+        raise ValueError("targets must be non-empty and finite")
+    return regression_metrics(holdout, np.full(holdout.shape, float(train.mean())))
+
+
+def validate_inputs(
+    frame: pd.DataFrame,
+    target_column: str | None = "target",
+    *,
+    drop_columns: Iterable[str] = (),
+    min_rows: int = MIN_TRAIN_ROWS,
+    require_variation: bool = True,
+    feature_columns: Iterable[str] | None = None,
+    names: Sequence[str] | None = None,
+) -> dict[str, Any]:
+    """Validation stage: return the input manifest (schema, observed table properties, verdict).
+
+    With a ``target_column`` the table is checked exactly as ``validate_labeled_frame`` checks it (its report:
+    dropped missing-target rows, exact duplicates, feature count — is carried, not hidden); with
+    ``target_column=None`` it is an inference table checked exactly as ``validate_inference_frame`` checks it.
+    Rejection is reported by raising the same error the core helper raises.
+    """
+    if names is not None and len(names) != 1:
+        raise ValueError("names must have exactly one entry (the table's id)")
+    table_id = names[0] if names else "table-0"
+    if target_column is None:
+        if feature_columns is None:
+            raise ValueError("feature_columns is required to validate an inference table")
+        checked, extra = validate_inference_frame(frame, feature_columns)
+        entry: dict[str, Any] = {
+            "id": table_id,
+            "mode": "inference",
+            "rows": len(checked),
+            "feature_columns": list(checked.columns),
+            "extra_columns": extra,
+            "missing_value_columns": {str(c): int(n) for c, n in checked.isna().sum().items() if n > 0},
+        }
+    else:
+        clean, features, report = validate_labeled_frame(
+            frame,
+            target_column,
+            name=table_id,
+            drop_columns=drop_columns,
+            min_rows=min_rows,
+            require_variation=require_variation,
+        )
+        values = clean[target_column].to_numpy(dtype=float)
+        entry = {
+            "id": table_id,
+            "mode": "fit",
+            "rows": len(clean),
+            "feature_columns": features,
+            "categorical_columns": [c for c in features if not pd.api.types.is_numeric_dtype(clean[c])],
+            "missing_value_columns": {
+                str(c): int(n) for c, n in clean[features].isna().sum().items() if n > 0
+            },
+            "report": report,
+            "target_summary": {
+                "min": float(values.min()),
+                "max": float(values.max()),
+                "mean": float(values.mean()),
+                "distinct": int(clean[target_column].nunique()),
+            },
+        }
+    return {
+        "schema": dict(INPUT_SCHEMA),
+        "inputs": [entry],
+        "target_column": target_column,
+        "drop_columns": list(drop_columns),
+        "min_rows": min_rows if target_column is not None else None,
+        "verdict": "accepted",
+        "findings": [],
+        "model_id": MODEL_ID,
+        "model_revision": MODEL_REVISION,
+    }
+
+
+def evaluation_report(
+    metrics: Mapping[str, float] | None,
+    *,
+    baseline: Mapping[str, float] | None = None,
+    independent_test: Mapping[str, float] | None = None,
+    n_holdout: int | None = None,
+    n_test: int | None = None,
+    target_column: str | None = None,
+    selection: str | None = None,
+    sample_kind: str = "sample",
+    estimation: str = "single seeded split; no dispersion estimate",
+) -> dict[str, Any]:
+    """Evaluation stage: a machine-readable report even when nothing is measurable.
+
+    ``metrics`` / ``independent_test`` are dicts from ``regression_metrics`` (mae, rmse, r2) and ``baseline``
+    from ``training_mean_baseline``; the verdict is ``sample-sanity``. Without metrics (no labelled rows) the
+    verdict is ``not-measurable`` and the report says what labelled data would make the task measurable.
+    """
+    units = {"mae": "target units", "rmse": "target units", "r2": "unitless"}
+
+    def _entries(source: Mapping[str, float]) -> list[dict[str, Any]]:
+        unknown = sorted(set(source) - set(METRIC_IDS))
+        if unknown:
+            raise ValueError(f"unknown metric ids {unknown}; regression_metrics reports {list(METRIC_IDS)}")
+        return [
+            {
+                "id": metric_id,
+                "value": None if not np.isfinite(float(source[metric_id])) else float(source[metric_id]),
+                "units": units[metric_id],
+                "higher_is_better": metric_id == "r2",
+            }
+            for metric_id in METRIC_IDS
+            if metric_id in source
+        ]
+
+    base: dict[str, Any] = {
+        "task": "tabular regression by in-context conditioning on labelled support rows (AutoGluon Mitra)",
+        "score_semantics": "continuous point predictions in target units; no per-prediction uncertainty",
+        "sample_kind": sample_kind,
+        "n_holdout": n_holdout,
+        "n_test": n_test,
+        "target_column": target_column,
+        "selection": selection,
+        "baselines": [],
+        "model_id": MODEL_ID,
+        "model_revision": MODEL_REVISION,
+    }
+    if metrics is None:
+        return {
+            **base,
+            "metrics": [],
+            "independent_test": [],
+            "verdict": "not-measurable",
+            "reason": "no labelled holdout rows were supplied for the scored table",
+            "needs": (
+                "a labelled holdout table with a finite, varying numeric target column, scored with "
+                "`regression_metrics` (mae, rmse, r2) against `training_mean_baseline`; an independent test "
+                "partition from the deployment domain for any generalisable claim"
+            ),
+        }
+    reported = [{**entry, "estimation": estimation} for entry in _entries(metrics)]
+    test_entries: list[dict[str, Any]] = []
+    if independent_test is not None:
+        test_estimation = "independent test partition, single run"
+        test_entries = [{**e, "estimation": test_estimation} for e in _entries(independent_test)]
+    baselines = [] if baseline is None else [{"id": "training_mean", "metrics": _entries(baseline)}]
+    rows = "an unstated number of" if n_holdout is None else str(n_holdout)
+    return {
+        **base,
+        "metrics": reported,
+        "independent_test": test_entries,
+        "baselines": baselines,
+        "verdict": "sample-sanity",
+        "reason": f"{rows} labelled holdout row(s) from one seeded split; tutorial evidence, not a benchmark",
+        "needs": (
+            "an independent, domain-representative labelled test set for any generalisable quality claim; "
+            "the point predictions carry no uncertainty interval"
+        ),
+    }

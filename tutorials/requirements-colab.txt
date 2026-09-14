@@ -1,3 +1,5 @@
-# Pinned direct dependencies for DIMER Mitra Regressor release-grade Colab tutorials.
+# Pinned direct dependencies for the standalone DIMER Mitra Regressor tutorials: a mirror of pyproject.toml
+# [project].dependencies, which the notebooks carry inline as PINS (NOTEBOOK_SPEC 1.1 ENV2/PAR2).
 autogluon.tabular[mitra]==1.5.0
 lightgbm==4.6.0
+huggingface-hub==0.36.2
