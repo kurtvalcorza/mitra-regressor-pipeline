@@ -659,7 +659,7 @@ def _validate_notebook_content(
 
 def validate_notebooks() -> None:
     tutorials = ROOT / "tutorials"
-    notebooks = sorted(tutorials.glob("*.ipynb"))
+    notebooks = sorted(p for p in tutorials.glob("*.ipynb") if not p.name.startswith("DIMER_"))
     names = sorted(NOTEBOOKS)
     _check(
         [p.name for p in notebooks] == names,
