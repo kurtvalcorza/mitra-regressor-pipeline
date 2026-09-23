@@ -59,7 +59,7 @@ Concrete application domains envisioned during development: demand and quantity 
 
 ###### Primary Intended Users
 
-Machine-learning researchers, data scientists, machine-learning engineers, and software developers working with structured datasets, and practitioners who want a pretrained foundation model for small-data tabular regression. The envisioned deployment setting is internal enterprise or research use through the DIMER platform, not a public-facing service.
+Machine-learning researchers, data scientists, machine-learning engineers, and software developers working with structured datasets, and practitioners who want a pretrained foundation model for small-data tabular regression. The envisioned deployment setting is research or in-house enterprise use on infrastructure the user controls, not a public-facing service.
 
 The pipeline assumes its users understand the provenance and semantics of their input data, the meaning and scale of the target variable, the consequences of prediction errors, and the limits of their own evaluation methodology: a user is expected to know that the served prediction is a raw, unclipped point estimate with no attached interval, that MAE on a 50-row holdout has wide variance, and that a sparse or heavy-tailed target needs a naive baseline for comparison. A user who cannot tell a held-out error from an in-sample one is outside the assumed competency.
 
