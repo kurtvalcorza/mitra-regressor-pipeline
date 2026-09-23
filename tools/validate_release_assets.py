@@ -184,7 +184,7 @@ AUXILIARY_NOTEBOOKS = {
             'FREEZE_NOW = True',
             'EVALUATE_FROZEN_TEST = True',
             'INCLUDE_FROZEN_TEST_RESULTS = True',
-            "RUNNER_SOURCE = ",
+            "RUNNER_SOURCE=",
         ),
         "markdown_markers": (
             "**Profile:** `E2E`",
@@ -735,7 +735,7 @@ def _validate_auxiliary_workshop(path: Path, notebook: dict, spec: dict, registr
 
     runner_values: list[str] = []
     for index, source in enumerate(code_sources):
-        if "RUNNER_SOURCE =" not in source:
+        if "RUNNER_SOURCE" not in source:
             continue
         tree = ast.parse(source, filename=f"{path.name}:runner-carrier-{index}")
         for node in ast.walk(tree):
