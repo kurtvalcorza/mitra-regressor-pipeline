@@ -178,7 +178,13 @@ AUXILIARY_NOTEBOOKS = {
         "revision": "3.0.0",
         "code_markers": (
             'EXPECTED_SHA256 = "6534230e9eb6a2e212b741c4c17d897a57338323eb011f35ba2dc3fb28d8bb7b"',
+            'USE_BYOD = False',
             'BYOD_ZIP_PATH = ""',
+            'REQUIRE_ALL_SELECTED_MODELS = True',
+            'RUN_MITRA_ICL = True',
+            'RUN_TABDPT_ICL = True',
+            'RUN_TABPFN3_ICL = True',
+            'RUN_TABICLV2_ICL = True',
             "CARRIED_ADAPTER_SOURCES=",
             "MODEL_ENVIRONMENT_DEPENDENCIES=",
             'FREEZE_NOW = True',
@@ -801,7 +807,7 @@ def validate_all() -> list[str]:
     validate_identity_consistency()
     validate_release_status()
     validate_notebooks()
-    return ["model-card", "identity-consistency", "release-status", "notebooks+parity"]
+    return ["model-card", "identity-consistency", "release-status", "generated-notebooks+parity", "auxiliary-workshop"]
 
 
 def main() -> int:
