@@ -45,9 +45,11 @@ jobs:
       - name: Execute E2E default path from clean state
         id: e2e
         run: |
+          # Execute a copy from /content so the kernel's working directory matches Colab's.
+          cp tutorials/mitra_regressor_colab.ipynb /content/mitra_regressor_colab.ipynb
           jupyter nbconvert \
             --to notebook \
-            --execute tutorials/mitra_regressor_colab.ipynb \
+            --execute /content/mitra_regressor_colab.ipynb \
             --output executed-mitra-regressor-e2e.ipynb \
             --output-dir /content \
             --ExecutePreprocessor.timeout=2400 \
@@ -56,32 +58,56 @@ jobs:
       - name: Prepare independent inference input and trusted archive digest
         id: prepare-inference
         run: |
+          mkdir -p /content/mitra-tutorial /content/mitra-inference
+          cp /content/outputs/mitra_regressor_predictor.zip /content/mitra-tutorial/mitra-predictor.zip
           python - <<'PY'
-          import zipfile
+          import hashlib
+          import json
           from pathlib import Path
-          import pandas as pd
 
-          sample = Path("examples/sample-data/freshretailnet-h7.zip")
-          with zipfile.ZipFile(sample) as zf:
-              test_name = next(name for name in zf.namelist() if Path(name).name == "test.csv")
-              with zf.open(test_name) as handle:
-                  frame = pd.read_csv(handle)
-          frame.drop(columns=["target"]).head(64).to_csv("/content/inference.csv", index=False)
+          from sklearn.datasets import load_diabetes
+
+          # Unlabelled rows with the default E2E sample's feature schema (the notebook's inference
+          # cell requires exactly the bundle's feature columns; the target is withheld).
+          load_diabetes(as_frame=True).data.tail(24).to_csv("/content/inference.csv", index=False)
+
+          zip_path = Path("/content/mitra-tutorial/mitra-predictor.zip")
+          digest = hashlib.sha256(zip_path.read_bytes()).hexdigest()
+          # The standalone notebook takes these through its form fields; set them in an executed copy only.
+          fields = {
+              "ARTIFACT_ZIP_PATH = ''": f"ARTIFACT_ZIP_PATH = '{zip_path}'",
+              "EXPECTED_ZIP_SHA256 = ''": f"EXPECTED_ZIP_SHA256 = '{digest}'",
+              "NEW_DATA_PATH = ''": "NEW_DATA_PATH = '/content/inference.csv'",
+          }
+          source = Path("tutorials/mitra_regressor_predictor_inference_colab.ipynb")
+          notebook = json.loads(source.read_text(encoding="utf-8"))
+          for cell in notebook["cells"]:
+              if cell.get("cell_type") != "code":
+                  continue
+              text = "".join(cell["source"]) if isinstance(cell["source"], list) else cell["source"]
+              for marker, value in fields.items():
+                  if marker in text:
+                      text = text.replace(marker, value, 1)
+                      fields[marker] = None
+              cell["source"] = text.splitlines(keepends=True)
+          missing = [marker for marker, value in fields.items() if value is not None]
+          if missing:
+              raise RuntimeError(f"Inference notebook form fields not found: {missing}")
+          Path("/content/mitra_regressor_predictor_inference_colab.ipynb").write_text(json.dumps(notebook, indent=1), encoding="utf-8")
+          print(f"Trusted predictor archive SHA-256: {digest}")
           PY
-          echo "MITRA_PREDICTOR_ZIP=/content/mitra-tutorial/mitra-predictor.zip" >> "$GITHUB_ENV"
-          echo "MITRA_INFERENCE_CSV=/content/inference.csv" >> "$GITHUB_ENV"
-          echo "MITRA_EXPECTED_ZIP_SHA256=$(sha256sum /content/mitra-tutorial/mitra-predictor.zip | awk '{print $1}')" >> "$GITHUB_ENV"
 
       - name: Execute artifact-inference notebook against external producer artifact
         id: artifact-inference
         run: |
           jupyter nbconvert \
             --to notebook \
-            --execute tutorials/mitra_regressor_predictor_inference_colab.ipynb \
+            --execute /content/mitra_regressor_predictor_inference_colab.ipynb \
             --output executed-mitra-regressor-artifact-inference.ipynb \
             --output-dir /content \
             --ExecutePreprocessor.timeout=1200 \
             --ExecutePreprocessor.kernel_name=python3
+          cp /content/outputs/mitra_regressor_predictor_inference_predictions.csv /content/mitra-inference/predictions.csv
 
       - name: Upload executed notebooks and predictor artifact
         id: upload-evidence
