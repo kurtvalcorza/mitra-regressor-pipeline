@@ -1,13 +1,14 @@
-"""Load every sample-dataset registry variant of the E2E notebook without network.
+"""Load every committed sample-dataset archive through the E2E notebook's data cell without network.
 
 Regression guard for the Kaggle T4 run of 2026-09-07, where the data-loading cell
-raised ``KeyError: 'urls'`` for every ``DATA_SOURCE`` (including the default) because
-the registry entries did not carry the keys the resolution code read.
-
-The notebook's data-loading cell is executed once per ``SAMPLE_CONFIGS`` selector
-with ``urllib.request.urlopen`` replaced by a stub that serves the committed
-``examples/sample-data/*.zip`` bytes, so the test is hermetic and also proves that
-the registry digests match the committed archives.
+raised ``KeyError: 'urls'`` for every ``DATA_SOURCE``. Since the standalone
+NOTEBOOK_SPEC 2.0 notebook, the default sample is scikit-learn's bundled diabetes
+table and the committed ``examples/sample-data/*.zip`` archives are supplied through
+the ``Upload pre-split train/val/test`` BYOD branch. The notebook's data-loading cell
+is executed once per committed archive with ``google.colab.files.upload`` replaced by
+a stub that serves the archive's ``train.csv``/``val.csv``/``test.csv`` and
+``urllib.request.urlopen`` replaced by a stub that fails, so the test is hermetic and
+also proves that each archive matches the target and row counts in its dataset card.
 """
 
 from __future__ import annotations
@@ -25,6 +26,7 @@ import types
 import unittest
 import urllib.error
 import urllib.request
+import zipfile
 from pathlib import Path
 from unittest import mock
 
@@ -34,23 +36,24 @@ if str(ROOT) not in sys.path:
 
 NOTEBOOK = Path(os.environ.get("SAMPLE_REGISTRY_NOTEBOOK", ROOT / "tutorials" / "mitra_regressor_colab.ipynb"))
 SAMPLE_DIR = ROOT / "examples" / "sample-data"
-FORBIDDEN_URL_FRAGMENTS = ("feat/add-sample-datasets",)
+DATASET_CARD = SAMPLE_DIR / "DATASET_CARD.md"
+PRESPLIT = "Upload pre-split train/val/test"
+SPLIT_FILES = ("train.csv", "val.csv", "test.csv")
 
-try:  # the static CI job installs only pandas + numpy; the cell imports sklearn for the BYOD branch only
+try:  # the static CI job installs only pandas + numpy; the cell imports sklearn for the sample and single-CSV branches only
+    import sklearn.datasets  # noqa: F401
     import sklearn.model_selection  # noqa: F401
 except ImportError:  # pragma: no cover - exercised only on minimal runners
     def _unavailable(*args, **kwargs):
         raise RuntimeError("scikit-learn is not installed on this runner")
 
-    stub = types.ModuleType("sklearn.model_selection")
-    stub.train_test_split = _unavailable
     sys.modules.setdefault("sklearn", types.ModuleType("sklearn"))
-    sys.modules["sklearn.model_selection"] = stub
+    for name, attr in (("sklearn.datasets", "load_diabetes"), ("sklearn.model_selection", "train_test_split")):
+        stub = types.ModuleType(name)
+        setattr(stub, attr, _unavailable)
+        sys.modules[name] = stub
 
-try:
-    import mitra_pipeline as mp
-except ImportError:  # pre-Spec-1.0 trees have no public package; the cell must not need it
-    mp = None
+import mitra_pipeline as mp  # noqa: E402
 
 
 def load_data_cell() -> str:
@@ -58,100 +61,112 @@ def load_data_cell() -> str:
     for cell in payload["cells"]:
         source = cell["source"]
         text = "".join(source) if isinstance(source, list) else source
-        if cell["cell_type"] == "code" and "SAMPLE_CONFIGS = {" in text:
+        if cell["cell_type"] == "code" and re.search(r"^DATA_SOURCE = ", text, re.MULTILINE):
             return "\n".join(line for line in text.splitlines() if not line.lstrip().startswith(("%", "!")))
-    raise AssertionError(f"{NOTEBOOK.name}: no code cell defines SAMPLE_CONFIGS")
+    raise AssertionError(f"{NOTEBOOK.name}: no code cell defines the DATA_SOURCE form field")
 
 
-def registry(cell: str) -> dict[str, dict]:
+def form_value(cell: str, name: str):
     for node in ast.parse(cell).body:
-        if isinstance(node, ast.Assign) and any(getattr(t, "id", None) == "SAMPLE_CONFIGS" for t in node.targets):
+        if isinstance(node, ast.Assign) and any(getattr(t, "id", None) == name for t in node.targets):
             return ast.literal_eval(node.value)
-    raise AssertionError("SAMPLE_CONFIGS is not a top-level literal assignment")
+    raise AssertionError(f"{name} is not a top-level literal assignment")
 
 
-def with_selector(cell: str, selector: str) -> str:
-    pattern = re.compile(r"^DATA_SOURCE = .*?(\s*# @param.*)?$", re.MULTILINE)
-    assert pattern.search(cell), "DATA_SOURCE form field not found"
-    return pattern.sub(lambda m: f"DATA_SOURCE = {selector!r}{m.group(1) or ''}", cell, count=1)
+def with_form(cell: str, **values) -> str:
+    for name, value in values.items():
+        pattern = re.compile(rf"^{name} = .*?(\s*# @param.*)?$", re.MULTILINE)
+        assert pattern.search(cell), f"{name} form field not found"
+        cell = pattern.sub(lambda m, n=name, v=value: f"{n} = {v!r}{m.group(1) or ''}", cell, count=1)
+    return cell
 
 
-class ArchiveServer:
-    """urlopen stand-in that serves committed sample archives and records every URL."""
-
-    def __init__(self, tamper: bool = False) -> None:
-        self.urls: list[str] = []
-        self.tamper = tamper
-
-    def __call__(self, url, timeout=None, *args, **kwargs):
-        url = url if isinstance(url, str) else url.full_url
-        self.urls.append(url)
-        target = SAMPLE_DIR / url.rsplit("/", 1)[-1]
-        if not target.is_file():
-            raise urllib.error.URLError(f"no committed sample archive for {url}")
-        payload = target.read_bytes() + (b"\0" if self.tamper else b"")
-        return io.BytesIO(payload)
+def card_entries() -> dict[str, dict]:
+    """Archive name -> target column and per-split row counts, as documented in DATASET_CARD.md."""
+    entries: dict[str, dict] = {}
+    for section in re.split(r"^## ", DATASET_CARD.read_text(encoding="utf-8"), flags=re.MULTILINE):
+        archive = re.search(r"\*\*Archive:\*\* `([^`]+\.zip)`", section)
+        if not archive:
+            continue
+        target = re.search(r"\*\*Target:\*\* `([^`]+)`", section)
+        rows = re.search(r"\*\*Rows:\*\* ([\d,]+) train · ([\d,]+) val · ([\d,]+) test", section)
+        assert target and rows, f"{archive.group(1)}: dataset card lacks a Target or Rows line"
+        counts = [int(value.replace(",", "")) for value in rows.groups()]
+        entries[archive.group(1)] = {"target": target.group(1), "rows": dict(zip(SPLIT_FILES, counts, strict=True))}
+    return entries
 
 
-def run_cell(cell: str, selector: str, tamper: bool = False) -> tuple[dict, ArchiveServer]:
-    server = ArchiveServer(tamper=tamper)
+def archive_members(path: Path) -> dict[str, bytes]:
+    with zipfile.ZipFile(path) as archive:
+        return {Path(name).name: archive.read(name) for name in archive.namelist() if Path(name).name in SPLIT_FILES}
+
+
+def _offline(url, *args, **kwargs):
+    raise urllib.error.URLError(f"network access attempted from the data cell: {url}")
+
+
+def run_cell(cell: str, uploads: dict[str, bytes] | None = None, **form) -> dict:
+    colab = types.ModuleType("google.colab")
+    colab.files = types.SimpleNamespace(upload=lambda: dict(uploads or {}))
+    google = types.ModuleType("google")
+    google.colab = colab
     namespace = {
         "__name__": "__notebook__",
+        "json": json,
         "os": os,
-        "urllib": urllib,
         "Path": Path,
-        "mp": mp,
+        "read_csv_bytes": mp.read_csv_bytes,
         "display": lambda *args, **kwargs: None,
-        "NETWORK_TIMEOUT_SECONDS": 30,
     }
-    with tempfile.TemporaryDirectory() as scratch, mock.patch("urllib.request.urlopen", server):
+    with tempfile.TemporaryDirectory() as scratch, mock.patch("urllib.request.urlopen", _offline), \
+            mock.patch.dict(sys.modules, {"google": google, "google.colab": colab}):
         cwd = os.getcwd()
         os.chdir(scratch)  # Colab/Kaggle do not run from the repository root
         try:
             with contextlib.redirect_stdout(io.StringIO()):
-                exec(compile(with_selector(cell, selector), f"{NOTEBOOK.name}:data-cell", "exec"), namespace)
+                exec(compile(with_form(cell, **form), f"{NOTEBOOK.name}:data-cell", "exec"), namespace)
         finally:
             os.chdir(cwd)
-    return namespace, server
+    return namespace
 
 
-class SampleRegistryTests(unittest.TestCase):
+class SampleDataTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.cell = load_data_cell()
-        cls.registry = registry(cls.cell)
+        cls.card = card_entries()
 
-    def test_registry_lists_every_committed_archive(self) -> None:
-        files = {cfg["file"] for cfg in self.registry.values()}
+    def test_default_path_is_the_bundled_sample(self) -> None:
+        self.assertTrue(str(form_value(self.cell, "DATA_SOURCE")).startswith("Sample"))
+        self.assertIs(form_value(self.cell, "USE_BYOD"), False)
+
+    def test_dataset_card_documents_every_committed_archive(self) -> None:
         committed = {path.name for path in SAMPLE_DIR.glob("*.zip")}
-        self.assertEqual(files, committed, "registry files and committed archives differ")
+        self.assertTrue(committed, "no committed sample archives")
+        self.assertEqual(set(self.card), committed, "dataset card entries and committed archives differ")
 
-    def test_registry_digests_match_committed_archives(self) -> None:
-        for selector, cfg in self.registry.items():
-            with self.subTest(selector=selector):
-                self.assertIn("sha256", cfg, "registry entry carries no expected SHA-256")
-                digest = hashlib.sha256((SAMPLE_DIR / cfg["file"]).read_bytes()).hexdigest()
-                self.assertEqual(cfg["sha256"], digest)
-
-    def test_every_variant_loads_without_network(self) -> None:
-        for selector, cfg in self.registry.items():
-            with self.subTest(selector=selector):
-                namespace, server = run_cell(self.cell, selector)
-                self.assertEqual(len(server.urls), 1, server.urls)
-                self.assertTrue(server.urls[0].endswith("/" + cfg["file"]), server.urls[0])
-                for fragment in FORBIDDEN_URL_FRAGMENTS:
-                    self.assertNotIn(fragment, server.urls[0])
-                self.assertEqual(namespace["TARGET_COLUMN"], cfg["target"])
-                for name in ("train_data", "holdout_data", "test_data"):
+    def test_every_archive_loads_through_presplit_upload_without_network(self) -> None:
+        for archive, entry in self.card.items():
+            with self.subTest(archive=archive):
+                members = archive_members(SAMPLE_DIR / archive)
+                self.assertEqual(set(members), set(SPLIT_FILES), archive)
+                namespace = run_cell(self.cell, uploads=members, DATA_SOURCE=PRESPLIT, USE_BYOD=True, TARGET_COLUMN=entry["target"])
+                for name, split in zip(("train_data", "holdout_data", "test_data"), SPLIT_FILES, strict=True):
                     frame = namespace[name]
-                    self.assertGreater(len(frame), 0, name)
-                    self.assertIn(cfg["target"], frame.columns, name)
-                self.assertEqual(namespace.get("DATA_DIGEST"), cfg.get("sha256"))
+                    self.assertEqual(len(frame), entry["rows"][split], f"{archive}:{split}")
+                    self.assertIn(entry["target"], frame.columns, f"{archive}:{split}")
+                expected = hashlib.sha256(json.dumps({name: hashlib.sha256(members[name]).hexdigest() for name in sorted(SPLIT_FILES)}, sort_keys=True).encode()).hexdigest()
+                self.assertEqual(namespace["DATA_DIGEST"], expected)
 
-    def test_tampered_archive_is_rejected(self) -> None:
-        selector = next(iter(self.registry))
-        with self.assertRaises(ValueError):
-            run_cell(self.cell, selector, tamper=True)
+    def test_incomplete_presplit_upload_is_rejected(self) -> None:
+        members = archive_members(SAMPLE_DIR / next(iter(self.card)))
+        members.pop("test.csv")
+        with self.assertRaisesRegex(RuntimeError, "Missing"):
+            run_cell(self.cell, uploads=members, DATA_SOURCE=PRESPLIT, USE_BYOD=True)
+
+    def test_upload_selector_requires_byod_opt_in(self) -> None:
+        with self.assertRaisesRegex(ValueError, "USE_BYOD"):
+            run_cell(self.cell, DATA_SOURCE=PRESPLIT, USE_BYOD=False)
 
 
 if __name__ == "__main__":
