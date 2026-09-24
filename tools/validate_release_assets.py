@@ -175,7 +175,7 @@ AUXILIARY_NOTEBOOKS = {
         "mode": "WORKSHOP",
         "notebook_spec": "2.1",
         "standalone": True,
-        "revision": "3.0.1",
+        "revision": "3.1.0",
         "code_markers": (
             'EXPECTED_SHA256 = "6534230e9eb6a2e212b741c4c17d897a57338323eb011f35ba2dc3fb28d8bb7b"',
             'import urllib.request',
