@@ -163,3 +163,16 @@ Use a fresh Colab runtime and a new Section 0.3 experiment for each case. Record
 ### Local BYOD validation probe — 2026-09-26
 
 The revised v2 notebook's actual path-mode acquisition, ZIP staging and full schema-validation cells were executed locally with its embedded `CORE_SOURCE` in a temporary directory (Python 3.12, pandas 3.0.5, NumPy 2.5.2). Only the three BYOD form assignments were overridden in memory. A representative ZIP repacked from the repository sample was accepted with 4,180 training, 1,600 validation and 1,600 test rows. A separate ZIP with `lag_1` removed from all splits was rejected with `Expected features are missing: ['lag_1']` before any model execution. These are acquisition/validation-only probes; no foundation models, artifact reload, test evaluation or export were executed, so REL12 remains open.
+
+
+## Maintainer-supplied Colab execution — 2026-09-26
+
+The maintainer reported that this notebook passed an end-to-end Colab run and authorized merging its open PR. The supplied [executed notebook](execution-evidence/2026-09-26/DIMER_FreshRetailNet_MultiModel_Regression_Workshop_v2.ipynb) is preserved byte-for-byte as evidence.
+
+- Reviewed source commit: `087b2fbfbbded007c0fcf3902f167b33b7232da9`.
+- Executed-file SHA-256: `ae31481fa1fa5d8d478591ab5a16b9397e7ddf7ebea23447de832220927950af`.
+- Independently inspected: 36 executed code cells; zero saved error outputs; terminal completion and exports present.
+- Configuration/source comparison: Default controls; cell sources match the reviewed PR exactly.
+- Evidence boundary: saved outputs were inspected; execution was not independently repeated. This submission establishes the recorded path, not optional FULL/BYOD paths. Fresh-runtime/restart details beyond the maintainer's explicit prior confirmations are not inferred.
+
+This record supersedes the pending rerun item for the source/configuration above. It does not promote the whole pipeline or close untested optional-path qualification.
