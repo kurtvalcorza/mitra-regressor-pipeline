@@ -137,3 +137,29 @@ cell in a runtime that has no repository checkout — has been validated statica
 package import blocked), never run. The clean runs will be the first execution of the standalone path, of the staging path,
 of the new helpers (`validate_inputs`, `training_mean_baseline`, `evaluation_report`) and of `MitraRegressionPipeline`
 against the real weights.
+
+## FreshRetailNet guided regression v2: saved execution and remaining gates
+
+This record applies to `tutorials/DIMER_FreshRetailNet_MultiModel_Regression_Workshop_v2.ipynb`, separately from the generated diabetes E2E/companion pair above. Status remains **Candidate**.
+
+| Evidence | Recorded fact | Limit |
+|---|---|---|
+| Original executed artifact | Commit `4ffea2c7d543a34768027519e006a898412f9324`; notebook Git blob `7405af2e89c6585c3f425eb15b98e888490a25d2` | Identity of the saved run, not the revised prose |
+| Saved outputs | 36/36 code cells have execution counts; 0 saved error outputs; terminal run-all/export summary present | Saved output inspection is not an independent fresh-runtime execution |
+| User-confirmed execution conditions | Maintainer explicitly confirmed on 2026-09-26 that the original v2 run used a fresh Colab runtime and default Run all, with no manual restarts or rerunning cells | User attestation plus inspected saved outputs; not an independent executor rerun and not execution of the revised prose |
+| Runtime declaration | Notebook metadata specifies Colab GPU / T4 | Metadata alone does not establish the actual hardware or clean-start conditions |
+| Guided-text revision | Executable cells and their outputs/counts are preserved; new orientation, predictions and activity instructions | This prose revision has not been rerun end to end |
+
+The original commit above now has user-confirmed fresh-runtime/default-path evidence, supported by its inspected saved outputs. For REL1/REL10 review of the revised teaching artifact, record the exact revised notebook commit and blob, the executor/date, Python and package versions, actual device, form settings, clean-runtime/model-cache conditions and exported report digest. Run the revised notebook top to bottom in supported Colab, then separately follow the interactive activity before freezing. Do not promote from saved outputs or static checks alone. The notebook's `clean_runtime_evidence: pending` metadata remains accurate for this unverified revised artifact.
+
+### BYOD verification recipe (REL12 remains pending)
+
+Use a fresh Colab runtime and a new Section 0.3 experiment for each case. Record notebook and ZIP digests, runtime details, settings and outputs.
+
+1. **Positive path:** supply a representative pre-split ZIP containing `train.csv`, `val.csv` and `test.csv`, each with the 17 documented numeric features and numeric `target`, consistent columns, finite targets and at least two rows per split (use enough training/support rows for all selected model conditions). Retain meaningful non-overlapping temporal partitions. Set `USE_BYOD=True`, `BYOD_METHOD="path"`, and `BYOD_ZIP_PATH` to the uploaded/staged ZIP. Keep the remaining default model and evaluation settings. Confirm explicit-path acquisition and schema checks, then run the full downstream baseline/foundation comparison, freeze, saved-artifact reload, independent test, inference preview and report export. Record successful selected-model receipts and the terminal summary, not just CSV acceptance.
+2. **Negative path:** make a separate copy with `lag_1` removed from all three CSVs. Use the same path-mode controls in a fresh experiment. Confirm Section 2.1 raises `Expected features are missing: ['lag_1']` before fitting, freezing or exporting a successful model result. Preserve that diagnostic and record the rejected archive digest.
+3. Record both outcomes against the exact notebook revision. Local acquisition/schema probes are useful preliminary evidence only; they do not satisfy full downstream BYOD execution or clean Colab release gates.
+
+### Local BYOD validation probe — 2026-09-26
+
+The revised v2 notebook's actual path-mode acquisition, ZIP staging and full schema-validation cells were executed locally with its embedded `CORE_SOURCE` in a temporary directory (Python 3.12, pandas 3.0.5, NumPy 2.5.2). Only the three BYOD form assignments were overridden in memory. A representative ZIP repacked from the repository sample was accepted with 4,180 training, 1,600 validation and 1,600 test rows. A separate ZIP with `lag_1` removed from all splits was rejected with `Expected features are missing: ['lag_1']` before any model execution. These are acquisition/validation-only probes; no foundation models, artifact reload, test evaluation or export were executed, so REL12 remains open.
