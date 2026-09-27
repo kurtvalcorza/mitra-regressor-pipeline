@@ -200,3 +200,50 @@ Code cells changed, so the saved outputs of the earlier run no longer describe t
 
 The review's learner walkthrough remains open. Its optional training-median baseline suggestion is not a defect and was not added.
 
+
+### Maintainer-supplied Colab execution of revision 3.1.1 — 2026-09-27
+
+The maintainer supplied an executed copy of revision 3.1.1 and authorized merging. It is preserved byte-for-byte as [evidence](execution-evidence/2026-09-27/DIMER_FreshRetailNet_MultiModel_Regression_Workshop_v2.ipynb).
+
+- **Source:** branch `fix/regression-review-findings` at `c032386`, notebook blob `97e4a9651559`. All 88 cell ids and sources match exactly.
+- **Executed-file SHA-256:** `aab96088bd944311c4d7b460872c7f8f14d66ac5c31735ba2bcb8196252af687`.
+- **Runtime:** Colab `gpuType` T4; the four foundation models ran on `cuda`. Host environment:
+  - Python 3.13.15
+  - NumPy 2.1.3
+  - pandas 2.2.3
+  - matplotlib 3.10.0
+  - scikit-learn 1.6.1
+  - LightGBM 4.6.0
+- **Execution:**
+  - 36 of 36 code cells executed in order (counts 1–36), with no error outputs.
+  - Primary metric: MAE.
+  - The completion summary reports 9 validation models, 12 frozen test models, no foundation failures, and "Run-all complete".
+- **Validation MAE:**
+  - TabICLv2 0.36674
+  - TabPFN-3 0.37118
+  - LightGBM 0.37341
+  - Random Forest 0.37644
+  - TabDPT 0.39218
+  - Mitra 0.41717
+- **Test MAE after the freeze:**
+  - TabPFN-3 0.42416
+  - TabICLv2 0.43286
+  - Random Forest 0.43706
+  - Mitra 0.44025
+  - LightGBM 0.46011
+  - TabDPT 0.52836
+- **REG-01:** §8.0 fixed the paired comparator (`lightgbm`, the validation-best frozen classical baseline) before the test, and §8.3 used it.
+- **REG-05:** each `gain_vs_reference` equals the observed MAE difference. For example, TabPFN-3 is +0.03595 = 0.46011 − 0.42416, with interval [0.01689, 0.05689].
+- **REG-02:** all intervals are `available`.
+- **REG-03:** §9.1 shows populated bands in every split (cut points 0.5 and 0.9) and scores them.
+- **Export:** ZIP SHA-256 `9d4d1d54ad228425…`.
+- **Evidence boundary:** the saved outputs were inspected, but the execution was not repeated independently. This record covers only the default path: MAE as the primary metric, all models selected, the pinned sample, and the in-context mode.
+
+This record satisfies the fresh default `Run all` item above. These items remain open:
+
+- a foundation-only selection;
+- R² as the primary metric;
+- the BYOD runs, including tied targets;
+- the fast path.
+
+**Status: Candidate.**
