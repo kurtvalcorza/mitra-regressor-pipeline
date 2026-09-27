@@ -1,0 +1,94 @@
+{
+  "notebook_commit": "dd7c8ecd49ad1c7de4cae5875152a71c40f431d7",
+  "notebook_blob": "026741c58e5a9557d14320f72239afc411f2351a",
+  "execution_scope": "Reduced, transcribed logic with synthetic fixtures; no full notebook or model execution",
+  "runtime": {
+    "python": "3.13.5",
+    "numpy": "2.3.5",
+    "pandas": "2.2.3",
+    "scikit_learn": "1.8.0"
+  },
+  "checks": [
+    {
+      "id": "P1",
+      "finding": "REG-01",
+      "outcome": "reproduced",
+      "observed": "StopIteration when the frozen prediction set contains foundation models only",
+      "limit": "Visible selection membership and bootstrap selector only; Session.freeze not executed"
+    },
+    {
+      "id": "P2",
+      "outcome": "positive control passed",
+      "reference_key": "lightgbm"
+    },
+    {
+      "id": "P3",
+      "finding": "REG-02",
+      "outcome": "reproduced",
+      "full_test_r2": 0.96,
+      "bootstrap_draws": 1000,
+      "nonfinite_r2_draws": 477,
+      "interval_as_strings": [
+        "nan",
+        "0.96"
+      ],
+      "nonfinite_self_difference_draws": 477,
+      "scope": "R2 selected with a two-row nonconstant test target; not the default MAE sample"
+    },
+    {
+      "id": "P4",
+      "outcome": "positive control passed",
+      "mae_rmse_draws_all_finite": true
+    },
+    {
+      "id": "P5",
+      "finding": "REG-03",
+      "outcome": "reproduced",
+      "train_rows": 100,
+      "train_distinct_numeric_targets": 3,
+      "edges": [
+        0.0,
+        0.0
+      ],
+      "truth_bands": [
+        "high",
+        "high",
+        "high"
+      ],
+      "prediction_bands": [
+        "high",
+        "high",
+        "high"
+      ],
+      "balanced_accuracy": 1.0,
+      "observed_true_classes": [
+        "high"
+      ],
+      "interpretation": "Correct metric for a one-class derived task, not evidence of successful three-band classification"
+    },
+    {
+      "id": "P6",
+      "outcome": "positive control passed",
+      "edges": [
+        0.6666666666666572,
+        1.3333333333333144
+      ],
+      "truth_bands": [
+        "low",
+        "mid",
+        "high"
+      ],
+      "prediction_bands": [
+        "low",
+        "low",
+        "low"
+      ],
+      "balanced_accuracy": 0.3333333333333333,
+      "observed_true_classes": [
+        "high",
+        "low",
+        "mid"
+      ]
+    }
+  ]
+}
