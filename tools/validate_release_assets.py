@@ -205,13 +205,14 @@ AUXILIARY_NOTEBOOKS = {
         ),
     },
     "DIMER_FreshRetailNet_MultiModel_Regression_Workshop_v2.ipynb": {
-        # Committed with the outputs of its recorded Colab run (kept by maintainer decision).
+        # Outputs may be committed from a recorded Colab run (maintainer decision). Revision 3.1.1 changed code cells,
+        # so its outputs were cleared; the 3.1.0 run is preserved in docs/execution-evidence/.
         "committed_outputs": "executed-record",
         "profile": "E2E",
         "mode": "WORKSHOP",
         "notebook_spec": "2.1",
         "standalone": True,
-        "revision": "3.1.0",
+        "revision": "3.1.1",
         "code_markers": (
             'EXPECTED_SHA256 = "6534230e9eb6a2e212b741c4c17d897a57338323eb011f35ba2dc3fb28d8bb7b"',
             'import urllib.request',
@@ -231,6 +232,11 @@ AUXILIARY_NOTEBOOKS = {
             'EVALUATE_FROZEN_TEST = True',
             'INCLUDE_FROZEN_TEST_RESULTS = True',
             "RUNNER_SOURCE=",
+            # Notebook Review Framework v1 findings (2026-09-27); tests/test_workshop_v2_review_fixes.py exercises them.
+            'write_json(SESSION.root / "comparator.json",FROZEN_COMPARATOR)',  # REG-01: comparator fixed at the freeze
+            'interval_status=("available" if undefined_draws==0 else',  # REG-02: undefined R² draws are reported
+            "BANDS_VALID = bool(band_edges[0] < band_edges[1]",  # REG-03: derived three-band task is validated
+            '"gain_vs_reference":observed if compared else np.nan',  # REG-05: observed score difference
         ),
         "markdown_markers": (
             "**Profile:** `E2E`",

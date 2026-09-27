@@ -176,3 +176,27 @@ The maintainer reported that this notebook passed an end-to-end Colab run and au
 - Evidence boundary: saved outputs were inspected; execution was not independently repeated. This submission establishes the recorded path, not optional FULL/BYOD paths. Fresh-runtime/restart details beyond the maintainer's explicit prior confirmations are not inferred.
 
 This record supersedes the pending rerun item for the source/configuration above. It does not promote the whole pipeline or close untested optional-path qualification.
+
+
+## FreshRetailNet regression v2: Notebook Review Framework v1 findings — revision 3.1.1 (2026-09-27)
+
+A review under the Notebook Review Framework v1 (reviewed commit `dd7c8ec`, notebook blob `026741c5`) concluded **Needs revision** for the full interactive/BYOD experience. No default-path blocker was established. It credited the maintainer-supplied Colab execution recorded above. Revision 3.1.1 of `tutorials/DIMER_FreshRetailNet_MultiModel_Regression_Workshop_v2.ipynb` addresses all five findings. `tests/test_workshop_v2_review_fixes.py` executes the notebook's own cell code against synthetic inputs. All of its 11 checks fail on the reviewed revision and pass on 3.1.1. These are logic checks, not model runs.
+
+| Finding | Correction in 3.1.1 | Acceptance check |
+|---|---|---|
+| **REG-01** (major): a foundation-only frozen selection raised `StopIteration` in the bootstrap | §8.0 fixes and records the paired-comparison reference at the freeze (`comparator.json`: the frozen classical baseline with the best validation score, or none). §8.3 uses that record and never chooses from test scores. With no frozen baseline, it reports each model's own interval and no paired comparison. The comparator is named in every row and exported | A mixed selection records LightGBM; a foundation-only selection records none and still reports every model's interval |
+| **REG-02** (major): R² bootstrap draws with one repeated target produced non-finite intervals | R² is `NaN` on a degenerate draw instead of dividing by zero. When any draw is degenerate, the R² intervals are marked `unavailable` with the count, and the point scores are kept. A constant test target is refused with a pointer to MAE or RMSE. §8.0 warns in advance when R² is selected with fewer than 30 test rows | A two-row target `[0, 1]` gives the point R² of 0.96 with every interval `unavailable`; a constant target raises an actionable error |
+| **REG-03** (major): tied BYOD targets collapsed the three-band exercise into a one-class task that scored 1.0 | §9.1 shows band coverage per split and scores only when the cut points differ and every band has rows; otherwise it explains and skips. The companion notebook's reference scores are labelled pinned-sample-only, with a BYOD notice | 70/20/10 tied targets are skipped rather than scored; ordinary targets still score a one-band guess at 1/3 |
+| **REG-04** (minor): the answers claimed invariance, and the conclusion was MAE-only | The worked answers are labelled as one reference configuration. The conclusion template follows the primary metric chosen in §0.2 and names the comparator | Static checks of both cells |
+| **REG-05** (minor): `gain_vs_reference` was a bootstrap mean, not the observed difference | The gain is now the full-test score difference in the favourable direction; paired draws give only its interval | The reported gain equals the difference of the displayed point scores for MAE, RMSE and R² |
+
+Code cells changed, so the saved outputs of the earlier run no longer describe the notebook and were cleared. That run remains in `execution-evidence/2026-09-26/`. **Status: Candidate.** The following exact-revision evidence is required:
+
+- a fresh Colab T4 default `Run all` of revision 3.1.1;
+- a foundation-only selection;
+- R² as the primary metric;
+- positive and negative BYOD runs, including tied targets;
+- the documented fast path.
+
+The review's learner walkthrough remains open. Its optional training-median baseline suggestion is not a defect and was not added.
+
