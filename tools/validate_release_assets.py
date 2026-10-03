@@ -175,12 +175,18 @@ AUXILIARY_NOTEBOOKS = {
         "mode": "WORKSHOP",
         "notebook_spec": "2.1",
         "standalone": True,
-        "revision": "3.2.0",
+        "revision": "3.3.0",
         "code_markers": (
             'EXPECTED_SHA256 = "6534230e9eb6a2e212b741c4c17d897a57338323eb011f35ba2dc3fb28d8bb7b"',
             'import urllib.request',
-            'FOUNDATION_PYTHON_SPEC = "3.12"',
-            "uv_path = ensure_uv()",
+            'FOUNDATION_PYTHON_SPEC = "3.12.12"',
+            # uv isolated environment (2026-10-03): pinned uv, managed CPython, hash-locked wheels, no kernel installs.
+            'UV_SHA256 = "aee9802f46bae436bd91751bb33ddeb379ef1596b5c19df193219d545d244b60"',
+            "uv_path=ensure_uv()",
+            '"venv","--managed-python","--python",FOUNDATION_PYTHON_SPEC',
+            '"--require-hashes","--no-deps"',
+            '"--only-binary",":all:"',
+            "CARRIED_ENVIRONMENT_LOCKS=",
             '"python_spec":FOUNDATION_PYTHON_SPEC',
             'USE_BYOD = False',
             'BYOD_ZIP_PATH = ""',
@@ -212,19 +218,25 @@ AUXILIARY_NOTEBOOKS = {
         ),
     },
     "DIMER_FreshRetailNet_MultiModel_Regression_Workshop_v2.ipynb": {
-        # Outputs may be committed from a recorded Colab run (maintainer decision). Revision 3.1.1 changed code cells,
-        # so its outputs were cleared; the 3.1.0 run is preserved in docs/execution-evidence/.
+        # Outputs may be committed from a recorded Colab run (maintainer decision). Revisions 3.1.1 and 3.2.0 changed
+        # code cells, so their outputs were cleared; earlier runs are preserved in docs/execution-evidence/.
         "committed_outputs": "executed-record",
         "profile": "E2E",
         "mode": "WORKSHOP",
         "notebook_spec": "2.1",
         "standalone": True,
-        "revision": "3.1.1",
+        "revision": "3.2.0",
         "code_markers": (
             'EXPECTED_SHA256 = "6534230e9eb6a2e212b741c4c17d897a57338323eb011f35ba2dc3fb28d8bb7b"',
             'import urllib.request',
-            'FOUNDATION_PYTHON_SPEC = "3.12"',
-            "uv_path = ensure_uv()",
+            'FOUNDATION_PYTHON_SPEC = "3.12.12"',
+            # uv isolated environment (2026-10-03): pinned uv, managed CPython, hash-locked wheels, no kernel installs.
+            'UV_SHA256 = "aee9802f46bae436bd91751bb33ddeb379ef1596b5c19df193219d545d244b60"',
+            "uv_path=ensure_uv()",
+            '"venv","--managed-python","--python",FOUNDATION_PYTHON_SPEC',
+            '"--require-hashes","--no-deps"',
+            '"--only-binary",":all:"',
+            "CARRIED_ENVIRONMENT_LOCKS=",
             '"python_spec":FOUNDATION_PYTHON_SPEC',
             'USE_BYOD = False',
             'BYOD_ZIP_PATH = ""',

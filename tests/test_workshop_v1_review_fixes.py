@@ -202,7 +202,7 @@ def test_export_does_not_require_a_test_evaluation() -> None:
     assert "EXPORT_TEST_RESULTS=INCLUDE_FROZEN_TEST_RESULTS and TEST_EVALUATION_COMPLETED" in export
     assert '"includes_test_results":EXPORT_TEST_RESULTS' in export
     assert 'shutil.copy2(SESSION.root / "comparator.json",export_directory / "comparator.json")' in export
-    assert '"notebook_revision":"3.2.0"' in export
+    assert '"notebook_revision":"3.3.0"' in export  # 3.3.0: uv isolated environment
 
 
 # --- FRR1-m2: plots and the conclusion template follow the primary metric -----------------------------------------
@@ -319,10 +319,10 @@ def test_identity_edition_and_guided_layer_waivers() -> None:
     assert "deliberate" in CELLS["7fcacb12"] and "same" in CELLS["7fcacb12"]
     assert "### Input → Model → Output" in CELLS["frr1howtouse"] and "**Infrastructure:**" in CELLS["frr1howtouse"]
     assert CELLS["frr1troubleshoot"].startswith("# Troubleshooting")
-    assert NB["metadata"]["workshop_revision"] == "3.2.0"
+    assert NB["metadata"]["workshop_revision"] == "3.3.0"  # 3.3.0: uv isolated environment
 
 
 def test_readme_says_which_notebook_to_use() -> None:
     assert "### Which notebook should I use?" in README
     assert "the same pipeline and defaults" not in README
-    assert "Revision 3.2.0" in README
+    assert "Revision 3.3.0" in README  # 3.3.0: uv isolated environment

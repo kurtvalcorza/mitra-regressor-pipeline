@@ -275,3 +275,9 @@ FRR1-S1 (a reference-run note) was not addressed. Code cells changed, so no earl
 - a foundation-only selection, and R² as the primary metric;
 - positive and negative BYOD runs;
 - optionally, one fine-tuning condition on a GPU.
+
+## FreshRetailNet regression workshops (v1 and v2): 2026-10-03 uv isolated environment
+
+Both editions moved together to the uv isolated environment: compact v1 revision 3.2.0 → 3.3.0 (notebook blob `c47cc75d` → `7f216583`) and guided v2 revision 3.1.1 → 3.2.0 (blob `97e4a965` → `5ce1e3e1`). Nothing is installed into the notebook kernel and Run all needs no restart. Section 0.1 checks for a Linux x86_64 kernel with Colab's scikit-learn and LightGBM instead of pip-installing LightGBM. Section 5.2 downloads uv 0.12.15 by SHA-256, creates each model environment with `uv venv --managed-python --python 3.12.12`, and installs the carried `tutorials/requirements-workshop-<stack>.lock.txt` with `--require-hashes --only-binary :all:`. TabDPT's `antlr4-python3-runtime` 4.9.3 has no wheel, so its hash-pinned source archive is built with the locked setuptools. Top-level pins, data, seeds, models and metrics are unchanged. The notebooks are now **Linux x86_64 only** (Colab, Kaggle, Linux Jupyter). `tests/test_workshop_uv_environment.py` covers the change: 12 of its 18 checks fail on the previous revisions, and the other 6 check the lock files only.
+
+A hosted re-run of both revisions is pending. **Status: Candidate.**
