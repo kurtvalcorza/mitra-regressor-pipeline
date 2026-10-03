@@ -175,7 +175,7 @@ AUXILIARY_NOTEBOOKS = {
         "mode": "WORKSHOP",
         "notebook_spec": "2.1",
         "standalone": True,
-        "revision": "3.1.0",
+        "revision": "3.2.0",
         "code_markers": (
             'EXPECTED_SHA256 = "6534230e9eb6a2e212b741c4c17d897a57338323eb011f35ba2dc3fb28d8bb7b"',
             'import urllib.request',
@@ -195,6 +195,11 @@ AUXILIARY_NOTEBOOKS = {
             'EVALUATE_FROZEN_TEST = True',
             'INCLUDE_FROZEN_TEST_RESULTS = True',
             "RUNNER_SOURCE=",
+            # Notebook Review Framework v1 findings (2026-10-03); tests/test_workshop_v1_review_fixes.py exercises them.
+            'write_json(SESSION.root / "comparator.json",FROZEN_COMPARATOR)',  # FRR1-M2: comparator fixed at the freeze
+            'interval_status=("available" if undefined_draws==0 else',  # FRR1-M3: undefined R² draws are reported
+            '"gain_vs_reference":observed if compared else np.nan',  # FRR1-m1: observed score difference
+            "EXPORT_TEST_RESULTS=INCLUDE_FROZEN_TEST_RESULTS and TEST_EVALUATION_COMPLETED",  # FRR1-m3: exploratory run
         ),
         "markdown_markers": (
             "**Profile:** `E2E`",
@@ -202,6 +207,8 @@ AUXILIARY_NOTEBOOKS = {
             "**Notebook specification:** DIMER Notebook Specification 2.1",
             "**Bring Your Own Data:**",
             "Comparing Tabular Foundation Models",
+            "**Compact workshop edition (v1",  # FRR1-M5/m6: edition and pointer to the guided edition
+            "# Troubleshooting",  # FRR1-m6: GDL13
         ),
     },
     "DIMER_FreshRetailNet_MultiModel_Regression_Workshop_v2.ipynb": {

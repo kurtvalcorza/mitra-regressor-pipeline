@@ -247,3 +247,31 @@ This record satisfies the fresh default `Run all` item above. These items remain
 - the fast path.
 
 **Status: Candidate.**
+
+
+## FreshRetailNet regression v1 (compact edition): Notebook Review Framework v1 findings — revision 3.2.0 (2026-10-03)
+
+A separate review pass under the Notebook Review Framework v1 (reviewed commit `a9a6f05`, notebook blob `6508437e`) concluded **Needs revision**: 0 Blocker, 5 Major, 7 Minor, 1 Suggestion. The review and its probes are in [`reviews/2026-10-03-notebook-review/`](reviews/2026-10-03-notebook-review/), with a verification addendum. Every Major and Minor finding was re-verified against the source before it was fixed; none was refuted. Revision 3.2.0 of `tutorials/DIMER_FreshRetailNet_MultiModel_Regression_Workshop.ipynb` addresses all twelve. `tests/test_workshop_v1_review_fixes.py` executes the notebook's own cell code against synthetic inputs. 22 of its 23 checks fail on the reviewed revision and all pass on 3.2.0 (the 23rd checks that the MAE plot stays MAE). These are logic checks, not model runs.
+
+| Finding | Correction in 3.2.0 |
+|---|---|
+| **FRR1-M1** (major): after the default Run all, the documented way back to experimenting looped on the frozen error | The 0.3 text, the 8.0 text, a new How-to-use section and the troubleshooting table say exactly what to rerun after starting a new experiment (Section 1.1 onward, **Runtime → Run after**). The prose now explains that Run all freezes by default |
+| **FRR1-M2** (major): a foundation-only selection raised `StopIteration` in 8.3 | Port of the guided edition's REG-01 fix: the comparator is fixed and recorded at the freeze, and a selection without a classical baseline keeps each model's own interval |
+| **FRR1-M3** (major): R² bootstrap intervals became NaN on small test sets | Port of REG-02: R² intervals are marked unavailable with a count, a constant test target is refused, and the freeze warns in advance |
+| **FRR1-M4** (major): the fine-tuning question could not be answered on the default path | Research question 2, the objective and checkpoint question 4 are marked as an optional GPU extension, with the switches, the time limits, the evidence of a weight update and how to answer when it was not run |
+| **FRR1-M5** (major): the tutorials README did not say which notebook to use | `tutorials/README.md` has a "Which notebook should I use?" table and states which fixes and differences each edition carries |
+| **FRR1-m1**: `gain_vs_reference` was a bootstrap mean | Port of REG-05: the observed full-test difference |
+| **FRR1-m2**: plots and the conclusion were MAE-only; ablation sentences mixed partitions | 5.6 and 8.2 plot the primary metric; the template follows it and uses validation scores for both ablations |
+| **FRR1-m3**: Run all with **Freeze now** off stopped at 8.1 | 8.1–8.4 skip with a notice and 10.1 exports validation-stage records only, so the exploratory summary is reached |
+| **FRR1-m4**: fixed expected-output text did not match the run | The zero-target rate names its split, the archive path line is gone, and 7.1 bands stockout hours as 0, up to 5 and more than 5 hours |
+| **FRR1-m5**: identity drift | Title "DIMER Notebook: …", a labelled time estimate, the 2.1 declaration explained, and the shared `_v2` workspace name explained |
+| **FRR1-m6**: guided-layer gaps | How to use, Input → Model → Output, infrastructure labels and troubleshooting added; sample answers and the predict–change activity are waived in the opening with a pointer to the guided edition |
+| **FRR1-m7**: 4.1 metric code did not produce the tables | 4.1 is labelled an illustration, the unused helper is removed, and the cell checks its values against the pipeline's metric function |
+
+FRR1-S1 (a reference-run note) was not addressed. Code cells changed, so no earlier output describes this revision. **Status: Candidate.** The following exact-revision evidence is required:
+
+- a fresh Colab T4 default `Run all` of revision 3.2.0;
+- a run with **Freeze now** off, and the documented new-experiment recovery after a default run;
+- a foundation-only selection, and R² as the primary metric;
+- positive and negative BYOD runs;
+- optionally, one fine-tuning condition on a GPU.
