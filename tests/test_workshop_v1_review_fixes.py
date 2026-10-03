@@ -315,7 +315,7 @@ def test_identity_edition_and_guided_layer_waivers() -> None:
     opening = CELLS["f79c68c5"]
     assert opening.startswith("# DIMER Notebook: ") and "**Compact workshop edition (v1" in opening
     assert "_v2.ipynb" in opening and "sample answers" in opening
-    assert "(an estimate, not measured for this revision)" in opening
+    assert "(measured on a Colab T4 for this revision)" in opening
     assert "deliberate" in CELLS["7fcacb12"] and "same" in CELLS["7fcacb12"]
     assert "### Input → Model → Output" in CELLS["frr1howtouse"] and "**Infrastructure:**" in CELLS["frr1howtouse"]
     assert CELLS["frr1troubleshoot"].startswith("# Troubleshooting")
