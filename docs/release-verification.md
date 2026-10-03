@@ -247,3 +247,63 @@ This record satisfies the fresh default `Run all` item above. These items remain
 - the fast path.
 
 **Status: Candidate.**
+
+
+## FreshRetailNet regression v1 (compact edition): Notebook Review Framework v1 findings — revision 3.2.0 (2026-10-03)
+
+A separate review pass under the Notebook Review Framework v1 (reviewed commit `a9a6f05`, notebook blob `6508437e`) concluded **Needs revision**: 0 Blocker, 5 Major, 7 Minor, 1 Suggestion. The review and its probes are in [`reviews/2026-10-03-notebook-review/`](reviews/2026-10-03-notebook-review/), with a verification addendum. Every Major and Minor finding was re-verified against the source before it was fixed; none was refuted. Revision 3.2.0 of `tutorials/DIMER_FreshRetailNet_MultiModel_Regression_Workshop.ipynb` addresses all twelve. `tests/test_workshop_v1_review_fixes.py` executes the notebook's own cell code against synthetic inputs. 22 of its 23 checks fail on the reviewed revision and all pass on 3.2.0 (the 23rd checks that the MAE plot stays MAE). These are logic checks, not model runs.
+
+| Finding | Correction in 3.2.0 |
+|---|---|
+| **FRR1-M1** (major): after the default Run all, the documented way back to experimenting looped on the frozen error | The 0.3 text, the 8.0 text, a new How-to-use section and the troubleshooting table say exactly what to rerun after starting a new experiment (Section 1.1 onward, **Runtime → Run after**). The prose now explains that Run all freezes by default |
+| **FRR1-M2** (major): a foundation-only selection raised `StopIteration` in 8.3 | Port of the guided edition's REG-01 fix: the comparator is fixed and recorded at the freeze, and a selection without a classical baseline keeps each model's own interval |
+| **FRR1-M3** (major): R² bootstrap intervals became NaN on small test sets | Port of REG-02: R² intervals are marked unavailable with a count, a constant test target is refused, and the freeze warns in advance |
+| **FRR1-M4** (major): the fine-tuning question could not be answered on the default path | Research question 2, the objective and checkpoint question 4 are marked as an optional GPU extension, with the switches, the time limits, the evidence of a weight update and how to answer when it was not run |
+| **FRR1-M5** (major): the tutorials README did not say which notebook to use | `tutorials/README.md` has a "Which notebook should I use?" table and states which fixes and differences each edition carries |
+| **FRR1-m1**: `gain_vs_reference` was a bootstrap mean | Port of REG-05: the observed full-test difference |
+| **FRR1-m2**: plots and the conclusion were MAE-only; ablation sentences mixed partitions | 5.6 and 8.2 plot the primary metric; the template follows it and uses validation scores for both ablations |
+| **FRR1-m3**: Run all with **Freeze now** off stopped at 8.1 | 8.1–8.4 skip with a notice and 10.1 exports validation-stage records only, so the exploratory summary is reached |
+| **FRR1-m4**: fixed expected-output text did not match the run | The zero-target rate names its split, the archive path line is gone, and 7.1 bands stockout hours as 0, up to 5 and more than 5 hours |
+| **FRR1-m5**: identity drift | Title "DIMER Notebook: …", a labelled time estimate, the 2.1 declaration explained, and the shared `_v2` workspace name explained |
+| **FRR1-m6**: guided-layer gaps | How to use, Input → Model → Output, infrastructure labels and troubleshooting added; sample answers and the predict–change activity are waived in the opening with a pointer to the guided edition |
+| **FRR1-m7**: 4.1 metric code did not produce the tables | 4.1 is labelled an illustration, the unused helper is removed, and the cell checks its values against the pipeline's metric function |
+
+FRR1-S1 (a reference-run note) was not addressed. Code cells changed, so no earlier output describes this revision. **Status: Candidate.** The following exact-revision evidence is required:
+
+- a fresh Colab T4 default `Run all` of revision 3.2.0;
+- a run with **Freeze now** off, and the documented new-experiment recovery after a default run;
+- a foundation-only selection, and R² as the primary metric;
+- positive and negative BYOD runs;
+- optionally, one fine-tuning condition on a GPU.
+
+## FreshRetailNet regression workshops (v1 and v2): 2026-10-03 uv isolated environment
+
+Both editions moved together to the uv isolated environment: compact v1 revision 3.2.0 → 3.3.0 (notebook blob `c47cc75d` → `7f216583`) and guided v2 revision 3.1.1 → 3.2.0 (blob `97e4a965` → `5ce1e3e1`). Nothing is installed into the notebook kernel and Run all needs no restart. Section 0.1 checks for a Linux x86_64 kernel with Colab's scikit-learn and LightGBM instead of pip-installing LightGBM. Section 5.2 downloads uv 0.12.15 by SHA-256, creates each model environment with `uv venv --managed-python --python 3.12.12`, and installs the carried `tutorials/requirements-workshop-<stack>.lock.txt` with `--require-hashes --only-binary :all:`. TabDPT's `antlr4-python3-runtime` 4.9.3 has no wheel, so its hash-pinned source archive is built with the locked setuptools. Top-level pins, data, seeds, models and metrics are unchanged. The notebooks are now **Linux x86_64 only** (Colab, Kaggle, Linux Jupyter). `tests/test_workshop_uv_environment.py` covers the change: 12 of its 18 checks fail on the previous revisions, and the other 6 check the lock files only.
+
+A hosted re-run of both revisions passed on 2026-10-03; see the record below. **Status: Candidate.**
+
+### Colab CLI execution of compact v1 revision 3.3.0 and guided v2 revision 3.2.0 — 2026-10-03
+
+Both editions were run separately at commit `aca2655147fc0be2d7b73ae09c9ccdbac196f8ee`, each on its own fresh Colab session. The executed notebooks are preserved byte for byte:
+
+| Edition | Notebook blob | Executed file | SHA-256 | Cells | Session wall |
+|---|---|---|---|---|---|
+| Compact v1, revision 3.3.0 | `7f21658365e072dc8a96be18ad3fefdd3fbe6b0d` | [`…Workshop_aca2655_colab-cli-t4.ipynb`](execution-evidence/2026-10-03/DIMER_FreshRetailNet_MultiModel_Regression_Workshop_aca2655_colab-cli-t4.ipynb) | `ade39452ae0fb48be34cdcbedc555d32e0b30bac2c523fb2f011e2d5eed20aad` | 33/33 | 701.8 s |
+| Guided v2, revision 3.2.0 | `5ce1e3e13554f79e921dab05957abd73822b0012` | [`…Workshop_v2_aca2655_colab-cli-t4.ipynb`](execution-evidence/2026-10-03/DIMER_FreshRetailNet_MultiModel_Regression_Workshop_v2_aca2655_colab-cli-t4.ipynb) | `68323096abafd2fa9ee808f85f8e4bb0172957169315561f3a70b7390d3e4262` | 36/36 | 651.9 s |
+
+- **Source:** each notebook was downloaded from GitHub at the PR head and its Git blob verified before the session.
+- **Executor:** Google Colab CLI 0.7.4 on a fresh Colab Tesla T4 session per notebook, through the workspace `colab-cli-serial-test-suite` (`colab new --gpu T4`, `colab exec -f`, `colab stop`). Code cells ran in order in one kernel; this is not a browser Run all, and the CLI records no execution counts, so order is evidenced by its `Executing cell k/N` log.
+- **Path exercised:** default controls only — pinned FreshRetailNet sample, MAE as the primary metric, all four foundation models in context, **Freeze now** and the test stage on. The optional activities, fine-tuning, BYOD, the foundation-only selection, R² as the primary metric and the **Freeze now** off path were not run.
+- **Outcome:** PASSED, 33/33 (v1) and 36/36 (v2) code cells with no error outputs. Both completion summaries report 9 validation models, 12 frozen test models, no foundation failures, and "Run-all complete".
+- **Kernel:** Python 3.13.15 on Linux x86_64; section 0.1 installed nothing. The kernel's classical stack was NumPy 2.1.3, pandas 2.2.3, matplotlib 3.10.0, scikit-learn 1.6.1 and LightGBM 4.6.0.
+- **Isolated environments (section 5.2):** in both runs all four uv environments (`mitra`, `tabdpt`, `tabicl`, `tabpfn`) were created with CPython 3.12.12, installed from the hash-locked files, and passed `uv pip check` and the adapter import check. TabDPT's `antlr4-python3-runtime` 4.9.3 was built from its source archive in under 1 s. All four foundation models ran on `cuda`.
+- **Setup time:** uv reported about 200 s (v1) and 193 s (v2) preparing and installing packages across the four environments: Mitra 72 s / 77 s, TabDPT 66 s / 61 s, TabICL 60 s / 52 s, TabPFN under 1 s (its packages were already cached). The CLI records no per-cell times, so the wall time of section 5.2 as a whole was not measured.
+- **Time against the notebooks' estimates:** the compact edition states about 20–40 minutes of compute on a fresh T4. Its measured session wall, including session start and stop, was 701.8 s (11.7 minutes); the guided edition's was 651.9 s (10.9 minutes). Validation-stage `runtime_seconds` for the foundation models were 10.7–119.5 s (v1) and 10.6–95.8 s (v2); Mitra was the slowest in both. The estimates were not edited.
+- **Validation MAE (both editions, identical):** TabICLv2 0.36674, TabPFN-3 0.37118, LightGBM 0.37341, Random Forest 0.37644, TabDPT 0.39218, Mitra 0.41717.
+- **Test MAE after the freeze (both editions, identical):** TabPFN-3 0.42416, TabICLv2 0.43286, Random Forest 0.43706, Mitra 0.44025, LightGBM 0.46011, TabDPT 0.52836. The paired-comparison reference fixed at the freeze was `lightgbm`. TabPFN-3's `gain_vs_reference` is +0.03595 with interval [0.01689, 0.05689]. All intervals are `available`.
+- **v2 §9.1 demand bands:** cut points 0.5 and 0.9, every band populated in every split, scored as in the earlier run.
+- **Report ZIP SHA-256:** v1 `967bbecf5167db2d…`, v2 `3da05f7e25652e7d…`. These are new experiment directories, so the digests differ from earlier runs by construction.
+- **Comparison with the most recent recorded hosted run:** the guided edition's last recorded run is revision 3.1.1 above (maintainer-supplied, 2026-09-27). Every printed metric of revision 3.2.0 equals it: the baseline and validation tables, the ablations, the 7.1 error bands, the frozen-test table, the bootstrap intervals and gains, the 8.4 prediction preview and the 9.1 band scores. Only the descriptive `runtime_seconds` column differs, for example TabICLv2 9.24 s → 10.59 s and TabPFN-3 12.04 s → 14.78 s. The compact edition has no earlier recorded hosted run. Its validation, test and bootstrap values equal the guided edition's in both runs; its 7.1 stockout bands differ by design (0, up to 5 and more than 5 hours).
+- **Evidence boundary:** the saved outputs were inspected. The journeys not exercised — the interactive activities, the **Freeze now** off path and new-experiment recovery, a foundation-only selection, R² as the primary metric, BYOD, the fast path and fine-tuning — remain open.
+
+This record satisfies the fresh default-path run of both revisions. The other items listed for revisions 3.1.1 and 3.2.0 above remain open. **Status: Candidate.**
