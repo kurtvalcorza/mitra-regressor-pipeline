@@ -1,0 +1,2 @@
+# Executed notebooks are evidence: keep them byte-for-byte (no newline conversion).
+docs/execution-evidence/** -text
