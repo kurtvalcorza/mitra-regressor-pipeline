@@ -28,6 +28,7 @@ release labels are unchanged. **Readiness: Verification pending** (hosted Run al
 - Stand-ins: the Section 1 kernel cell is executed with a stand-in environment and IPython shell; the Section 4 `byod_payloads` helper with temporary files and a fake `google.colab.files.upload`.
 - `python tools/build_notebook.py --check` (both templates): OK. `python tools/validate_release_assets.py`: PASS. Every CI runner-Python script (`check_shared`, `check_contract`, `validate_colab_tutorial`, `test_tutorial_api`, `test_colab_csv_headers`, `test_sample_registry`): OK. `ruff check mitra_pipeline tests tools`: clean. `pytest` (CI deps: pandas, numpy): 75 passed before → 91 passed after.
 - `uv pip install --dry-run --require-hashes --only-binary :all: -r tutorials/requirements-colab-isolated.lock.txt` into a `uv venv --managed-python --python 3.12.12`: resolves, would install 74 packages (the two repositories' locks are identical apart from the header).
+- `.github/workflows/notebook-release.yml` (`execute-notebooks`): its "Prepare independent inference input" step runs in the runner's own Python and imported scikit-learn, which the in-kernel install used to provide; the first CI run on this branch failed there (`ModuleNotFoundError: No module named 'sklearn'`) after the E2E notebook itself had executed cleanly from the isolated environment. The runner install step now adds scikit-learn, pandas and numpy at the lock's versions. Reproduced locally against the regenerated companion notebook (field markers found, CSV written).
 
 ## Remaining gates
 
