@@ -65,13 +65,25 @@ jobs:
           python - <<'PY'
           import hashlib
           import json
+          import zipfile
           from pathlib import Path
 
           from sklearn.datasets import load_diabetes
+          from sklearn.model_selection import train_test_split
 
-          # Unlabelled rows with the default E2E sample's feature schema (the notebook's inference
-          # cell requires exactly the bundle's feature columns; the target is withheld).
-          load_diabetes(as_frame=True).data.tail(24).to_csv("/content/inference.csv", index=False)
+          # Genuinely new unlabelled rows (MRP-m6): the E2E run's independent test partition, re-derived with the
+          # seed the bundle records; the target is withheld and no scored row may be one of the bundle's support rows.
+          frame = load_diabetes(as_frame=True).frame
+          zip_meta = zipfile.ZipFile("/content/mitra-tutorial/mitra-predictor.zip").read("tutorial_run_metadata.json")
+          seed = json.loads(zip_meta)["seed"]
+          support, remainder = train_test_split(frame, test_size=0.4, random_state=seed)
+          _, test_rows = train_test_split(remainder, test_size=0.5, random_state=seed)
+          features = [c for c in frame.columns if c != "target"]
+          overlap = set(map(tuple, test_rows[features].to_numpy())) & set(map(tuple, support[features].to_numpy()))
+          if overlap or len(test_rows) == 0:
+              raise RuntimeError(f"inference rows overlap the bundle's support rows: {len(overlap)}")
+          test_rows[features].to_csv("/content/inference.csv", index=False)
+          print(f"Independent inference rows: {len(test_rows)} (overlap with support rows: 0)")
 
           zip_path = Path("/content/mitra-tutorial/mitra-predictor.zip")
           digest = hashlib.sha256(zip_path.read_bytes()).hexdigest()
