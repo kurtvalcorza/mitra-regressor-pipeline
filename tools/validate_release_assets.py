@@ -144,7 +144,7 @@ NOTEBOOKS = {
             "validate_inputs(new_data.drop(columns=[FEATURE_COLUMNS[0]]), None, feature_columns=FEATURE_COLUMNS)",
             "X_new, extra_columns = validate_inference_frame(new_data, FEATURE_COLUMNS)",
             "out['prediction'] = serving.predict(X_new)",
-            "report = evaluation_report(None, n_holdout=0, target_column=TARGET_COLUMN, sample_kind='BYOD')",
+            "report = evaluation_report(None, n_holdout=0, target_column=TARGET_COLUMN, sample_kind=sample_kind)",
             "'model_revision': MODEL_REVISION",
             "'model_license': MODEL_LICENSE",
         ),
@@ -159,7 +159,8 @@ NOTEBOOKS = {
             "artifact creation, in-notebook fitting or fine-tuning, classification",
         ),
         "forbidden_code": (
-            "load_diabetes(",
+            # load_diabetes( is allowed here (MRP-B1): the default sample input is the producer's independent test
+            # partition re-derived from the locked scikit-learn table and checked against the bundle's data digest.
             "shutil.make_archive(",
             ".fit(",
             "write_artifact_manifest(",
@@ -354,7 +355,10 @@ COMMON_MARKDOWN_MARKERS = (
 # Patterns that must never appear in tutorial code (comment-stripped), in any cell.
 FORBIDDEN_PATTERNS = (
     ("credential in clone URL", re.compile(r"https://[^/'\"\s]*@github\.com/|x-access-token:")),
-    ("repository clone (ST1)", re.compile(r"\bgit\b[^\n]*\bclone\b|github\.com/kurtvalcorza")),
+    # The one allowed github.com/kurtvalcorza URL in code is the companion's pinned sample-bundle release asset
+    # (Kurt 2026-10-04 MRP-B1; fleet pattern ratified 2026-10-08): a whole-archive SHA-256-checked download pinned in
+    # SAMPLE_ARTIFACT, not a repository dependency (NOTEBOOK_SPEC REL3 as clarified, SART6).
+    ("repository clone (ST1)", re.compile(r"\bgit\b[^\n]*\bclone\b|github\.com/kurtvalcorza(?!/mitra-regressor-pipeline/releases/download/sample-bundle-v\d+/[A-Za-z0-9_.-]+\.zip['\"])")),
     ("mutable git dependency (MOD14)", re.compile(r"git\+https?://(?![^\n]*@[0-9a-f]{40}\b)")),
     ("editable self-install", re.compile(r"""['"](?:-e|--editable)['"]|pip install (?:-e|--editable)\b""")),
     ("repository package import (ST1)", re.compile(rf"^\s*(?:from|import)\s+{PACKAGE}\b", re.M)),
