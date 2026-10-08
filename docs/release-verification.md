@@ -3,7 +3,7 @@
 `tutorials/mitra_regressor_colab.ipynb` (`E2E`) and `tutorials/mitra_regressor_predictor_inference_colab.ipynb`
 (`ARTIFACT-INFERENCE`) are **release candidates** until the exact notebook revisions have executed top-to-bottom in a
 clean supported runtime. Unit tests, JSON validation, code-cell compilation, and `tools/validate_release_assets.py` are
-necessary checks but are **not** runtime evidence under DIMER Notebook Specification 1.1. This file is the durable
+necessary checks but are **not** runtime evidence under DIMER Notebook Specification 2.2. This file is the durable
 release-gate record for both notebooks.
 
 ## Automatic coverage (static, every pull request)
@@ -13,14 +13,14 @@ CI runs `tools/validate_release_assets.py`, which checks, for each of the two no
 - notebook JSON parses; every code cell compiles as plain Python (no `%`/`!` magics); no persisted outputs or
   execution counts; no unresolved placeholder markers; every code cell is preceded by an explanatory markdown cell;
 - exactly the two tutorial notebooks, each named in `tutorials/README.md` with its profile, the notebook-spec version and
-  the standalone carrier; `metadata.dimer` declares that profile, spec `1.1`, `standalone: true` and `generated_from`
+  the standalone carrier; `metadata.dimer` declares that profile, spec `2.2`, `standalone: true` and `generated_from`
   (repository, module commit, module path `mitra_pipeline/tutorial_api.py`, module SHA-256, generator);
 - the standalone carrier (ST1–ST6, PAR1–PAR3): no clone, repository install or repository import on the primary path
   (the previous pair's `git clone` of this repository is gone); one cell tagged `embedded_module` equal to
   `mitra_pipeline/tutorial_api.py` after the generator's documented rewrite (the `DEFAULT_WEIGHTS_DIR` line); the inline
   `MANIFEST` equal to the committed `weights/mitra-regressor/dimer-base-manifest.json` and the inline `PINS` equal to the
   `pyproject.toml` runtime pins; the notebook byte-identical to `tools/build_notebook.py` output for its template; the
-  pinned-install cell with its restart-on-stale-import guard; `NOTEBOOK_SOURCE` recorded in exports;
+  isolated-environment bootstrap cell (generator /2.2: hash-locked `uv` environment, nothing installed into the kernel, no restart); `NOTEBOOK_SOURCE` recorded in exports;
 - `MODEL_ID`/`MODEL_REVISION` are bound only in the carried module cell (and repeated in the inline manifest, which the
   notebook asserts against the module before fetching), the revision is a 40-hex immutable commit, and the same identity
   string appears in `README.md`, `MODEL_CARD.md`, and `docs/WEIGHTS.md` with no stray revisions;
@@ -121,10 +121,34 @@ they are measurements for the stated runtime, not general estimates.
 |---|---|---|---|---|---|
 | 2026-09-14 | `7a4efc7` / `d32d6f6b45c6` | Kaggle T4 (`kurtvalcorza/dimer-nb2-mitra-regressor` v2) | Standalone E2E default sample path | 159.4 s | **PASSED** — 9/9 ok code cells executed cleanly, 9 files, 605 MB staged |
 | | | | Standalone ARTIFACT-INFERENCE with an external bundle | | pending — queued to the GPU lane |
+| 2026-10-08 | `fc56cdd` / `256708eef85f` | Colab CLI 0.7.4 sequential execution, fresh Colab Tesla T4 | Standalone E2E default sample path (no field edited; optional journeys not exercised) | 178.1 s | **PASSED** — one pass, no restart, 0 errors: 10/10 code cells in order (`exec.log`), isolated environment built in 82 s; evidence in `docs/execution-evidence/2026-10-08/mitra_regressor_colab/` |
+
+### Colab CLI execution of the E2E notebook at `fc56cdd` (blob `256708eef85f`) — 2026-10-08
+
+- **Executor:** Colab CLI 0.7.4 sequential execution on a fresh Colab Tesla T4 VM (`colab exec -f`): every code cell in order in one
+  kernel, order taken from `exec.log` ("Executing cell k/10"). Not a browser **Run all**; no execution counts; forms not rendered.
+- **Notebook:** `tutorials/mitra_regressor_colab.ipynb`, commit `fc56cdd7be65537265b60e956c188c87baaf756e`, blob
+  `256708eef85f92109df3118fca94c885bcbdca8f` (fetched byte-exact at the commit; the executed copy's code cells equal the source).
+- **Path:** default sample path only, no field edited. Section 1 built the isolated uv environment (74 locked packages, Python
+  3.12.12; kernel Python 3.13.15) in 82 s; the model ran on `cuda`.
+- **Outcome:** **one pass, no restart, 0 errors**; 10/10 code cells; the carried-module cell has no output by design. Wall 178.1 s.
+- **Printed results:** partitions 265 / 88 / 89; Mitra conditioned on 212 of the 265 support rows (53 kept by AutoGluon for its
+  internal `Validation score`, printed `-48.1091` = MAE 48.11 on those rows). Holdout MAE / RMSE / R²: Mitra 40.13 / 50.50 / 0.558,
+  Random Forest 42.28 / 53.97 / 0.495, LightGBM 44.94 / 57.55 / 0.426, Dummy mean 67.52 / 76.16 / -0.006; test MAE: Mitra 44.50,
+  Random Forest 44.67, LightGBM 47.77; printed MAE gap best tree minus Mitra 2.15 (holdout) and 0.17 (test). Evaluation verdict
+  `sample-sanity`; `selection_basis` `default:pretrained`; fresh reload **PASS** (predictions within `rtol=1e-6, atol=1e-8`).
+- **Exported bundle:** `outputs/mitra_regressor_predictor.zip`, 280,010,193 bytes, SHA-256
+  `1b0892040f59a8182e63bc4545b74594d5be72f6b79d97e8f5f9bdbd07f29c48` (printed by the run; the downloaded copy has the same digest).
+  It is the source of the `sample-bundle-v1` release asset used by the predictor-inference notebook.
+- **Evidence files** (`docs/execution-evidence/2026-10-08/mitra_regressor_colab/`, byte-exact, covered by the `-text` rule):
+  executed notebook `3f7a640020b2aed435949007e6c5513eef8195a4af024d1540aed32a8669d5bd`, `run_summary.json` `e252e60b766727e0ba4db28c2aedc0f096aff2a8d77fd56b07902d4a59531dfb`, `exec.log` `43a346373ac5d43f481c933caf8a7723fcc4cb9dc0513bc8167f24f1a3ca316b`, `mitra_regressor_result.json` `a4e9e81286113f6f80dbf822c13b3f7c0c47523f0b34921fb3d4f956a7c91c0d`.
+- **Not exercised:** browser Run all, BYOD (single CSV and pre-split), `RUN_FINE_TUNING` on GPU, new-data inference upload,
+  the `SEED` activity. The worked answers were checked against this run (NOTEBOOK_SPEC REL13): they hold; LightGBM's test MAE
+  (47.77) is a little above the "low-to-mid 40s" range the Section 6 answer gives (rounding-level).
 
 ## Current status
 
-No clean-runtime execution of the standalone notebooks has been recorded yet; clean GPU execution evidence for the E2E path is now recorded below. Static validation (`tools/validate_release_assets.py`), nbformat validation, a `compile()` sweep over every code
+**Generated tutorial pair: Candidate.** The E2E notebook's current blob `256708eef85f` has one recorded execution, the 2026-10-08 Colab CLI T4 run above (default path only); browser Run all, BYOD, the fine-tuning gate and the activity remain unexercised, and promotion is an integrator's decision. The 2026-09-14 Kaggle T4 row above is evidence for the previous E2E blob (`d32d6f6b45c6`) only: an nbclient execution of the default sample path with a `google.colab` shim, not a browser Colab `Run all`. On 2026-10-08 both notebooks were regenerated (generator /2.2 isolated uv environment, DIMER Notebook Specification 2.2, Notebook Review Framework v1 fixes MRC-M1..M2 / MRC-m1..m6), so under NOTEBOOK_SPEC REL14 they return to Candidate until a run of the exact new blobs is recorded; the earlier row stays as history. The ARTIFACT-INFERENCE companion has no recorded run. Static validation (`tools/validate_release_assets.py`), nbformat validation, a `compile()` sweep over every code
 cell, and the offline unit suite passed on the tutorial source at the candidate revision, which is necessary but not
 sufficient. The registry status remains **Candidate** until a reviewer confirms a recorded run against the notebook blobs
 under review and an integrator promotes it; promotion is not performed by the builder. Facts a reviewer should weigh:

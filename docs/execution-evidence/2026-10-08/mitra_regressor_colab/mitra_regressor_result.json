@@ -1,0 +1,603 @@
+{
+  "predictions": [
+    {
+      "age": 0.012648137276287077,
+      "sex": -0.044641636506989144,
+      "bmi": -0.020217511096257485,
+      "bp": -0.015998975220305175,
+      "s1": 0.01219056876179996,
+      "s2": 0.02123281182262779,
+      "s3": -0.07653558588880739,
+      "s4": 0.10811110062954676,
+      "s5": 0.05987940361514779,
+      "s6": -0.021788232074638245,
+      "prediction": 173.125
+    },
+    {
+      "age": 0.001750521923228816,
+      "sex": -0.044641636506989144,
+      "bmi": -0.06548561819925106,
+      "bp": -0.00567042229275739,
+      "s1": -0.007072771253015731,
+      "s2": -0.019476488210011744,
+      "s3": 0.04127682384197474,
+      "s4": -0.03949338287409329,
+      "s5": -0.003300838074501491,
+      "s6": 0.007206516329202944,
+      "prediction": 96.59375
+    },
+    {
+      "age": 0.01991321417832592,
+      "sex": -0.044641636506989144,
+      "bmi": -0.05794093368208547,
+      "bp": -0.057313186930496314,
+      "s1": -0.001568959820211247,
+      "s2": -0.012587222050641968,
+      "s3": 0.07441156407875721,
+      "s4": -0.03949338287409329,
+      "s5": -0.061175799045152635,
+      "s6": -0.07563562196748617,
+      "prediction": 70.671875
+    },
+    {
+      "age": 0.001750521923228816,
+      "sex": 0.05068011873981862,
+      "bmi": -0.05794093368208547,
+      "bp": -0.04354178302709927,
+      "s1": -0.09650970703608859,
+      "s2": -0.047033552847490806,
+      "s3": -0.09862541271332903,
+      "s4": 0.03430885887772673,
+      "s5": -0.061175799045152635,
+      "s6": -0.07149351505265171,
+      "prediction": 99.0625
+    },
+    {
+      "age": -0.027309785684926546,
+      "sex": -0.044641636506989144,
+      "bmi": -0.06332999405148947,
+      "bp": -0.05042748497879779,
+      "s1": -0.08962994274508297,
+      "s2": -0.1043397213549757,
+      "s3": 0.05232173725423556,
+      "s4": -0.0763945037500033,
+      "s5": -0.05615310200706333,
+      "s6": -0.06735140813781726,
+      "prediction": 92.890625
+    },
+    {
+      "age": -0.005514554978810025,
+      "sex": -0.044641636506989144,
+      "bmi": 0.023972783932855315,
+      "bp": 0.008100981610639655,
+      "s1": -0.034591828417038145,
+      "s2": -0.038891692840962916,
+      "s3": 0.022868634821540033,
+      "s4": -0.03949338287409329,
+      "s5": -0.015998872510179042,
+      "s6": -0.013504018244969336,
+      "prediction": 152.140625
+    },
+    {
+      "age": 0.08166636784565606,
+      "sex": 0.05068011873981862,
+      "bmi": -0.02560657146566148,
+      "bp": -0.03665608107540074,
+      "s1": -0.07036660273026729,
+      "s2": -0.046407255923911754,
+      "s3": -0.03971920784793797,
+      "s4": -0.002592261998183278,
+      "s5": -0.041176166918895155,
+      "s6": -0.005219804415300423,
+      "prediction": 113.875
+    },
+    {
+      "age": 0.009015598825267658,
+      "sex": 0.05068011873981862,
+      "bmi": -0.0051281420619263066,
+      "bp": -0.06419888888219483,
+      "s1": 0.06998058880624704,
+      "s2": 0.08386250418053477,
+      "s3": -0.03971920784793797,
+      "s4": 0.07120997975363674,
+      "s5": 0.03954249419232167,
+      "s6": 0.019632837073706312,
+      "prediction": 148.4375
+    }
+  ],
+  "new_data": null,
+  "metrics": {
+    "active_mode": "pretrained",
+    "holdout": {
+      "mae": 40.13276811079545,
+      "rmse": 50.499065903849804,
+      "r2": 0.5576422770557667
+    },
+    "independent_test": {
+      "mae": 44.49574262640449,
+      "rmse": 54.74648853400911,
+      "r2": 0.4818617715615343
+    },
+    "pretrained_holdout": {
+      "mae": 40.13276811079545,
+      "rmse": 50.499065903849804,
+      "r2": 0.5576422770557667
+    },
+    "finetuned_holdout": null,
+    "executable_baselines": [
+      {
+        "model": "Dummy-mean",
+        "split": "holdout",
+        "mae": 67.51616638078903,
+        "rmse": 76.1613636533489,
+        "r2": -0.006181543619704355
+      },
+      {
+        "model": "Dummy-mean",
+        "split": "test",
+        "mae": 66.72885308458767,
+        "rmse": 76.90570132709547,
+        "r2": -0.02246905448258185
+      },
+      {
+        "model": "Dummy-median",
+        "split": "holdout",
+        "mae": 65.98863636363636,
+        "rmse": 76.0353536192211,
+        "r2": -0.0028548152756506795
+      },
+      {
+        "model": "Dummy-median",
+        "split": "test",
+        "mae": 67.49438202247191,
+        "rmse": 79.0166388394441,
+        "r2": -0.07936965117065276
+      },
+      {
+        "model": "LightGBM",
+        "split": "holdout",
+        "mae": 44.94195056299266,
+        "rmse": 57.54703552234927,
+        "r2": 0.4255492026256459
+      },
+      {
+        "model": "LightGBM",
+        "split": "test",
+        "mae": 47.77067923012436,
+        "rmse": 60.42365902414801,
+        "r2": 0.36882884850621667
+      },
+      {
+        "model": "RandomForest",
+        "split": "holdout",
+        "mae": 42.28147727272727,
+        "rmse": 53.96552511684069,
+        "r2": 0.4948274559987085
+      },
+      {
+        "model": "RandomForest",
+        "split": "test",
+        "mae": 44.67056179775281,
+        "rmse": 55.39417308017112,
+        "r2": 0.4695294649279522
+      },
+      {
+        "model": "Mitra-pretrained",
+        "split": "holdout",
+        "mae": 40.13276811079545,
+        "rmse": 50.499065903849804,
+        "r2": 0.5576422770557667
+      },
+      {
+        "model": "Mitra-pretrained",
+        "split": "test",
+        "mae": 44.49574262640449,
+        "rmse": 54.74648853400911,
+        "r2": 0.4818617715615343
+      }
+    ]
+  },
+  "training_mean_baseline": {
+    "mae": 67.51616638078903,
+    "rmse": 76.1613636533489,
+    "r2": -0.006181543619704355
+  },
+  "evaluation_report": {
+    "task": "tabular regression by in-context conditioning on labelled support rows (AutoGluon Mitra)",
+    "score_semantics": "continuous point predictions in target units; no per-prediction uncertainty",
+    "sample_kind": "sample",
+    "n_holdout": 88,
+    "n_test": 89,
+    "target_column": "target",
+    "selection": "default:pretrained",
+    "baselines": [
+      {
+        "id": "training_mean",
+        "metrics": [
+          {
+            "id": "mae",
+            "value": 67.51616638078903,
+            "units": "target units",
+            "higher_is_better": false
+          },
+          {
+            "id": "rmse",
+            "value": 76.1613636533489,
+            "units": "target units",
+            "higher_is_better": false
+          },
+          {
+            "id": "r2",
+            "value": -0.006181543619704355,
+            "units": "unitless",
+            "higher_is_better": true
+          }
+        ]
+      }
+    ],
+    "model_id": "autogluon/mitra-regressor",
+    "model_revision": "5f277aa8f69042d39d6ac3612aed18bb9279bd95",
+    "metrics": [
+      {
+        "id": "mae",
+        "value": 40.13276811079545,
+        "units": "target units",
+        "higher_is_better": false,
+        "estimation": "single seeded split (support/holdout/independent test); no dispersion estimate"
+      },
+      {
+        "id": "rmse",
+        "value": 50.499065903849804,
+        "units": "target units",
+        "higher_is_better": false,
+        "estimation": "single seeded split (support/holdout/independent test); no dispersion estimate"
+      },
+      {
+        "id": "r2",
+        "value": 0.5576422770557667,
+        "units": "unitless",
+        "higher_is_better": true,
+        "estimation": "single seeded split (support/holdout/independent test); no dispersion estimate"
+      }
+    ],
+    "independent_test": [
+      {
+        "id": "mae",
+        "value": 44.49574262640449,
+        "units": "target units",
+        "higher_is_better": false,
+        "estimation": "independent test partition, single run"
+      },
+      {
+        "id": "rmse",
+        "value": 54.74648853400911,
+        "units": "target units",
+        "higher_is_better": false,
+        "estimation": "independent test partition, single run"
+      },
+      {
+        "id": "r2",
+        "value": 0.4818617715615343,
+        "units": "unitless",
+        "higher_is_better": true,
+        "estimation": "independent test partition, single run"
+      }
+    ],
+    "verdict": "sample-sanity",
+    "reason": "88 labelled holdout row(s) from one seeded split; tutorial evidence, not a benchmark",
+    "needs": "an independent, domain-representative labelled test set for any generalisable quality claim; the point predictions carry no uncertainty interval",
+    "executable_baselines": [
+      {
+        "model": "Dummy-mean",
+        "split": "holdout",
+        "mae": 67.51616638078903,
+        "rmse": 76.1613636533489,
+        "r2": -0.006181543619704355
+      },
+      {
+        "model": "Dummy-mean",
+        "split": "test",
+        "mae": 66.72885308458767,
+        "rmse": 76.90570132709547,
+        "r2": -0.02246905448258185
+      },
+      {
+        "model": "Dummy-median",
+        "split": "holdout",
+        "mae": 65.98863636363636,
+        "rmse": 76.0353536192211,
+        "r2": -0.0028548152756506795
+      },
+      {
+        "model": "Dummy-median",
+        "split": "test",
+        "mae": 67.49438202247191,
+        "rmse": 79.0166388394441,
+        "r2": -0.07936965117065276
+      },
+      {
+        "model": "LightGBM",
+        "split": "holdout",
+        "mae": 44.94195056299266,
+        "rmse": 57.54703552234927,
+        "r2": 0.4255492026256459
+      },
+      {
+        "model": "LightGBM",
+        "split": "test",
+        "mae": 47.77067923012436,
+        "rmse": 60.42365902414801,
+        "r2": 0.36882884850621667
+      },
+      {
+        "model": "RandomForest",
+        "split": "holdout",
+        "mae": 42.28147727272727,
+        "rmse": 53.96552511684069,
+        "r2": 0.4948274559987085
+      },
+      {
+        "model": "RandomForest",
+        "split": "test",
+        "mae": 44.67056179775281,
+        "rmse": 55.39417308017112,
+        "r2": 0.4695294649279522
+      },
+      {
+        "model": "Mitra-pretrained",
+        "split": "holdout",
+        "mae": 40.13276811079545,
+        "rmse": 50.499065903849804,
+        "r2": 0.5576422770557667
+      },
+      {
+        "model": "Mitra-pretrained",
+        "split": "test",
+        "mae": 44.49574262640449,
+        "rmse": 54.74648853400911,
+        "r2": 0.4818617715615343
+      }
+    ]
+  },
+  "input_manifest": {
+    "schema": {
+      "input": "pandas.DataFrame, one row per example; feature columns of any dtype plus a numeric target",
+      "columns": "unique names; `drop_columns` are removed before validation",
+      "target": "coerced to numeric (non-numeric values are rejected); rows with a missing target are dropped and counted; infinite values are rejected; the training target must vary",
+      "train_rows": [
+        50,
+        10000
+      ],
+      "eval_rows": [
+        2,
+        null
+      ],
+      "features": [
+        1,
+        500
+      ],
+      "inference_input": "every fitted feature column present; no `prediction` column; extras pass through",
+      "preprocessing": "none by the package (AutoGluon's Mitra handles raw columns); training rows above MAX_TRAIN_ROWS are capped by seeded sampling and the cap is reported"
+    },
+    "inputs": [
+      {
+        "id": "sklearn-diabetes:train",
+        "mode": "fit",
+        "rows": 265,
+        "feature_columns": [
+          "age",
+          "sex",
+          "bmi",
+          "bp",
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5",
+          "s6"
+        ],
+        "categorical_columns": [],
+        "missing_value_columns": {},
+        "report": {
+          "rows_before_target_drop": 265,
+          "rows_after_target_drop": 265,
+          "dropped_missing_target_rows": 0,
+          "exact_duplicate_rows": 0,
+          "feature_count": 10
+        },
+        "target_summary": {
+          "min": 25.0,
+          "max": 346.0,
+          "mean": 151.02641509433963,
+          "distinct": 176
+        }
+      },
+      {
+        "id": "sklearn-diabetes:holdout",
+        "mode": "fit",
+        "rows": 88,
+        "feature_columns": [
+          "age",
+          "sex",
+          "bmi",
+          "bp",
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5",
+          "s6"
+        ],
+        "categorical_columns": [],
+        "missing_value_columns": {},
+        "report": {
+          "rows_before_target_drop": 88,
+          "rows_after_target_drop": 88,
+          "dropped_missing_target_rows": 0,
+          "exact_duplicate_rows": 0,
+          "feature_count": 10
+        },
+        "target_summary": {
+          "min": 37.0,
+          "max": 310.0,
+          "mean": 145.0568181818182,
+          "distinct": 75
+        }
+      },
+      {
+        "id": "sklearn-diabetes:test",
+        "mode": "fit",
+        "rows": 89,
+        "feature_columns": [
+          "age",
+          "sex",
+          "bmi",
+          "bp",
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5",
+          "s6"
+        ],
+        "categorical_columns": [],
+        "missing_value_columns": {},
+        "report": {
+          "rows_before_target_drop": 89,
+          "rows_after_target_drop": 89,
+          "dropped_missing_target_rows": 0,
+          "exact_duplicate_rows": 0,
+          "feature_count": 10
+        },
+        "target_summary": {
+          "min": 42.0,
+          "max": 317.0,
+          "mean": 162.42696629213484,
+          "distinct": 74
+        }
+      }
+    ],
+    "target_column": "target",
+    "drop_columns": [],
+    "min_rows": 50,
+    "verdict": "accepted",
+    "findings": [
+      {
+        "input": "too-few-rows-probe",
+        "verdict": "rejected",
+        "message": "table-0 is not ready: use at least 50 labelled rows after missing-target drops"
+      }
+    ],
+    "model_id": "autogluon/mitra-regressor",
+    "model_revision": "5f277aa8f69042d39d6ac3612aed18bb9279bd95"
+  },
+  "sample": {
+    "kind": "sample",
+    "name": "sklearn-diabetes",
+    "source": "Sample: Diabetes",
+    "data_sha256": "0111b4ba11f24d2c8b118c163b2c32d907f957f8c5ea7142d1231a90ccfe5777",
+    "train_rows": 265,
+    "holdout_rows": 88,
+    "test_rows": 89
+  },
+  "artifact": {
+    "zip": "mitra_regressor_predictor.zip",
+    "zip_sha256": "1b0892040f59a8182e63bc4545b74594d5be72f6b79d97e8f5f9bdbd07f29c48",
+    "run_metadata": {
+      "artifact_format": "dimer-autogluon-predictor",
+      "artifact_format_version": 1,
+      "base_model": "autogluon/mitra-regressor",
+      "base_model_revision": "5f277aa8f69042d39d6ac3612aed18bb9279bd95",
+      "weights_sha256": "d8e75c62af0bec2fd404b0ad20a442d951d43ca6d331315cfcc0509b54f2c642",
+      "config_sha256": "2bc1ed5047f7c25368245e8ad32540a5fa28940b1ec05d3f1f454a09ff5384c1",
+      "notebook_source": {
+        "repository": "mitra-regressor-pipeline",
+        "repository_revision": "d10087ab422ef9ddd5667a0116ecf504b05db6a2",
+        "embedded_module": "mitra_pipeline/tutorial_api.py",
+        "embedded_modules": [
+          "mitra_pipeline/tutorial_api.py"
+        ],
+        "module_sha256": "ad5f2f3a5a39da032faf599764f7e93f04bbe82297eb8f7ca5c96f02d3c0ee5a",
+        "generator": "build_notebook.py/2.2",
+        "notebook_spec": "2.2"
+      },
+      "model_source": "verified local snapshot (Section 3)",
+      "autogluon_version": "1.5.0",
+      "python_version": "3.12.12",
+      "torch_version": "2.9.1+cu128",
+      "device": "cuda",
+      "problem_type": "regression",
+      "target_column": "target",
+      "features": [
+        "age",
+        "sex",
+        "bmi",
+        "bp",
+        "s1",
+        "s2",
+        "s3",
+        "s4",
+        "s5",
+        "s6"
+      ],
+      "mode": "pretrained",
+      "selection_basis": "default:pretrained",
+      "seed": 42,
+      "data_source": "Sample: Diabetes",
+      "data_sha256": "0111b4ba11f24d2c8b118c163b2c32d907f957f8c5ea7142d1231a90ccfe5777",
+      "train_rows_before_cap": 265,
+      "train_rows_used": 265,
+      "train_row_cap_applied": false,
+      "support_rows": 265,
+      "mitra_context_rows": 212,
+      "autogluon_internal_validation": "automatic holdout_frac split of the support rows; Mitra is conditioned on mitra_context_rows of them",
+      "tree_baseline_rows": 265,
+      "holdout_rows": 88,
+      "independent_test_rows": 89,
+      "eval_metric": "mean_absolute_error",
+      "fine_tuning_requested": false,
+      "fine_tune_steps_requested": null,
+      "fine_tune_time_limit_seconds": null,
+      "max_memory_usage_ratio": 1.1,
+      "pretrained_holdout_metrics": {
+        "mae": 40.13276811079545,
+        "rmse": 50.499065903849804,
+        "r2": 0.5576422770557667
+      },
+      "pretrained_test_metrics": {
+        "mae": 44.49574262640449,
+        "rmse": 54.74648853400911,
+        "r2": 0.4818617715615343
+      },
+      "finetuned_holdout_metrics": null,
+      "finetuned_test_metrics": null,
+      "prediction_uncertainty": "point predictions only; no calibrated per-prediction interval",
+      "exported_at_utc": "2026-10-08T07:29:55.732961+00:00"
+    }
+  },
+  "notebook_source": {
+    "repository": "mitra-regressor-pipeline",
+    "repository_revision": "d10087ab422ef9ddd5667a0116ecf504b05db6a2",
+    "embedded_module": "mitra_pipeline/tutorial_api.py",
+    "embedded_modules": [
+      "mitra_pipeline/tutorial_api.py"
+    ],
+    "module_sha256": "ad5f2f3a5a39da032faf599764f7e93f04bbe82297eb8f7ca5c96f02d3c0ee5a",
+    "generator": "build_notebook.py/2.2",
+    "notebook_spec": "2.2"
+  },
+  "repository_revision": "d10087ab422ef9ddd5667a0116ecf504b05db6a2",
+  "model_id": "autogluon/mitra-regressor",
+  "model_revision": "5f277aa8f69042d39d6ac3612aed18bb9279bd95",
+  "model_license": "apache-2.0",
+  "runtime": {
+    "python": "3.12.12",
+    "torch": "2.9.1+cu128",
+    "autogluon": "1.5.0",
+    "lightgbm": "4.6.0",
+    "numpy": "2.3.5",
+    "pandas": "2.3.3",
+    "sklearn": "1.7.2",
+    "device": "cuda"
+  }
+}
