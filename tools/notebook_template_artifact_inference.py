@@ -89,7 +89,7 @@ TEMPLATE = {
                 "**Default: the trusted sample bundle.** With `ARTIFACT_ZIP_PATH` empty the cell downloads the bundle pinned "
                 "in `SAMPLE_ARTIFACT` — release asset `sample-bundle-v1` of this repository, written by the E2E tutorial in a "
                 "recorded Colab T4 run (the printed `producer` names the notebook blob, commit and run; artifact format "
-                "`autogluon-tabular-predictor`, producer Python 3.12 / AutoGluon 1.5.0) — and compares its whole-archive SHA-256 "
+                "`dimer-autogluon-predictor` version 1, producer Python 3.12 / AutoGluon 1.5.0) — and compares its whole-archive SHA-256 "
                 "with the pinned digest **before extraction**; a mismatch stops the cell and nothing is extracted. A complete "
                 "earlier download in this runtime is reused. Nothing is uploaded and `google.colab` is not imported on this path.\n\n"
                 "**Your own bundle (optional).** Set `ARTIFACT_ZIP_PATH` to a bundle ZIP already in the runtime (Kaggle dataset, "

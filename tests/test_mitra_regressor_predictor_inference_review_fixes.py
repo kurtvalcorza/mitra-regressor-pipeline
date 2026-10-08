@@ -75,6 +75,7 @@ def test_mrp_b1_sample_artifact_is_pinned_by_release_url_sha256_and_producer():
     assert "ARTIFACT_ZIP_PATH = ''  # @param" in source  # the location field defaults to the pinned asset
     markdown = _markdown(ART)
     assert "Known NOTEBOOK_SPEC 2.0 gap" not in markdown and "no sample is bundled" not in markdown
+    assert "`dimer-autogluon-predictor` version 1" in markdown  # the carried ARTIFACT_FORMAT, as the hosted run printed
 
 
 def _run_section_4(tmp_path, monkeypatch, payload: bytes, *, pinned_sha: str | None = None, **fields):
