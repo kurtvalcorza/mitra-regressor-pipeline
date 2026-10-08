@@ -1,0 +1,95 @@
+[colab] Parsing notebook '/home/kurt/colab-runs/mitra-regressor-pipeline-fc56cdd-695ecf/mitra_regressor_colab_fc56cdd_colab-cli-t4.ipynb'...
+[colab] Executing cell 1/10 - Infrastructure: build (or reuse) the isolated environment and route later cells to it...
+{'isolated_environment': '/content/dimer_isolated_env_a45168c01c72', 'reused': False, 'isolated_python': '3.12.12', 'kernel_python': '3.13.15', 'locked_packages': 74, 'setup_seconds': 82}
+{'routed_to': '/content/dimer_isolated_env_a45168c01c72/bin/python', 'worker_pid': 1794, 'worker_reused': False}
+[colab] Executing cell 2/10 - Infrastructure: record the runtime...
+{'notebook_source': {'repository': 'mitra-regressor-pipeline', 'repository_revision': 'd10087ab422ef9ddd5667a0116ecf504b05db6a2', 'embedded_module': 'mitra_pipeline/tutorial_api.py', 'embedded_modules': ['mitra_pipeline/tutorial_api.py'], 'module_sha256': 'ad5f2f3a5a39da032faf599764f7e93f04bbe82297eb8f7ca5c96f02d3c0ee5a', 'generator': 'build_notebook.py/2.2', 'notebook_spec': '2.2'}, 'python': '3.12.12', 'executable': '/content/dimer_isolated_env_a45168c01c72/bin/python', 'torch': '2.9.1+cu128', 'numpy': '2.3.5', 'pandas': '2.3.3', 'sklearn': '1.7.2', 'cuda': True}
+[colab] Executing cell 3/10 - mitra_regressor-09...
+[colab] Executing cell 4/10 - Infrastructure: stage and digest-verify the pinned snapshot, then load the model...
+{'model_id': 'autogluon/mitra-regressor', 'revision': '5f277aa8f69042d39d6ac3612aed18bb9279bd95', 'license': 'apache-2.0', 'files': 2, 'total_bytes': 302683221}
+{'weights_dir': '/content/weights/mitra-regressor', 'fetched': ['model.safetensors', 'config.json']}
+{'verified_files': 2, 'revision': '5f277aa8f69042d39d6ac3612aed18bb9279bd95'}
+{'device': 'cuda', 'source': 'local-snapshot'}
+[colab] Executing cell 5/10 - mitra_regressor-13...
+{'sample_kind': 'sample', 'name': 'sklearn-diabetes', 'target': 'target', 'drop_columns': [], 'train_rows': 265, 'holdout_rows': 88, 'test_rows': 89, 'data_sha256': '0111b4ba11f24d2c8b118c163b2c32d907f957f8c5ea7142d1231a90ccfe5777'}
+[colab] Executing cell 6/10 - mitra_regressor-16...
+{'ceilings': {'MIN_TRAIN_ROWS': 50, 'MAX_TRAIN_ROWS': 10000, 'MAX_FEATURES': 500}}
+{
+  "id": "sklearn-diabetes:train",
+  "mode": "fit",
+  "rows": 265,
+  "feature_columns": [
+    "age",
+    "sex",
+    "bmi",
+    "bp",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5",
+    "s6"
+  ],
+  "categorical_columns": [],
+  "missing_value_columns": {},
+  "report": {
+    "rows_before_target_drop": 265,
+    "rows_after_target_drop": 265,
+    "dropped_missing_target_rows": 0,
+    "exact_duplicate_rows": 0,
+    "feature_count": 10
+  },
+  "target_summary": {
+    "min": 25.0,
+    "max": 346.0,
+    "mean": 151.02641509433963,
+    "distinct": 176
+  }
+}
+findings: [{'input': 'too-few-rows-probe', 'verdict': 'rejected', 'message': 'table-0 is not ready: use at least 50 labelled rows after missing-target drops'}]
+{'train': 265, 'holdout': 88, 'test': 89, 'features': 10, 'cap': {'applied': False, 'before': 265, 'after': 265}, 'overlaps': {'train_vs_holdout': 0, 'train_vs_test': 0, 'holdout_vs_test': 0}}
+training-mean baseline on the holdout {'mae': 67.51616638078903, 'rmse': 76.1613636533489, 'r2': -0.006181543619704355}
+[colab] Executing cell 7/10 - mitra_regressor-19...
+Automatically generating train/validation split with holdout_frac=0.2, Train Rows: 212, Val Rows: 53
+Fitting model: Mitra ... Training model for up to 299.97s of the 299.97s of remaining time.
+	-48.1091	 = Validation score   (-mean_absolute_error)
+{'support_rows': 265, 'mitra_context_rows': 212, 'autogluon_internal_validation_rows': 53, 'tree_baseline_rows': 265}
+pretrained holdout {'mae': 40.13276811079545, 'rmse': 50.499065903849804, 'r2': 0.5576422770557667} | AutoGluon evaluate: {'mean_absolute_error': 40.13276811079545, 'root_mean_squared_error': 50.499065903849804, 'mean_squared_error': 2550.155657161366, 'r2': 0.5576422770557667, 'pearsonr': 0.752487068551369, 'median_absolute_error': 32.6796875}
+pretrained independent test {'mae': 44.49574262640449, 'rmse': 54.74648853400911, 'r2': 0.4818617715615343}
+{'recommended_for_export': 'pretrained', 'selection_basis': 'default:pretrained', 'device': 'cuda'}
+           model   split       mae      rmse        r2
+      Dummy-mean holdout 67.516166 76.161364 -0.006182
+      Dummy-mean    test 66.728853 76.905701 -0.022469
+    Dummy-median holdout 65.988636 76.035354 -0.002855
+    Dummy-median    test 67.494382 79.016639 -0.079370
+        LightGBM holdout 44.941951 57.547036  0.425549
+        LightGBM    test 47.770679 60.423659  0.368829
+    RandomForest holdout 42.281477 53.965525  0.494827
+    RandomForest    test 44.670562 55.394173  0.469529
+Mitra-pretrained holdout 40.132768 50.499066  0.557642
+Mitra-pretrained    test 44.495743 54.746489  0.481862
+{'holdout_mae_gap_best_tree_minus_mitra': 2.15, 'test_mae_gap_best_tree_minus_mitra': 0.17, 'holdout_rows': 88, 'test_rows': 89, 'mitra_context_rows': 212, 'tree_baseline_rows': 265}
+All values above are current-run tutorial metrics. Lower MAE/RMSE is better; higher R2 is better.
+[colab] Executing cell 8/10 - mitra_regressor-22...
+{
+  "verdict": "sample-sanity",
+  "reason": "88 labelled holdout row(s) from one seeded split; tutorial evidence, not a benchmark",
+  "selection": "default:pretrained",
+  "n_holdout": 88,
+  "n_test": 89
+}
+[colab] Executing cell 9/10 - mitra_regressor-25...
+Inference upload skipped; eight held-out rows scored instead.
+          age       sex       bmi  ...        s5        s6  prediction
+285  0.012648 -0.044642 -0.020218  ...  0.059879 -0.021788  173.125000
+255  0.001751 -0.044642 -0.065486  ... -0.003301  0.007207   96.593750
+370  0.019913 -0.044642 -0.057941  ... -0.061176 -0.075636   70.671875
+349  0.001751  0.050680 -0.057941  ... -0.061176 -0.071494   99.062500
+57  -0.027310 -0.044642 -0.063330  ... -0.056153 -0.067351   92.890625
+
+[5 rows x 11 columns]
+[colab] Executing cell 10/10 - mitra_regressor-27...
+{'predictor_zip': '/content/outputs/mitra_regressor_predictor.zip', 'zip_sha256': '1b0892040f59a8182e63bc4545b74594d5be72f6b79d97e8f5f9bdbd07f29c48', 'artifact_manifest': '/content/outputs/mitra-pretrained/artifact_manifest.json'}
+PASS: artifact manifest/provenance verified before deserialisation; predictor reloaded from fresh files; predictions equivalent (rtol=1e-6, atol=1e-8).
+['artifact-reload', 'mitra-pretrained', 'mitra_regressor_evaluation_report.json', 'mitra_regressor_input_manifest.json', 'mitra_regressor_predictions.csv', 'mitra_regressor_predictor.zip', 'mitra_regressor_result.json']
+[colab] Saving notebook with outputs to '/home/kurt/colab-runs/mitra-regressor-pipeline-fc56cdd-695ecf/mitra_regressor_colab_fc56cdd_colab-cli-t4_output.ipynb'...
