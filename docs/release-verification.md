@@ -120,7 +120,9 @@ they are measurements for the stated runtime, not general estimates.
 | Date (UTC) | Commit / notebook blob | Executor | Path exercised | Wall | Outcome |
 |---|---|---|---|---|---|
 | 2026-09-14 | `7a4efc7` / `d32d6f6b45c6` | Kaggle T4 (`kurtvalcorza/dimer-nb2-mitra-regressor` v2) | Standalone E2E default sample path | 159.4 s | **PASSED** — 9/9 ok code cells executed cleanly, 9 files, 605 MB staged |
-| | | | Standalone ARTIFACT-INFERENCE with an external bundle | | pending — queued to the GPU lane |
+| | | | Standalone ARTIFACT-INFERENCE with an external bundle | | pending — queued to the GPU lane (superseded by the 2026-10-08 rows below) |
+| 2026-10-08 | `08667a7` / `8a2ea1c75750` | GitHub Actions `Notebook release execution` run 37747908149 (ubuntu-24.04, runner Python; notebook in the isolated uv environment) | Standalone ARTIFACT-INFERENCE, own-bundle path: the E2E bundle produced in the same job, by `ARTIFACT_ZIP_PATH` + `EXPECTED_ZIP_SHA256`, scoring the 89-row E2E test partition (overlap with support rows asserted 0) | 5m52s job | **PASSED** — CI execution of the path journey (not a Colab run; artifacts kept 30 days by Actions) |
+| 2026-10-08 | `08667a7` / `8a2ea1c75750` | Colab CLI 0.7.4 sequential execution, fresh Colab Tesla T4 | Standalone ARTIFACT-INFERENCE default path: pinned `sample-bundle-v1` asset downloaded and SHA-256-verified before extraction, 89 sample rows (no field edited) | 152.3 s | **PASSED** — one pass, no restart, 0 errors: 9/9 code cells in order (`exec.log`); evidence in `docs/execution-evidence/2026-10-08/mitra_regressor_predictor_inference_colab/` |
 | 2026-10-08 | `fc56cdd` / `256708eef85f` | Colab CLI 0.7.4 sequential execution, fresh Colab Tesla T4 | Standalone E2E default sample path (no field edited; optional journeys not exercised) | 178.1 s | **PASSED** — one pass, no restart, 0 errors: 10/10 code cells in order (`exec.log`), isolated environment built in 82 s; evidence in `docs/execution-evidence/2026-10-08/mitra_regressor_colab/` |
 
 ### Colab CLI execution of the E2E notebook at `fc56cdd` (blob `256708eef85f`) — 2026-10-08
@@ -146,9 +148,31 @@ they are measurements for the stated runtime, not general estimates.
   the `SEED` activity. The worked answers were checked against this run (NOTEBOOK_SPEC REL13): they hold; LightGBM's test MAE
   (47.77) is a little above the "low-to-mid 40s" range the Section 6 answer gives (rounding-level).
 
+### Colab CLI execution of the ARTIFACT-INFERENCE notebook at `08667a7` (blob `8a2ea1c75750`) — 2026-10-08
+
+- **Executor:** Colab CLI 0.7.4 sequential execution on a fresh Colab Tesla T4 VM (`colab exec -f`), every code cell in order in one
+  kernel (order from `exec.log`, "Executing cell k/9"). Not a browser **Run all**; no execution counts; forms not rendered.
+- **Notebook:** `tutorials/mitra_regressor_predictor_inference_colab.ipynb`, commit `08667a77edaea726fc257f7e4c60d7411dd64329`, blob
+  `8a2ea1c757505b63bce433fda44002cd5f5f3ef6` (fetched byte-exact at the commit; the executed copy's code cells equal the source).
+- **Path:** default, no field edited. Section 1 built the isolated uv environment (74 locked packages, Python 3.12.12) in 80 s.
+  Section 4 downloaded the pinned release asset `sample-bundle-v1/mitra_regressor_predictor.zip` and matched its whole-archive SHA-256
+  `1b0892040f59a8182e63bc4545b74594d5be72f6b79d97e8f5f9bdbd07f29c48` before extraction (`digest_verified: True`; format
+  `dimer-autogluon-predictor` version 1). Section 6 scored the 89-row sample input (the producer's independent test partition,
+  `overlap_with_support_rows: 0`).
+- **Outcome:** **one pass, no restart, 0 errors**; 9/9 code cells; the carried-module cell has no output by design. Wall 152.3 s.
+  Evaluation verdict `not-measurable`, `sample_kind` `sample`; four outputs written. Activity (Section 8): `bmi` +0.05 moved the mean
+  prediction by +24.46, 88 rows up, 0 down.
+- **Evidence files** (`docs/execution-evidence/2026-10-08/mitra_regressor_predictor_inference_colab/`, byte-exact, covered by the
+  `-text` rule): executed notebook `65d1899e9ef348f26972089ac225efc36e2dfb66ad5d6a2259a04b0eafd3f22a`, `run_summary.json`
+  `29ef8c3c08c887c4d0f00c5562b7d9dca336ab4f1e50e3d1b5696ac4f7ebfa23`, `exec.log` `bdfd37432715114e72f600386753e9ce868584b5b2dc79f95301c00bd829779b`.
+- **Earlier run:** the Colab CLI run of `9bb4d3b` (blob `f0ff1a37d6b0`, 9/9, 191.9 s, PASS) is superseded: its Section 4 prose
+  named the wrong artifact format, corrected in `08667a7` (prose only).
+- **Not exercised:** browser Run all, the own-bundle path on Colab (`ARTIFACT_ZIP_PATH`, covered by the CI run above), the
+  `upload` dialogs, the activity with another value. Worked answers checked against this run (REL13): they hold.
+
 ## Current status
 
-**Generated tutorial pair: Candidate.** The E2E notebook's current blob `256708eef85f` has one recorded execution, the 2026-10-08 Colab CLI T4 run above (default path only); browser Run all, BYOD, the fine-tuning gate and the activity remain unexercised, and promotion is an integrator's decision. The 2026-09-14 Kaggle T4 row above is evidence for the previous E2E blob (`d32d6f6b45c6`) only: an nbclient execution of the default sample path with a `google.colab` shim, not a browser Colab `Run all`. On 2026-10-08 both notebooks were regenerated (generator /2.2 isolated uv environment, DIMER Notebook Specification 2.2, Notebook Review Framework v1 fixes MRC-M1..M2 / MRC-m1..m6), so under NOTEBOOK_SPEC REL14 they return to Candidate until a run of the exact new blobs is recorded; the earlier row stays as history. The ARTIFACT-INFERENCE companion has no recorded run. Static validation (`tools/validate_release_assets.py`), nbformat validation, a `compile()` sweep over every code
+**Generated tutorial pair: Candidate.** The E2E notebook's current blob `256708eef85f` has one recorded execution, the 2026-10-08 Colab CLI T4 run above (default path only); browser Run all, BYOD, the fine-tuning gate and the activity remain unexercised, and promotion is an integrator's decision. The 2026-09-14 Kaggle T4 row above is evidence for the previous E2E blob (`d32d6f6b45c6`) only: an nbclient execution of the default sample path with a `google.colab` shim, not a browser Colab `Run all`. On 2026-10-08 both notebooks were regenerated (generator /2.2 isolated uv environment, DIMER Notebook Specification 2.2, Notebook Review Framework v1 fixes MRC-M1..M2 / MRC-m1..m6), so under NOTEBOOK_SPEC REL14 they return to Candidate until a run of the exact new blobs is recorded; the earlier row stays as history. The ARTIFACT-INFERENCE companion's current blob `8a2ea1c75750` has a recorded Colab CLI T4 run of its default path (the pinned sample bundle) and a CI run of the own-bundle path, both 2026-10-08. Static validation (`tools/validate_release_assets.py`), nbformat validation, a `compile()` sweep over every code
 cell, and the offline unit suite passed on the tutorial source at the candidate revision, which is necessary but not
 sufficient. The registry status remains **Candidate** until a reviewer confirms a recorded run against the notebook blobs
 under review and an integrator promotes it; promotion is not performed by the builder. Facts a reviewer should weigh:

@@ -31,7 +31,7 @@ egress, enable, and monitoring — see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Release status
 
-**Candidate.** Static/unit checks do not constitute clean-runtime notebook evidence. The previous repository-installing pair was executed by the release workflow in a clean hosted runner. The 2026-09-14 Kaggle T4 run recorded in `docs/release-verification.md` covers the previous standalone E2E blob (`d32d6f6`) only; the pair regenerated on 2026-10-08 under DIMER Notebook Specification 2.2 has one recorded run, of the E2E default path (Colab CLI T4, 2026-10-08, blob `256708eef85f`); the companion has none yet. Complete `docs/release-verification.md` against the exact release revision before calling either notebook release-grade.
+**Candidate.** Static/unit checks do not constitute clean-runtime notebook evidence. The previous repository-installing pair was executed by the release workflow in a clean hosted runner. The 2026-09-14 Kaggle T4 run recorded in `docs/release-verification.md` covers the previous standalone E2E blob (`d32d6f6`) only; the pair regenerated on 2026-10-08 under DIMER Notebook Specification 2.2 has one recorded run, of the E2E default path (Colab CLI T4, 2026-10-08, blob `256708eef85f`); the companion's default path (pinned sample bundle) has one too (Colab CLI T4, 2026-10-08, blob `8a2ea1c75750`). Complete `docs/release-verification.md` against the exact release revision before calling either notebook release-grade.
 
 ## The model: Mitra
 

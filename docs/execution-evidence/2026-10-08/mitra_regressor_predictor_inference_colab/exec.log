@@ -1,0 +1,107 @@
+[colab] Parsing notebook '/home/kurt/colab-runs/mitra-regressor-pipeline-08667a7-5c44c8/mitra_regressor_predictor_inference_colab_08667a7_colab-cli-t4.ipynb'...
+[colab] Executing cell 1/9 - Infrastructure: build (or reuse) the isolated environment and route later cells to it...
+{'isolated_environment': '/content/dimer_isolated_env_a45168c01c72', 'reused': False, 'isolated_python': '3.12.12', 'kernel_python': '3.13.15', 'locked_packages': 74, 'setup_seconds': 80}
+{'routed_to': '/content/dimer_isolated_env_a45168c01c72/bin/python', 'worker_pid': 1730, 'worker_reused': False}
+[colab] Executing cell 2/9 - Infrastructure: record the runtime...
+{'notebook_source': {'repository': 'mitra-regressor-pipeline', 'repository_revision': '9bb4d3b34939f8f29238b0ebd6646de013d3160e', 'embedded_module': 'mitra_pipeline/tutorial_api.py', 'embedded_modules': ['mitra_pipeline/tutorial_api.py'], 'module_sha256': 'ad5f2f3a5a39da032faf599764f7e93f04bbe82297eb8f7ca5c96f02d3c0ee5a', 'generator': 'build_notebook.py/2.2', 'notebook_spec': '2.2'}, 'python': '3.12.12', 'executable': '/content/dimer_isolated_env_a45168c01c72/bin/python', 'torch': '2.9.1+cu128', 'numpy': '2.3.5', 'pandas': '2.3.3', 'sklearn': '1.7.2', 'cuda': True}
+[colab] Executing cell 3/9 - mitra_regressor_predictor_inference-08...
+[colab] Executing cell 4/9 - Infrastructure: stage and digest-verify the pinned snapshot, then load the model...
+{'model_id': 'autogluon/mitra-regressor', 'revision': '5f277aa8f69042d39d6ac3612aed18bb9279bd95', 'license': 'apache-2.0', 'files': 2, 'total_bytes': 302683221}
+{'weights_dir': '/content/weights/mitra-regressor', 'fetched': ['model.safetensors', 'config.json']}
+{'verified_files': 2, 'revision': '5f277aa8f69042d39d6ac3612aed18bb9279bd95'}
+{'device': 'cuda', 'source': 'local-snapshot'}
+[colab] Executing cell 5/9 - mitra_regressor_predictor_inference-12...
+{'sample_artifact': 'https://github.com/kurtvalcorza/mitra-regressor-pipeline/releases/download/sample-bundle-v1/mitra_regressor_predictor.zip', 'pinned_sha256': '1b0892040f59a8182e63bc4545b74594d5be72f6b79d97e8f5f9bdbd07f29c48', 'producer': {'notebook': 'tutorials/mitra_regressor_colab.ipynb', 'notebook_blob': '256708eef85f92109df3118fca94c885bcbdca8f', 'commit': 'fc56cdd7be65537265b60e956c188c87baaf756e', 'run': '2026-10-08 Colab CLI 0.7.4 sequential execution, fresh Colab Tesla T4, default path', 'evidence': 'docs/execution-evidence/2026-10-08/mitra_regressor_colab/', 'release': 'sample-bundle-v1', 'asset_id': 621123479, 'bytes': 280010193, 'python': '3.12.12', 'autogluon': '1.5.0'}}
+Whole-archive SHA-256 matches the trusted expected digest.
+{'artifact_source': 'sample artifact: https://github.com/kurtvalcorza/mitra-regressor-pipeline/releases/download/sample-bundle-v1/mitra_regressor_predictor.zip', 'digest_verified': True, 'zip': 'sample-mitra_regressor_predictor.zip', 'zip_sha256': '1b0892040f59a8182e63bc4545b74594d5be72f6b79d97e8f5f9bdbd07f29c48', 'format': 'dimer-autogluon-predictor', 'format_version': 1, 'base_model': 'autogluon/mitra-regressor', 'base_revision': '5f277aa8f690', 'problem_type': 'regression', 'mode': 'pretrained', 'selection_basis': 'default:pretrained'}
+{'target': 'target', 'required_features': ['age', 'sex', 'bmi', 'bp', 's1', 's2', 's3', 's4', 's5', 's6'], 'producer_autogluon': '1.5.0', 'producer_python': '3.12.12', 'data_source': 'Sample: Diabetes'}
+[colab] Executing cell 6/9 - mitra_regressor_predictor_inference-15...
+{'reconstructed_from': 'external-artifact/bundle', 'models': ['Mitra'], 'features': 10, 'device': 'cuda', 'source': 'artifact'}
+[colab] Executing cell 7/9 - mitra_regressor_predictor_inference-17...
+{'inference_limits': {'required_features': ['age', 'sex', 'bmi', 'bp', 's1', 's2', 's3', 's4', 's5', 's6'], 'numeric_features': 10, 'reserved_output_columns': ['prediction'], 'extra_columns': 'kept in the output, not passed to the model', 'row_ceiling': None}}
+{'sample_input': 'sample-independent-test-rows.csv', 'rows': 89, 'derived_from': 'sklearn load_diabetes, the producer split (60/20/20, seed 42), independent test partition', 'overlap_with_support_rows': 0, 'target_removed': 'target'}
+{
+  "schema": {
+    "input": "pandas.DataFrame, one row per example; feature columns of any dtype plus a numeric target",
+    "columns": "unique names; `drop_columns` are removed before validation",
+    "target": "coerced to numeric (non-numeric values are rejected); rows with a missing target are dropped and counted; infinite values are rejected; the training target must vary",
+    "train_rows": [
+      50,
+      10000
+    ],
+    "eval_rows": [
+      2,
+      null
+    ],
+    "features": [
+      1,
+      500
+    ],
+    "inference_input": "every fitted feature column present; no `prediction` column; extras pass through",
+    "preprocessing": "none by the package (AutoGluon's Mitra handles raw columns); training rows above MAX_TRAIN_ROWS are capped by seeded sampling and the cap is reported"
+  },
+  "inputs": [
+    {
+      "id": "sample-independent-test-rows.csv",
+      "mode": "inference",
+      "rows": 89,
+      "feature_columns": [
+        "age",
+        "sex",
+        "bmi",
+        "bp",
+        "s1",
+        "s2",
+        "s3",
+        "s4",
+        "s5",
+        "s6"
+      ],
+      "extra_columns": [],
+      "missing_value_columns": {}
+    }
+  ],
+  "target_column": null,
+  "drop_columns": [],
+  "min_rows": null,
+  "verdict": "accepted",
+  "findings": [
+    {
+      "input": "missing-column-probe",
+      "verdict": "rejected",
+      "message": "Inference CSV is missing required feature columns: ['age']"
+    }
+  ],
+  "model_id": "autogluon/mitra-regressor",
+  "model_revision": "5f277aa8f69042d39d6ac3612aed18bb9279bd95"
+}
+[colab] Executing cell 8/9 - mitra_regressor_predictor_inference-20...
+        age       sex       bmi  ...        s5        s6  prediction
+0  0.048974  0.050680  0.058463  ...  0.022004  0.027917  213.859375
+1 -0.016412 -0.044642 -0.035307  ... -0.070209 -0.079778   73.140625
+2  0.074401 -0.044642  0.114509  ... -0.000612 -0.005220  216.945312
+3  0.027178 -0.044642  0.092953  ... -0.048359  0.019633  170.656250
+4  0.052606  0.050680 -0.024529  ...  0.026717 -0.038357  166.953125
+
+[5 rows x 11 columns]
+{
+  "task": "tabular regression by in-context conditioning on labelled support rows (AutoGluon Mitra)",
+  "score_semantics": "continuous point predictions in target units; no per-prediction uncertainty",
+  "sample_kind": "sample",
+  "n_holdout": 0,
+  "n_test": null,
+  "target_column": "target",
+  "selection": null,
+  "baselines": [],
+  "model_id": "autogluon/mitra-regressor",
+  "model_revision": "5f277aa8f69042d39d6ac3612aed18bb9279bd95",
+  "metrics": [],
+  "independent_test": [],
+  "verdict": "not-measurable",
+  "reason": "no labelled holdout rows were supplied for the scored table",
+  "needs": "a labelled holdout table with a finite, varying numeric target column, scored with `regression_metrics` (mae, rmse, r2) against `training_mean_baseline`; an independent test partition from the deployment domain for any generalisable claim"
+}
+['mitra_regressor_predictor_inference_evaluation_report.json', 'mitra_regressor_predictor_inference_input_manifest.json', 'mitra_regressor_predictor_inference_predictions.csv', 'mitra_regressor_predictor_inference_result.json']
+[colab] Executing cell 9/9 - mitra_regressor_predictor_inference-23...
+{'feature': 'bmi', 'shift': 0.05, 'rows': 89, 'mean_prediction_change': 24.46, 'rows_up': 88, 'rows_down': 0, 'largest_change': 37.65}
+[colab] Saving notebook with outputs to '/home/kurt/colab-runs/mitra-regressor-pipeline-08667a7-5c44c8/mitra_regressor_predictor_inference_colab_08667a7_colab-cli-t4_output.ipynb'...
