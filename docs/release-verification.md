@@ -3,7 +3,7 @@
 `tutorials/mitra_regressor_colab.ipynb` (`E2E`) and `tutorials/mitra_regressor_predictor_inference_colab.ipynb`
 (`ARTIFACT-INFERENCE`) are **release candidates** until the exact notebook revisions have executed top-to-bottom in a
 clean supported runtime. Unit tests, JSON validation, code-cell compilation, and `tools/validate_release_assets.py` are
-necessary checks but are **not** runtime evidence under DIMER Notebook Specification 1.1. This file is the durable
+necessary checks but are **not** runtime evidence under DIMER Notebook Specification 2.2. This file is the durable
 release-gate record for both notebooks.
 
 ## Automatic coverage (static, every pull request)
@@ -13,14 +13,14 @@ CI runs `tools/validate_release_assets.py`, which checks, for each of the two no
 - notebook JSON parses; every code cell compiles as plain Python (no `%`/`!` magics); no persisted outputs or
   execution counts; no unresolved placeholder markers; every code cell is preceded by an explanatory markdown cell;
 - exactly the two tutorial notebooks, each named in `tutorials/README.md` with its profile, the notebook-spec version and
-  the standalone carrier; `metadata.dimer` declares that profile, spec `1.1`, `standalone: true` and `generated_from`
+  the standalone carrier; `metadata.dimer` declares that profile, spec `2.2`, `standalone: true` and `generated_from`
   (repository, module commit, module path `mitra_pipeline/tutorial_api.py`, module SHA-256, generator);
 - the standalone carrier (ST1–ST6, PAR1–PAR3): no clone, repository install or repository import on the primary path
   (the previous pair's `git clone` of this repository is gone); one cell tagged `embedded_module` equal to
   `mitra_pipeline/tutorial_api.py` after the generator's documented rewrite (the `DEFAULT_WEIGHTS_DIR` line); the inline
   `MANIFEST` equal to the committed `weights/mitra-regressor/dimer-base-manifest.json` and the inline `PINS` equal to the
   `pyproject.toml` runtime pins; the notebook byte-identical to `tools/build_notebook.py` output for its template; the
-  pinned-install cell with its restart-on-stale-import guard; `NOTEBOOK_SOURCE` recorded in exports;
+  isolated-environment bootstrap cell (generator /2.2: hash-locked `uv` environment, nothing installed into the kernel, no restart); `NOTEBOOK_SOURCE` recorded in exports;
 - `MODEL_ID`/`MODEL_REVISION` are bound only in the carried module cell (and repeated in the inline manifest, which the
   notebook asserts against the module before fetching), the revision is a 40-hex immutable commit, and the same identity
   string appears in `README.md`, `MODEL_CARD.md`, and `docs/WEIGHTS.md` with no stray revisions;
@@ -124,7 +124,7 @@ they are measurements for the stated runtime, not general estimates.
 
 ## Current status
 
-No clean-runtime execution of the standalone notebooks has been recorded yet; clean GPU execution evidence for the E2E path is now recorded below. Static validation (`tools/validate_release_assets.py`), nbformat validation, a `compile()` sweep over every code
+**Generated tutorial pair: Candidate; no execution evidence for the current notebook blobs.** The 2026-09-14 Kaggle T4 row above is evidence for the previous E2E blob (`d32d6f6b45c6`) only: an nbclient execution of the default sample path with a `google.colab` shim, not a browser Colab `Run all`. On 2026-10-08 both notebooks were regenerated (generator /2.2 isolated uv environment, DIMER Notebook Specification 2.2, Notebook Review Framework v1 fixes MRC-M1..M2 / MRC-m1..m6), so under NOTEBOOK_SPEC REL14 they return to Candidate until a run of the exact new blobs is recorded; the earlier row stays as history. The ARTIFACT-INFERENCE companion has no recorded run. Static validation (`tools/validate_release_assets.py`), nbformat validation, a `compile()` sweep over every code
 cell, and the offline unit suite passed on the tutorial source at the candidate revision, which is necessary but not
 sufficient. The registry status remains **Candidate** until a reviewer confirms a recorded run against the notebook blobs
 under review and an integrator promotes it; promotion is not performed by the builder. Facts a reviewer should weigh:
