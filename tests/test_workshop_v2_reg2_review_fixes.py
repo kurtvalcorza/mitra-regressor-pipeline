@@ -1,4 +1,5 @@
-"""Checks for the W14 review of the guided regression workshop (REG2-M1, REG2-M2, REG2-m1 … REG2-m11, 2026-10-12).
+"""Checks for the W14 review of the guided regression workshop (REG2-M1, REG2-M2, REG2-m1 … REG2-m11, 2026-10-12)
+and the peer review of those fixes (evaluation status, exposure logging, 2026-10-14).
 
 The dynamic tests execute the notebook's own cell code with stub session objects and small synthetic tables. They are
 logic checks on CPU, not model runs or Colab execution evidence.
@@ -20,7 +21,7 @@ CELLS = {cell["metadata"]["id"]: "".join(cell["source"]) for cell in json.loads(
 TARGET_EDA, FREEZE, TEST, TEST_TABLE, BOOTSTRAP, PREVIEW = (
     "4b2a6a68", "85d961d1", "ad332df3", "c3cc0309", "0944763fc02f", "uybWFVYNpD-1"
 )
-CLASSICAL_ABLATION, FM_ACTIVITY = "1f18af22", "e6bcf0b1"
+CLASSICAL_ABLATION, FM_ACTIVITY, FEATURE_EDA = "1f18af22", "e6bcf0b1", "91a6ce79"
 
 
 class _Anything:
@@ -116,7 +117,7 @@ def test_validation_ties_go_to_the_alphabetically_first_key(tmp_path: Path) -> N
     assert json.loads((ns["SESSION"].root / "comparator.json").read_text())["validation_selected_key"] == "tabiclv2_icl"
 
 
-def _bootstrap(tmp_path: Path, primary: str | None) -> tuple[dict, list[str]]:
+def _bootstrap(tmp_path: Path, primary: str | None, exposed: bool = False) -> tuple[dict, list[str]]:
     rng = np.random.default_rng(0)
     truth = rng.normal(size=80)
     predictions = {"lightgbm": truth + rng.normal(scale=0.5, size=80), "tabiclv2_icl": truth + rng.normal(scale=0.3, size=80),
@@ -124,6 +125,8 @@ def _bootstrap(tmp_path: Path, primary: str | None) -> tuple[dict, list[str]]:
     record = {"reference_key": "lightgbm", "selection_basis": "fixture", "primary_metric": "mae"}
     if primary:
         record["validation_selected_key"] = primary
+    if exposed:
+        record["test_previously_exposed"] = True
     (tmp_path / "comparator.json").write_text(json.dumps(record))
     table = pd.DataFrame({"model_key": list(predictions), "model": [k.upper() for k in predictions], "condition": "fixture",
                           "mae": [float(np.mean(np.abs(truth - p))) for p in predictions.values()], "run_id": "r"})
@@ -134,7 +137,8 @@ def _bootstrap(tmp_path: Path, primary: str | None) -> tuple[dict, list[str]]:
           "frames": {"test": pd.DataFrame({"target": truth})}, "final_test_results": table,
           "foundation_test_predictions": {k: pd.DataFrame({"row_id": range(80), "target": truth, "prediction": p})
                                           for k, p in predictions.items()},
-          "SESSION": types.SimpleNamespace(root=tmp_path)}
+          "SESSION": types.SimpleNamespace(root=tmp_path),
+          "parse_ablation_key": lambda key: ("lightgbm", "no_stockout") if key.endswith("_no_stockout") else None}
     return _run(BOOTSTRAP, ns), prints
 
 
@@ -144,7 +148,17 @@ def test_bootstrap_marks_the_validation_selected_row_as_confirmatory(tmp_path: P
     assert table["validation_selected"].to_dict() == {"lightgbm": False, "tabiclv2_icl": True, "tabpfn3_icl": False}
     # TabPFN-3 tops the test table in this fixture, but the confirmatory line names the validation-selected model.
     assert table["mae"].idxmin() == "tabpfn3_icl"
-    assert any(line.startswith("Confirmatory result") and "tabiclv2_icl" in line for line in prints)
+    assert any(line.startswith("Validation-selected result (confirmatory)") and "tabiclv2_icl" in line for line in prints)
+    assert table["evaluation_status"].to_dict() == {
+        "lightgbm": "descriptive", "tabiclv2_icl": "confirmatory", "tabpfn3_icl": "descriptive"}
+
+
+def test_bootstrap_labels_the_selected_result_exploratory_after_prior_exposure(tmp_path: Path) -> None:
+    ns, prints = _bootstrap(tmp_path, "tabiclv2_icl", exposed=True)
+    table = ns["BOOTSTRAP_RESULTS"].set_index("model_key")
+    assert table.loc["tabiclv2_icl", "evaluation_status"] == "exploratory (test previously exposed)"
+    assert not any("(confirmatory)" in line for line in prints)
+    assert any(line.startswith("Validation-selected result (exploratory (test previously exposed))") for line in prints)
 
 
 def test_bootstrap_labels_intervals_illustrative_and_names_multiplicity(tmp_path: Path) -> None:
@@ -178,9 +192,65 @@ def test_a_new_experiment_records_test_exposure_from_an_earlier_one(tmp_path: Pa
     second = _run(FREEZE, _experiment(tmp_path, "exp-b", prints))
     record = json.loads((second["SESSION"].root / "comparator.json").read_text())
     assert record["test_previously_exposed"] is True
-    (entry,) = record["prior_test_exposure"]
-    assert entry["event"] == "test_scored" and entry["experiment_id"] == "exp-a" and entry["freeze_sha256"] == "sha-exp-a"
+    assert record["evaluation_status"] == "exploratory (test previously exposed)"
+    events = [(e["event"], e["experiment_id"], e["freeze_sha256"]) for e in record["prior_test_exposure"]]
+    assert events == [("test_scoring_attempted", "exp-a", "sha-exp-a"), ("test_scoring_completed", "exp-a", "sha-exp-a")]
     assert any("exploratory" in line for line in prints)
+
+
+def test_unexposed_freeze_is_confirmatory(tmp_path: Path) -> None:
+    ns = _run(FREEZE, _experiment(tmp_path, "exp-a", []))
+    assert json.loads((ns["SESSION"].root / "comparator.json").read_text())["evaluation_status"] == "confirmatory"
+
+
+def test_a_test_failure_after_scoring_started_still_counts_as_exposure(tmp_path: Path) -> None:
+    ns = _run(FREEZE, _experiment(tmp_path, "exp-a", []))
+    calls = []
+
+    def evaluate(*args):
+        calls.append(args[1])
+        if len(calls) == 2:
+            raise RuntimeError("model failed after an earlier test score was shown")
+        return "receipt"
+
+    ns["evaluate_classical_frozen"] = evaluate
+    with pytest.raises(RuntimeError, match="model failed"):
+        _run(TEST, ns)
+    second = _run(FREEZE, _experiment(tmp_path, "exp-b", []))
+    record = json.loads((second["SESSION"].root / "comparator.json").read_text())
+    assert [e["event"] for e in record["prior_test_exposure"]] == ["test_scoring_attempted"]
+    assert record["evaluation_status"] == "exploratory (test previously exposed)"
+
+
+def test_test_target_relationship_in_3_6_is_logged_before_display(tmp_path: Path) -> None:
+    ns = _experiment(tmp_path, "exp-a", [])
+    shown = []
+    ns.update({"feature_columns": ["stockout_hours"], "RANDOM_SEED": 0, "INCLUDE_TEST_TARGETS_IN_EDA": True,
+               "display": lambda *a, **k: shown.append(len(ns["prior_test_exposure"]("exp-b")))})
+    ns["frames"] = {split: pd.DataFrame({"stockout_hours": [0, 1, 2, 0] * 5, "target": np.arange(20.0)})
+                    for split in ("train", "val", "test")}
+    _run(FEATURE_EDA, ns, {'RELATIONSHIP_SPLIT = "train"': 'RELATIONSHIP_SPLIT = "test"'})
+    assert shown and shown[0] == 1  # the entry existed before the first test-target table was displayed
+    assert ns["TEST_TARGETS_VIEWED"] is True
+    assert [e["cell"] for e in ns["prior_test_exposure"]("exp-b")] == ["3.6"]
+
+
+def test_ablation_effects_compare_with_the_full_feature_parent(tmp_path: Path) -> None:
+    ns, _ = _bootstrap(tmp_path, "tabiclv2_icl")
+    assert "ABLATION_TEST_EFFECTS" not in ns  # no ablation in this fixture
+    rng = np.random.default_rng(3)
+    truth = rng.normal(size=50)
+    preds = {"lightgbm": truth + 0.2, "lightgbm_no_stockout": truth + 0.3}
+    record = {"reference_key": "lightgbm", "selection_basis": "f", "primary_metric": "mae"}
+    (tmp_path / "comparator.json").write_text(json.dumps(record))
+    table = pd.DataFrame({"model_key": list(preds), "model": ["LightGBM", "LightGBM without stockout"],
+                          "condition": "f", "mae": [0.2, 0.3], "run_id": "r"})
+    ns.update({"frames": {"test": pd.DataFrame({"target": truth})}, "final_test_results": table,
+               "foundation_test_predictions": {k: pd.DataFrame({"row_id": range(50), "target": truth, "prediction": p})
+                                               for k, p in preds.items()}})
+    _run(BOOTSTRAP, ns)
+    (effect,) = ns["ABLATION_TEST_EFFECTS"].to_dict("records")
+    assert effect["full_feature_parent"] == "LightGBM" and effect["change_vs_parent"] == pytest.approx(0.1)
 
 
 def test_test_target_eda_is_logged_too(tmp_path: Path) -> None:
@@ -265,3 +335,22 @@ def test_disclosures_references_and_troubleshooting() -> None:
     for card in ("autogluon/mitra-regressor", "Layer6/TabDPT", "Prior-Labs/tabpfn_3", "jingang/TabICL"):
         assert f"huggingface.co/{card}/tree/" in CELLS["560086a7"]
     assert "This experiment is frozen. Start a new experiment" in CELLS["c40859f03f01"]
+    assert "restores runtime state only" in CELLS["c40859f03f01"]
+
+
+def test_peer_review_wording() -> None:
+    assert "issued after day *t* closes" in CELLS["b1c60e9c"] and "known on or before" not in CELLS["b1c60e9c"]
+    assert "pooled over rows" in CELLS["b1c60e9c"]
+    assert "as it should" not in CELLS["770f915e"] and "R² ≤ 0" in CELLS["770f915e"]
+    assert "cannot establish superiority" in CELLS["f3824bbd"]
+    assert "illustrative IID 95% bootstrap intervals" in CELLS[BOOTSTRAP] and "illustrative IID" in CELLS["ee2fdb595a22"]
+    assert "MAE by prediction-day stockout exposure" in CELLS["0de0df82"]
+    assert "ALLOW_ADDITIONAL_FEATURES = False" in CELLS["2f62cb50"] and "unverified" in CELLS["54c9334a"]
+    assert '"evaluation_status"' in CELLS["e0f495f3"] and "confirmatory / exploratory" in CELLS["391d4d6c"]
+
+
+def test_notebook_declares_spec_2_5() -> None:
+    notebook = json.loads(NOTEBOOK.read_text(encoding="utf-8"))
+    assert notebook["metadata"]["dimer"]["notebook_spec"] == "2.5"
+    assert "Notebook Specification 2.5" in CELLS["f79c68c5"] and "Specification 2.1" not in CELLS["aee8af32"]
+    assert '"notebook_spec":"2.5"' in CELLS["e0f495f3"] and '"notebook_spec":"2.5"' in CELLS["wv3iBhT9pD-2"]

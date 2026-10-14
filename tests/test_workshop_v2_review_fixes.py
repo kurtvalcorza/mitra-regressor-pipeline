@@ -139,6 +139,7 @@ def _bootstrap(tmp_path: Path, metric: str, truth, predictions: dict, reference)
         "foundation_test_predictions": frames,
         "TEST_EVALUATION_COMPLETED": True,
         "SESSION": types.SimpleNamespace(root=tmp_path),
+        "parse_ablation_key": lambda key: None,  # defined in 6.1; used by the 8.3 ablation table
     }
     return _run("0944763fc02f", namespace)
 
