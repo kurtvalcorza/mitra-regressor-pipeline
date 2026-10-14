@@ -355,3 +355,32 @@ Both editions were run separately at commit `aca2655147fc0be2d7b73ae09c9ccdbac19
 - **Evidence boundary:** the saved outputs were inspected. The journeys not exercised — the interactive activities, the **Freeze now** off path and new-experiment recovery, a foundation-only selection, R² as the primary metric, BYOD, the fast path and fine-tuning — remain open.
 
 This record satisfies the fresh default-path run of both revisions. The other items listed for revisions 3.1.1 and 3.2.0 above remain open. **Status: Candidate.**
+
+## FreshRetailNet guided regression v2: W14 review findings (REG2) — 2026-10-12
+
+Review of blob `5ce1e3e1` (revision 3.2.0, `main` at `3db6e84`): 0 Blocker, 2 Major, 11 Minor, 2 Suggestion. The fixes
+keep the revision label 3.2.0 and record themselves in `metadata.dimer.review_fixes`. No default-path computed value
+changes; the additions are records (`comparator.json` and manifest fields, a `validation_selected` column) and wording.
+
+- **REG2-M1 (owner ruling B):** the 8.3 intervals are described as an illustrative row-level (IID) bootstrap that is
+  probably too narrow, with a note on the 11 paired comparisons; superiority wording is gone. Follow-up: rebuild the
+  dataset with an evaluation-only series id for a cluster bootstrap.
+- **REG2-M2:** 8.0 records the validation-selected model (best validation primary metric among the frozen full-feature
+  conditions; ties to the alphabetically first key) with the comparator; 8.2/8.3 mark it and 8.3 prints its test score
+  as the confirmatory result; the conclusion template reports it.
+- **REG2-m1 (owner ruling B):** the fixed-recipe comparison is disclosed (Section 4 and the limitations). Follow-up: a
+  validation-tuned, early-stopped LightGBM baseline.
+- **REG2-m7 (owner ruling A):** a runtime-level `test_exposure_log.jsonl` under the workspace root, written by 3.1 (test
+  EDA) and 8.1 (test scoring), is not reset by Start new experiment; 8.0 copies earlier experiments' entries into
+  `comparator.json` and 10.1 into `experiment_manifest.json` (`prior_test_exposure`, `test_previously_exposed`).
+- **REG2-m2:** with Freeze now off, 8.1–8.4 skip with a notice and 10.1 exports validation-stage records (port of
+  FRR1-m3). Reproduced before the fix on CPU with stub state: 8.1 `ValueError`, 8.3 and 8.4 `RuntimeError`.
+- **REG2-m5:** 6.1 removes only its own classical keys, after the development check. Reproduced before the fix: a
+  rerun dropped the 6.2 key, and in a frozen experiment it emptied the list before refusing.
+- **REG2-m3, m4, m6, m8–m11, S1:** plots follow `PRIMARY_METRIC`; research question 2 is an optional GPU extension; the
+  6.2 activity uses the month/weather group that Run all does not print; the checkpoint-selection metric (validation
+  MAE, fixed in the carried code) is stated; total runtime (651.9 s, Colab T4 at `aca2655`) and computed download size
+  (about 14 GB); model papers and pinned cards; a Troubleshooting row for the frozen-experiment error.
+
+Verification is offline only (`tests/test_workshop_v2_reg2_review_fixes.py`, CPU, stub state); it is not
+clean-runtime evidence. A hosted Run all of the new blob is still required.
