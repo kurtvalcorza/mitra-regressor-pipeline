@@ -359,8 +359,9 @@ This record satisfies the fresh default-path run of both revisions. The other it
 ## FreshRetailNet guided regression v2: W14 review findings (REG2) — 2026-10-12
 
 Review of blob `5ce1e3e1` (revision 3.2.0, `main` at `3db6e84`): 0 Blocker, 2 Major, 11 Minor, 2 Suggestion. The fixes
-keep the revision label 3.2.0 and record themselves in `metadata.dimer.review_fixes`. No default-path computed value
-changes; the additions are records (`comparator.json` and manifest fields, a `validation_selected` column) and wording.
+keep the revision label 3.2.0 and record themselves in `metadata.dimer.review_fixes`. No default-path model or
+metric computation changed (static assessment; hosted run pending); the additions are records (`comparator.json` and
+manifest fields, `validation_selected` and `evaluation_status` columns), a test-exposure log file and wording.
 
 - **REG2-M1 (owner ruling B):** the 8.3 intervals are described as an illustrative row-level (IID) bootstrap that is
   probably too narrow, with a note on the 11 paired comparisons; superiority wording is gone. Follow-up: rebuild the
@@ -384,3 +385,16 @@ changes; the additions are records (`comparator.json` and manifest fields, a `va
 
 Verification is offline only (`tests/test_workshop_v2_reg2_review_fixes.py`, CPU, stub state); it is not
 clean-runtime evidence. A hosted Run all of the new blob is still required.
+
+### Peer review of the REG2 fixes and owner decisions — 2026-10-14
+
+- **Spec:** the guided edition now declares NOTEBOOK_SPEC 2.5 (metadata, opening, manifest, completion summary,
+  validator). The revision label stays 3.2.0; bumping both editions to 3.2.1 in one PR is a follow-up.
+- **Evaluation status:** 8.0 records `evaluation_status` (`confirmatory` only when no earlier test exposure is recorded,
+  otherwise `exploratory (test previously exposed)`); 8.2, 8.3, the export manifest and the conclusion template use it.
+- **Exposure logging:** logged before any test-target display (3.1 and 3.6) and before test scoring
+  (`test_scoring_attempted`, then `test_scoring_completed`), so a failure part-way through still counts.
+- **Wording:** restarting restores runtime state only; issuance after day *t* closes; pooled, row-weighted scope on
+  the same sampled series; prediction-day stockout labels; illustrative-IID plot titles and glossary; R² of the
+  training-mean predictor; an ablation-versus-parent point-difference table in 8.3; BYOD protocol declared as
+  unverified and extra feature columns refused unless `ALLOW_ADDITIONAL_FEATURES` is set.
