@@ -224,7 +224,7 @@ AUXILIARY_NOTEBOOKS = {
         "committed_outputs": "executed-record",
         "profile": "E2E",
         "mode": "WORKSHOP",
-        "notebook_spec": "2.1",
+        "notebook_spec": "2.5",
         "standalone": True,
         "revision": "3.2.0",
         "code_markers": (
@@ -261,7 +261,7 @@ AUXILIARY_NOTEBOOKS = {
         "markdown_markers": (
             "**Profile:** `E2E`",
             "**Mode:** `WORKSHOP`",
-            "**Notebook specification:** DIMER Notebook Specification 2.1",
+            "**Notebook specification:** DIMER Notebook Specification 2.5",
             "**Bring Your Own Data:**",
             "Comparing Tabular Foundation Models",
         ),

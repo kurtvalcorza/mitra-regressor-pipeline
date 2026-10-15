@@ -53,7 +53,9 @@ def _freeze(tmp_path: Path, selected: str) -> dict:
     baselines = pd.DataFrame(
         {"model_key": ["lightgbm", "random_forest", "training_mean"], "mae": [0.373, 0.380, 0.6], "r2": [0.7, 0.72, 0.0]}
     )
-    session = types.SimpleNamespace(root=tmp_path, freeze=lambda keys, controls: {"selected": keys})
+    session = types.SimpleNamespace(
+        root=tmp_path, experiment_id="exp-1", freeze=lambda keys, controls: {"selected": keys}
+    )
     namespace = {
         "CURRENT_CLASSICAL_KEYS": ["lightgbm", "random_forest", "training_mean"],
         "CURRENT_FOUNDATION_KEYS": ["tabiclv2_icl", "mitra_icl"],
@@ -64,6 +66,12 @@ def _freeze(tmp_path: Path, selected: str) -> dict:
         "SESSION": session,
         "PRIMARY_METRIC": "mae",
         "baseline_validation_results": baselines,
+        # REG2-M2: 8.0 ranks the frozen full-feature conditions on validation (5.6 builds this table).
+        "combined_validation_results": pd.concat(
+            [baselines, pd.DataFrame({"model_key": ["tabiclv2_icl", "mitra_icl"], "mae": [0.367, 0.417], "r2": [0.73, 0.71]})],
+            ignore_index=True,
+        ),
+        "prior_test_exposure": lambda experiment_id: [],  # REG2-m7: defined in 3.1
         "frames": {"test": pd.DataFrame({"target": np.arange(40.0)})},
         "parse_ablation_key": lambda key: None,
         "foundation_controls": lambda key, *a: {"backend": "foundation"},
@@ -129,7 +137,9 @@ def _bootstrap(tmp_path: Path, metric: str, truth, predictions: dict, reference)
         "frames": {"test": pd.DataFrame({"target": truth})},
         "final_test_results": table,
         "foundation_test_predictions": frames,
+        "TEST_EVALUATION_COMPLETED": True,
         "SESSION": types.SimpleNamespace(root=tmp_path),
+        "parse_ablation_key": lambda key: None,  # defined in 6.1; used by the 8.3 ablation table
     }
     return _run("0944763fc02f", namespace)
 
