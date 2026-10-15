@@ -124,6 +124,7 @@ they are measurements for the stated runtime, not general estimates.
 | 2026-10-08 | `08667a7` / `8a2ea1c75750` | GitHub Actions `Notebook release execution` run 37747908149 (ubuntu-24.04, runner Python; notebook in the isolated uv environment) | Standalone ARTIFACT-INFERENCE, own-bundle path: the E2E bundle produced in the same job, by `ARTIFACT_ZIP_PATH` + `EXPECTED_ZIP_SHA256`, scoring the 89-row E2E test partition (overlap with support rows asserted 0) | 5m52s job | **PASSED** — CI execution of the path journey (not a Colab run; artifacts kept 30 days by Actions) |
 | 2026-10-08 | `08667a7` / `8a2ea1c75750` | Colab CLI 0.7.4 sequential execution, fresh Colab Tesla T4 | Standalone ARTIFACT-INFERENCE default path: pinned `sample-bundle-v1` asset downloaded and SHA-256-verified before extraction, 89 sample rows (no field edited) | 152.3 s | **PASSED** — one pass, no restart, 0 errors: 9/9 code cells in order (`exec.log`); evidence in `docs/execution-evidence/2026-10-08/mitra_regressor_predictor_inference_colab/` |
 | 2026-10-08 | `fc56cdd` / `256708eef85f` | Colab CLI 0.7.4 sequential execution, fresh Colab Tesla T4 | Standalone E2E default sample path (no field edited; optional journeys not exercised) | 178.1 s | **PASSED** — one pass, no restart, 0 errors: 10/10 code cells in order (`exec.log`), isolated environment built in 82 s; evidence in `docs/execution-evidence/2026-10-08/mitra_regressor_colab/` |
+| 2026-10-14 | `4c44ff0` / `dfb253c68e55` | Colab CLI 0.7.4 sequential execution, fresh Colab Tesla T4 | Guided v2 (`DIMER_FreshRetailNet_MultiModel_Regression_Workshop_v2.ipynb`, revision 3.2.0 with the REG2 fixes, spec 2.5) default path (no field edited; activities, Freeze now off, BYOD and fine-tuning not exercised) | 593.9 s | **PASSED** — one pass, no restart, 0 errors: 36/36 code cells in order (`exec.log`); evidence in `docs/execution-evidence/2026-10-14/` |
 
 ### Colab CLI execution of the E2E notebook at `fc56cdd` (blob `256708eef85f`) — 2026-10-08
 
@@ -398,3 +399,42 @@ clean-runtime evidence. A hosted Run all of the new blob is still required.
   the same sampled series; prediction-day stockout labels; illustrative-IID plot titles and glossary; R² of the
   training-mean predictor; an ablation-versus-parent point-difference table in 8.3; BYOD protocol declared as
   unverified and extra feature columns refused unless `ALLOW_ADDITIONAL_FEATURES` is set.
+
+### Colab CLI execution of guided v2 at `4c44ff0` (blob `dfb253c68e55`) — 2026-10-14
+
+- **Executor:** Colab CLI 0.7.4 sequential execution on a fresh Colab Tesla T4 VM (`colab exec -f`, workspace
+  `colab-cli-serial-test-suite`): every code cell in order in one kernel, order taken from `exec.log` ("Executing cell
+  k/36"). Not a browser **Run all**; no execution counts; forms and uploads not exercised.
+- **Notebook:** `tutorials/DIMER_FreshRetailNet_MultiModel_Regression_Workshop_v2.ipynb`, commit
+  `4c44ff086c3a9f6c2d3c39c2667b36b5d1e6225c`, blob `dfb253c68e55ce7860ecdf6d5a54bb806e8266d6` (fetched byte-exact at the
+  commit and verified before the session; the executed copy's 88 cells have the same ids and order and its code equals the
+  source).
+- **Run:** 2026-10-14 23:17:38–23:27:24 UTC, session wall 593.9 s. Kernel Python 3.13.15 on Linux x86_64; section 0.1
+  installed nothing. All four uv environments were built from the hash-locked files and all four foundation models ran on
+  `cuda`.
+- **Outcome:** **PASSED** — 36/36 code cells, 0 error outputs; the completion summary reports `notebook_spec` 2.5, 9
+  validation models, 12 frozen test models, no foundation failures, and "Run-all complete".
+- **REG2 records on a single default run:** 8.0 printed the validation-selected model `tabiclv2_icl` (TabICLv2, best
+  validation MAE 0.36674) with evaluation status `confirmatory`; in 8.2 and 8.3 its row is the only `confirmatory` row and
+  the other 11 are `descriptive`; 8.3 prints its test MAE 0.43286 as the confirmatory result. No row or line reports
+  `exploratory (test previously exposed)`, so no earlier test exposure was recorded in the runtime. 8.3 also prints the
+  illustrative-IID and multiplicity notes and the ablation-versus-parent table (LightGBM without month and weather
+  -0.00142, LightGBM without stockout +0.00338, TabICLv2 without stockout +0.01600).
+- **Comparison with the `aca2655` run (blob `5ce1e3e1`, 2026-10-03):** every printed metric is identical — the baseline
+  and validation tables, the ablations, the 7.1 error bands, the frozen-test MAE / RMSE / median absolute error / R²,
+  the bootstrap intervals, gains and shares, the 8.4 prediction preview and the 9.1 band scores. The differences are:
+  the descriptive `runtime_seconds` column (for example Mitra 95.81 s → 90.12 s, TabICLv2 10.59 s → 8.80 s); run ids,
+  report-directory names and the report ZIP digest (new experiment directories, by construction); uv download order
+  and timings, AutoGluon memory and throughput lines; one Hugging Face "unauthenticated requests" warning that this
+  run did not print (environment output, not touched by the PR); and the additions made by the REG2 fixes — the
+  `validation_selected` and `evaluation_status` columns, the validation-selected lines, the IID and multiplicity notes,
+  the ablation-versus-parent table and `notebook_spec` 2.1 → 2.5. This confirms the static assessment that no
+  default-path model or metric computation changed.
+- **Evidence file** (`docs/execution-evidence/2026-10-14/`, byte-exact, covered by the `-text` rule):
+  `DIMER_FreshRetailNet_MultiModel_Regression_Workshop_v2_4c44ff0_colab-cli-t4.ipynb`, SHA-256
+  `293ce0bb5ceb0b3a4079ed9ae8f1177780268dbef11bd55200e101405bec2072`.
+- **Evidence boundary:** CLI sequential execution, not a browser Run all. Not exercised: the interactive activities, the
+  **Freeze now** off path, Start new experiment after test exposure (the `exploratory` status path), a foundation-only
+  selection, R² as the primary metric, BYOD, the fast path and fine-tuning.
+
+This record satisfies the hosted default-path run of the REG2 blob. The other open items remain. **Status: Candidate.**
