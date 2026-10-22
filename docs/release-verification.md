@@ -146,7 +146,7 @@ they are measurements for the stated runtime, not general estimates.
   `1b0892040f59a8182e63bc4545b74594d5be72f6b79d97e8f5f9bdbd07f29c48` (printed by the run; the downloaded copy has the same digest).
   It is the source of the `sample-bundle-v1` release asset used by the predictor-inference notebook.
 - **Evidence files** (`docs/execution-evidence/2026-10-08/mitra_regressor_colab/`, byte-exact, covered by the `-text` rule):
-  executed notebook `3f7a640020b2aed435949007e6c5513eef8195a4af024d1540aed32a8669d5bd`, `run_summary.json` `e252e60b766727e0ba4db28c2aedc0f096aff2a8d77fd56b07902d4a59531dfb`, `exec.log` `43a346373ac5d43f481c933caf8a7723fcc4cb9dc0513bc8167f24f1a3ca316b`, `mitra_regressor_result.json` `a4e9e81286113f6f80dbf822c13b3f7c0c47523f0b34921fb3d4f956a7c91c0d`.
+  executed notebook `3f7a640020b2aed435949007e6c5513eef8195a4af024d1540aed32a8669d5bd`, `run_summary.json` `e252e60b766727e0ba4db28c2aedc0f096aff2a8d77fd56b07902d4a59531dfb`, `exec.log` `43a346373ac5d43f481c933caf8a7723fcc4cb9dc0513bc8167f24f1a3ca316b` (as first committed; redacted 2026-10-22, now `8a384d833e71bb2a1060c3053b4e737f7995a2c1f5ececa16a522064793462da`), `mitra_regressor_result.json` `a4e9e81286113f6f80dbf822c13b3f7c0c47523f0b34921fb3d4f956a7c91c0d`.
 - **Not exercised:** browser Run all, BYOD (single CSV and pre-split), `RUN_FINE_TUNING` on GPU, new-data inference upload,
   the `SEED` activity. The worked answers were checked against this run (NOTEBOOK_SPEC REL13): they hold; LightGBM's test MAE
   (47.77) is a little above the "low-to-mid 40s" range the Section 6 answer gives (rounding-level).
@@ -167,7 +167,7 @@ they are measurements for the stated runtime, not general estimates.
   prediction by +24.46, 88 rows up, 0 down.
 - **Evidence files** (`docs/execution-evidence/2026-10-08/mitra_regressor_predictor_inference_colab/`, byte-exact, covered by the
   `-text` rule): executed notebook `65d1899e9ef348f26972089ac225efc36e2dfb66ad5d6a2259a04b0eafd3f22a`, `run_summary.json`
-  `29ef8c3c08c887c4d0f00c5562b7d9dca336ab4f1e50e3d1b5696ac4f7ebfa23`, `exec.log` `bdfd37432715114e72f600386753e9ce868584b5b2dc79f95301c00bd829779b`.
+  `29ef8c3c08c887c4d0f00c5562b7d9dca336ab4f1e50e3d1b5696ac4f7ebfa23`, `exec.log` `bdfd37432715114e72f600386753e9ce868584b5b2dc79f95301c00bd829779b` (as first committed; redacted 2026-10-22, now `a7555e02ac44410ae62303a3b1fb1685751db79f5aaaac4c9116f2415c9dee1f`).
 - **Earlier run:** the Colab CLI run of `9bb4d3b` (blob `f0ff1a37d6b0`, 9/9, 191.9 s, PASS) is superseded: its Section 4 prose
   named the wrong artifact format, corrected in `08667a7` (prose only).
 - **Not exercised:** browser Run all, the own-bundle path on Colab (`ARTIFACT_ZIP_PATH`, covered by the CI run above), the
@@ -481,3 +481,19 @@ clean-runtime evidence. A hosted Run all of the new blob is still required.
   selection, R² as the primary metric, BYOD, the fast path and fine-tuning.
 
 This record satisfies the hosted default-path run of the REG2 blob. The other open items remain. **Status: Candidate.**
+
+### Local-path redaction of earlier evidence (2026-10-22)
+
+The local run directory in these earlier committed evidence files was replaced by `<local-run-dir>/`, the
+convention the later evidence in this repository already uses. Only those bytes changed: line endings and every
+other byte are as committed. Git history is not rewritten, so earlier commits still hold the original files.
+SHA-256 before (committed on `main`) → after:
+
+| File | Replacements | SHA-256 before | SHA-256 after |
+| :--- | ---: | :--- | :--- |
+| `docs/execution-evidence/2026-10-08/mitra_regressor_colab/exec.log` | 2 | `43a346373ac5d43f481c933caf8a7723fcc4cb9dc0513bc8167f24f1a3ca316b` | `8a384d833e71bb2a1060c3053b4e737f7995a2c1f5ececa16a522064793462da` |
+| `docs/execution-evidence/2026-10-08/mitra_regressor_predictor_inference_colab/exec.log` | 2 | `bdfd37432715114e72f600386753e9ce868584b5b2dc79f95301c00bd829779b` | `a7555e02ac44410ae62303a3b1fb1685751db79f5aaaac4c9116f2415c9dee1f` |
+
+Where this document quotes one of these files' earlier hash as its committed hash, the new hash is now
+given beside it.
+
