@@ -214,16 +214,58 @@ before the first commit; SHA-256 captured → committed:
 | `mitra_regressor_colab_92c627c_colab-cli-t4_output.ipynb` | `22d30709f4a3f12233e87de7f3095d80c0de98cc78520d706e1b5247b739618e` | same (no local path) |
 | `suite.log` | `a9075c968c7652ea327b05c3d651a1cf4bae143b977b5c3ef4fafea1295522a3` | `8b69163cbb3bc6d06c614035bf5a4d8dcd1991e3919c87a3b2f68bfa94445b7e` |
 
+### Optional-activity run (2026-10-22)
+
+`f294525` / committed blob `32615208`, `SEED = 7`. The Section 11 activity is a re-run of Sections 4–7 with `SEED = 7`, so it was
+run as a run copy of committed blob `32615208` with one override, `SEED = 42` → `7` (run copy blob `a09930c08cfb`, SHA-256
+`95c8d0c339bf146324daedfcb17ffc8bf68196aae96a73724a950b8c9a759a6a`; it differs from the committed blob only in that assignment
+literal and is committed beside the evidence as `run_copy.ipynb`). Colab CLI 0.7.5 `colab exec -f` (a scripted run, not a browser
+Run all), fresh Colab Tesla T4, at `main` `f294525a0113f7f4f1bc007f4e3c15471cfe026a`, started 2026-10-22T13:33:10Z, 184.0 s wall,
+exit code 0, sequential, input (the run copy) unchanged, 13/13 code cells in the executor log, 0 errors, verdict PASS. With the
+seed-7 split (265 / 88 / 89 rows) the notebook printed pretrained holdout MAE 45.4541 / RMSE 55.6893 / R² 0.5111 beside the
+training-mean baseline's MAE 68.5416, and independent test MAE 41.8734 / R² 0.4749 (the seed-42 default split gives holdout MAE
+40.1328 / R² 0.5576 and test MAE 44.4957 / R² 0.4819 in the fine-tune run below: the split alone moves the holdout MAE by about
+5); the fresh reload printed PASS and Section 10 verified the pinned asset (`trusted_digest: verified (pinned SAMPLE_ARTIFACT_SHA256)`).
+Evidence in `docs/execution-evidence/2026-10-22/mitra_regressor_colab_f294525-activity/`. The local run directory was redacted to
+`<local-run-dir>` before the first commit; SHA-256 captured → committed:
+
+| File | Captured | Committed |
+|---|---|---|
+| `mitra_regressor_colab_f294525_colab-cli-t4_activity.ipynb` | `8a0c966b7f9a12cc8f51606fd7de61e8d102832339a2e1e0d489904fa2a0b104` | same (no local path) |
+| `exec.log` | `a949650a30e7c8c6c03cb4f7263abf0d171d2d6479ed8bb867ada81f2d996579` | `812f50271e80c0a182a50cf645c787a8a4b692f6b1c961687bf10f19413ad242` (2 replacements) |
+| `run_summary.json` | `7ae8187955997f5e12454ae109d90a2532d01eb6149a577516159a6edec84439` | same (no local path) |
+| `run_copy.ipynb` | `95c8d0c339bf146324daedfcb17ffc8bf68196aae96a73724a950b8c9a759a6a` | same (no local path) |
+
+### `RUN_FINE_TUNING` run (2026-10-22)
+
+`f294525` / committed blob `32615208`, `RUN_FINE_TUNING = True`. A run copy of committed blob `32615208` with one override,
+`RUN_FINE_TUNING = False` → `True` (run copy blob `57234ac30a85`, SHA-256 `01a6bd208009cf320be5d687241adebc7d22973a2dd32928af39344b4e933a2a`;
+it differs from the committed blob only in that assignment literal and is committed beside the evidence as `run_copy.ipynb`).
+Colab CLI 0.7.5 `colab exec -f` (a scripted run, not a browser Run all), fresh Colab Tesla T4, at `f294525`, started
+2026-10-22T13:54:24Z, 361.6 s wall, exit code 0, sequential, input (the run copy) unchanged, 13/13 code cells in the executor log,
+0 errors, verdict PASS. On the default diabetes sample the GPU fine-tune ran on cuda. Holdout: pretrained MAE 40.1328 / RMSE
+50.4991 / R² 0.5576, fine-tuned MAE 40.1924 / RMSE 50.5632 / R² 0.5565 (slightly worse). Independent test: pretrained MAE 44.4957 /
+RMSE 54.7465 / R² 0.4819, fine-tuned 44.6101 / 54.8549 / 0.4798, and the notebook printed "WARNING independent-test metrics worsened
+after fine-tuning: ['mae', 'rmse', 'r2'] (evidence only; never used for selection)". Selection stayed on the holdout
+(`'recommended_for_export': 'pretrained', 'selection_basis': 'holdout:mean_absolute_error'`); the fresh reload and Section 10
+passed as on the default path. Evidence in `docs/execution-evidence/2026-10-22/mitra_regressor_colab_f294525-finetune/`. The local
+run directory was redacted to `<local-run-dir>` before the first commit; SHA-256 captured → committed:
+
+| File | Captured | Committed |
+|---|---|---|
+| `mitra_regressor_colab_f294525_colab-cli-t4_finetune.ipynb` | `2da199d91deb38e7e97c537a84a02a0983ef0517650c7a8397a609378769c778` | same (no local path) |
+| `exec.log` | `3020bc2bddc08e1edb3509ae1da1c764b60eb3fce94c0509faec8fa03766bf9f` | `084e47fb81ac44310825d9e0890002e924bfba0ecb27c55805cf49ea5b0b3b4b` (2 replacements) |
+| `run_summary.json` | `63cff95c35817786cd261dd73da1a26c37fdbed632acebb7dff546d0c634fb69` | same (no local path) |
+| `run_copy.ipynb` | `01a6bd208009cf320be5d687241adebc7d22973a2dd32928af39344b4e933a2a` | same (no local path) |
+
 ## Current status
 
-**Generated E2E tutorial: Candidate (2026-10-22).** The current E2E notebook blob is `32615208` (`tutorials/mitra_regressor_colab.ipynb` at `92c627c`, unchanged on `main` at `8553b7a`; the NOTEBOOK_SPEC 3.0 revision with the Section 10 external-artifact section and the pinned release asset `sample-artifact-diabetes-v1`). Its one recorded hosted run is the `92c627c` record above (*First hosted run of the migrated notebook*): Colab CLI `colab exec -f` (scripted, not a browser Run all) on a fresh Colab Tesla T4, default path, exit 0, 13/13 code cells in the executor log, 0 error outputs, 171.4 s, input unchanged, verdict PASS; the fresh reload passed and Section 10 verified the pinned asset before extraction. `RUN_FINE_TUNING` is off by default, so the GPU fine-tune branch did not run. The notebook stays **Candidate** until these are recorded for this blob:
+**Generated E2E tutorial: Candidate (2026-10-22).** The current E2E notebook blob is `32615208` (`tutorials/mitra_regressor_colab.ipynb` at `92c627c`, unchanged on `main` at `8553b7a`; the NOTEBOOK_SPEC 3.0 revision with the Section 10 external-artifact section and the pinned release asset `sample-artifact-diabetes-v1`). Its one recorded hosted run is the `92c627c` record above (*First hosted run of the migrated notebook*): Colab CLI `colab exec -f` (scripted, not a browser Run all) on a fresh Colab Tesla T4, default path, exit 0, 13/13 code cells in the executor log, 0 error outputs, 171.4 s, input unchanged, verdict PASS; the fresh reload passed and Section 10 verified the pinned asset before extraction. `RUN_FINE_TUNING` is off by default, so the GPU fine-tune branch did not run in that run. The owner's 2026-10-22 ruling (the optional activity and the `RUN_FINE_TUNING` branch run once on this blob before promotion) is satisfied by the two `f294525` records above: the Section 11 activity (`SEED = 7` run copy) and the fine-tune branch (`RUN_FINE_TUNING = True` run copy), both Colab CLI 0.7.5 on a fresh T4, PASS. The notebook stays **Candidate** until these two are recorded for this blob:
 
 - **REL12:** a BYOD run in which one representative input is accepted through the downstream stages and one incompatible input is refused;
-- **REL2:** a browser run of the interactive journeys (BYOD upload dialog, optional-stage checkboxes, own-artifact ZIP); the scripted CLI run counts for the default path only;
-- **Optional activity:** the Section 11 activity (a re-run of Sections 4–7 with `SEED = 7`), which is markdown-only and has not been run on this blob;
-- **`RUN_FINE_TUNING` branch:** a GPU run with `RUN_FINE_TUNING = True`.
+- **REL2:** a browser run of the interactive journeys (BYOD upload dialog, optional-stage checkboxes, own-artifact ZIP); the scripted CLI runs count for the default path, the activity and the fine-tune branch only.
 
-The owner ruled on 2026-10-22 that the optional activity and the `RUN_FINE_TUNING` branch must be run before promotion. Promotion is an integrator decision; the builder does not change the status.
+Promotion is an integrator decision; the builder does not change the status.
 
 **History (the 2.2 pair, superseded; not evidence for `32615208`, REL14).** The previous blob `256708eef85f` has the 2026-10-08 Colab CLI T4 run above (default path only). The 2026-09-14 Kaggle T4 row above is evidence for the previous E2E blob (`d32d6f6b45c6`) only: an nbclient execution of the default sample path with a `google.colab` shim, not a browser Colab `Run all`. On 2026-10-08 both notebooks were regenerated (generator /2.2 isolated uv environment, DIMER Notebook Specification 2.2, Notebook Review Framework v1 fixes MRC-M1..M2 / MRC-m1..m6), so under NOTEBOOK_SPEC REL14 they return to Candidate until a run of the exact new blobs is recorded; the earlier row stays as history. The ARTIFACT-INFERENCE companion's then-current blob `8a2ea1c75750` (deleted with the companion) has a recorded Colab CLI T4 run of its default path (the pinned sample bundle) and a CI run of the own-bundle path, both 2026-10-08. Static validation (`tools/validate_release_assets.py`), nbformat validation, a `compile()` sweep over every code
 cell, and the offline unit suite passed on the tutorial source at the candidate revision, which is necessary but not
