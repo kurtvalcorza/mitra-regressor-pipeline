@@ -20,7 +20,6 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 E2E = ROOT / "tutorials" / "mitra_regressor_colab.ipynb"
-ART = ROOT / "tutorials" / "mitra_regressor_predictor_inference_colab.ipynb"
 
 
 def _cells(path: Path) -> list[dict]:
@@ -150,7 +149,7 @@ def test_mrc_m4_both_mitra_variants_reach_the_table_and_the_gpu_gate_runs_first(
     assert "# EVAL_METRIC sets AutoGluon's internal validation score and the fine-tune selection only" in source
     markdown = _markdown(E2E)
     assert "changing `EVAL_METRIC` does **not** change the metrics table" in markdown
-    closing = markdown[markdown.index("## Change one thing (next experiments)") :]
+    closing = markdown[markdown.index("## 11. Optional activity") :]  # the activity is Section 11 (NOTEBOOK_SPEC 3.0 §7.1)
     for text in ("*Run* — Sections 4–7", "re-run Sections 6–9", "re-run Sections 4–9", "*Predict*", "*Explain*", "**Activity (about 2 minutes on CPU)"):
         assert text in closing, text
 
@@ -235,13 +234,13 @@ def test_rel13_quoted_counts_are_labelled_with_their_source_revision():
 # --- MRC-m6: the four status documents agree ---------------------------------------------------------------------------
 
 
-def test_mrc_m6_status_documents_name_spec_2_2_and_the_same_evidence_state():
+def test_mrc_m6_status_documents_name_spec_3_0_and_the_same_evidence_state():
     status = (ROOT / "STATUS.md").read_text(encoding="utf-8")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     tutorials = (ROOT / "tutorials" / "README.md").read_text(encoding="utf-8")
     release = (ROOT / "docs" / "release-verification.md").read_text(encoding="utf-8")
     for text in (status, readme, tutorials, release):
-        assert "Specification 2.2" in text
+        assert "Specification 3.0" in text
     assert "Specification 1.1" not in status and "Specification 1.1 and are" not in readme
     assert "No clean-runtime execution of the standalone notebooks has been recorded yet; clean GPU" not in release
     assert "SAMPLE_CONFIGS" not in tutorials and "512 training rows" not in tutorials
@@ -251,11 +250,12 @@ def test_mrc_m6_status_documents_name_spec_2_2_and_the_same_evidence_state():
 # --- MRC-S1 / spec declaration -----------------------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("path", [E2E, ART])
-def test_generated_notebooks_declare_notebook_spec_2_2(path):
+@pytest.mark.parametrize("path", [E2E])
+def test_generated_notebooks_declare_notebook_spec_3_0(path):
     notebook = json.loads(path.read_text(encoding="utf-8"))
-    assert notebook["metadata"]["dimer"]["notebook_spec"] == "2.2"
-    assert "DIMER Notebook Specification 2.2 — **standalone**" in _markdown(path)
+    assert notebook["metadata"]["dimer"]["notebook_spec"] == "3.0"
+    assert notebook["metadata"]["dimer"]["notebook_kind"] == "TUTORIAL"
+    assert "DIMER Notebook Specification 3.0 — **standalone**" in _markdown(path)
 
 
 def test_section_4_and_6_cells_parse():

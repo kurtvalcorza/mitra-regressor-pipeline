@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-NOTEBOOKS = [ROOT / "tutorials" / "mitra_regressor_colab.ipynb", ROOT / "tutorials" / "mitra_regressor_predictor_inference_colab.ipynb"]
+NOTEBOOKS = [ROOT / "tutorials" / "mitra_regressor_colab.ipynb"]  # NOTEBOOK_SPEC 3.0: the companion is folded into Section 10
 
 
 def _shim(path: Path) -> str:

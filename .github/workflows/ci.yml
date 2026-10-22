@@ -25,7 +25,7 @@ jobs:
       - name: Install static test dependencies (the package is root-level; AutoGluon is never installed here)
         run: |
           python -m pip install --upgrade pip==26.2.1
-          python -m pip install pandas==3.0.5 numpy==2.5.3 pytest==8.4.2 ruff==0.16.6
+          python -m pip install pandas==3.0.5 numpy==2.5.3 scikit-learn==1.7.2 pytest==8.4.2 ruff==0.16.6
       - name: Shared-block parity
         run: python scripts/check_shared.py
       - name: DIMER contract
@@ -44,10 +44,9 @@ jobs:
         run: python scripts/test_sample_registry.py
       - name: Validate tutorial and model-card source (NOTEBOOK_SPEC 2.0 standalone carrier)
         run: python tools/validate_release_assets.py
-      - name: Standalone notebook parity (NOTEBOOK_SPEC 2.0 PAR3)
+      - name: Standalone notebook parity (PAR3)
         run: |
           python tools/build_notebook.py --check
-          python tools/build_notebook.py --check --template tools/notebook_template_artifact_inference.py
       - name: Compile deployables and tutorial API
         run: |
           python -m py_compile validator/validator.py validator/validate.py validator/contract_hardening.py

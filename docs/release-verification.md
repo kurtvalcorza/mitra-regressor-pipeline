@@ -1,14 +1,15 @@
 # Release verification
 
-`tutorials/mitra_regressor_colab.ipynb` (`E2E`) and `tutorials/mitra_regressor_predictor_inference_colab.ipynb`
-(`ARTIFACT-INFERENCE`) are **release candidates** until the exact notebook revisions have executed top-to-bottom in a
-clean supported runtime. Unit tests, JSON validation, code-cell compilation, and `tools/validate_release_assets.py` are
-necessary checks but are **not** runtime evidence under DIMER Notebook Specification 2.2. This file is the durable
-release-gate record for both notebooks.
+`tutorials/mitra_regressor_colab.ipynb` (`E2E`, kind `TUTORIAL`) is a **release candidate** until the exact notebook revision
+has executed top-to-bottom in a clean supported runtime. Unit tests, JSON validation, code-cell compilation, and
+`tools/validate_release_assets.py` are necessary checks but are **not** runtime evidence under DIMER Notebook Specification 3.0.
+This file is the durable release-gate record for the generated notebook. NOTEBOOK_SPEC 3.0 folded the predictor-inference
+companion (`tutorials/mitra_regressor_predictor_inference_colab.ipynb`, deleted) into the E2E notebook's Section 10
+external-artifact section; the companion's recorded runs below stay as history and are evidence for that deleted notebook only.
 
 ## Automatic coverage (static, every pull request)
 
-CI runs `tools/validate_release_assets.py`, which checks, for each of the two notebooks:
+CI runs `tools/validate_release_assets.py`, which checks, for the generated notebook:
 
 - notebook JSON parses; every code cell compiles as plain Python (no `%`/`!` magics); no persisted outputs or
   execution counts; no unresolved placeholder markers; every code cell is preceded by an explanatory markdown cell;
@@ -31,29 +32,31 @@ CI runs `tools/validate_release_assets.py`, which checks, for each of the two no
   `fine_tune=False`), the GPU-guarded `fine_tune=True` candidate behind `RUN_FINE_TUNING`, `DummyRegressor` / LightGBM /
   Random Forest on the same partitions, `evaluation_report` with the independent test, inference-mode `validate_inputs` +
   `validate_inference_frame`, `write_artifact_manifest`, `safe_extract_archive` + `validate_artifact_directory` before
-  `TabularPredictor.load` on the fresh reload and the `rtol=1e-6, atol=1e-8` equivalence check; companion: the required
-  whole-archive digest (`ALLOW_UNVERIFIED_ARTIFACT` gated off), `safe_extract_archive`, `validate_artifact_directory`, the
-  base-model identity/digest comparison, the AutoGluon/Python compatibility checks before `TabularPredictor.load`,
-  inference-mode `validate_inputs` with a rejection probe, `predict`, a `not-measurable` `evaluation_report` — the ceiling
-  prints, the four exports per notebook, the learner-facing statements (point estimates only, dropped rows counted, no
-  gradient update, fine-tuning gate, reproducibility boundary, verify-before-deserialise, trust boundary, no artifact created
-  in the companion) and the gated-off form parameters (`USE_BYOD`, `RUN_FINE_TUNING`, `RUN_NEW_DATA_INFERENCE`,
-  `ALLOW_UNVERIFIED_ARTIFACT`); forbidden patterns (credential-in-URL, own-repository clone/install, a `git+https://`
+  `TabularPredictor.load` on the fresh reload and the `rtol=1e-6, atol=1e-8` equivalence check; Section 10: the pinned
+  `SAMPLE_ARTIFACT_URL` / `SAMPLE_ARTIFACT_SHA256` download (`fetch_pinned_artifact`), the own-bundle digest
+  (`ALLOW_UNVERIFIED_ARTIFACT` gated off), `safe_extract_archive`, `validate_artifact_directory`, the base-model
+  identity/digest comparison, `check_data_contract` (SART10), the AutoGluon/Python compatibility checks before
+  `TabularPredictor.load`, inference-mode `validate_inputs` with a rejection probe, `predict`, a `not-measurable`
+  `evaluation_report` — the ceiling prints, the four exports plus the two Section 10 outputs, the learner-facing statements (point estimates only, dropped rows counted, no
+  gradient update, fine-tuning gate, reproducibility boundary, verify-before-deserialise, trust boundary, Section 10 never
+  reading this run's export) and the gated-off form parameters (`USE_BYOD`, `RUN_FINE_TUNING`, `RUN_NEW_DATA_INFERENCE`,
+  `ALLOW_UNVERIFIED_ARTIFACT`, `USE_OWN_ROWS`); forbidden patterns (credential-in-URL, own-repository clone/install, a `git+https://`
   dependency without a 40-hex SHA, a mutable `revision='main'`, `worker.run(` / `worker_cli(` / `subprocess.run([` outside
   the install cell, direct `urllib.request` / `TabularPredictor(` / `predictor.fit(` / `hyperparameters=` / `zipfile.ZipFile(`
   / `hf_hub_download(` / `sklearn.metrics` use **outside the carried module cell**, `trust_remote_code=True`, `pickle.load`,
-  `torch.load(`, `extractall(`; in the companion also `load_diabetes(`, `shutil.make_archive(`, `.fit(`, `write_artifact_manifest(`);
+  `torch.load(`, `extractall(`, and `shutil.make_archive(` (the export is `deterministic_zip`); a `github.com/kurtvalcorza`
+  reference anywhere except the exact pinned sample-artifact URL, as a whole token, in the carried module (ST1);
 - `STATUS.md`, `README.md` and `tutorials/README.md` agree on one release-status token and no document makes an
   unsupported release-grade, production-readiness or benchmark claim;
 - `MODEL_CARD.md` front matter (license, base model), single H1, placeholder/claim hygiene and the
   `## Checkpoint and Artifact Provenance` section (the card predates the MODEL_CARD_SPEC heading structure; the structural
   checks are switched off in the validator until the fleet's card pass reaches this branch).
 
-CI also runs `ruff`, `tools/build_notebook.py --check` for both templates, `scripts/check_shared.py`,
+CI also runs `ruff`, `tools/build_notebook.py --check`, `scripts/check_shared.py`,
 `scripts/check_contract.py`, `scripts/validate_colab_tutorial.py` (the repository's own spec-1.1 checks), the two
 `scripts/test_*.py` regression suites (`test_tutorial_api.py` against the package, `test_colab_csv_headers.py` against the
 package and the generated notebooks) and the offline unit suite (`tests/`: `test_role_helpers.py`, `test_notebook_parity.py`,
-`test_companion_parity.py`; injected downloader, no weights, AutoGluon never imported). These are source/provenance and unit
+`test_external_artifact_section.py`; injected downloader, no weights, AutoGluon never imported). These are source/provenance and unit
 checks. They are **not** execution evidence.
 
 ## Executor paths
@@ -96,12 +99,11 @@ Before changing the registry status from `Candidate` to `Release-grade`:
      extracted with `safe_extract_archive` into `outputs/artifact-reload/`, `validate_artifact_directory` passes before
      `TabularPredictor.load`, and the reloaded predictor's predictions equal the in-memory model's within `rtol=1e-6, atol=1e-8`;
      `outputs/mitra_regressor_result.json` written with `NOTEBOOK_SOURCE`, model revision, model licence, runtime versions and device;
-6. in a **second** clean runtime, run the exact companion notebook revision with `ARTIFACT_ZIP_PATH` pointing at a copy of the E2E
-   run's bundle, `EXPECTED_ZIP_SHA256` set to its printed digest and `NEW_DATA_PATH` at a separately generated unlabelled CSV (or
-   supply the files through the upload dialog); verify the digest, archive, manifest, base-model and runtime-compatibility checks
-   pass before `TabularPredictor.load`, that `validate_inputs(..., target_column=None, ...)` writes
-   `outputs/mitra_regressor_predictor_inference_input_manifest.json` with one recorded rejection finding, and that the
-   `not-measurable` evaluation report, `..._predictions.csv` and `..._result.json` are written;
+6. on the same default path, Section 10 prints the pinned URL, SHA-256 and producer before downloading, accepts the asset only at
+   `SAMPLE_ARTIFACT_SHA256`, passes the archive, manifest, base-model, data-contract and runtime-compatibility checks before
+   `TabularPredictor.load`, refuses the missing-column probe, and writes
+   `outputs/external_artifact/mitra_regressor_external_predictions.csv` (89 rows) and
+   `outputs/external_artifact/mitra_regressor_external_result.json` (verdict `not-measurable`, artifact `zip_sha256` equal to the pin);
 7. verify the exports exist and the interpretation sections match the observed paths;
 8. record the notebook Git blob ids, commit, runtime (platform, Python, PyTorch, AutoGluon, device), model identifier and immutable
    revision, whether the model cache was clean, outcome, produced outputs, and any warning or applicable `SHOULD` deviation in the table below;
@@ -171,9 +173,50 @@ they are measurements for the stated runtime, not general estimates.
 - **Not exercised:** browser Run all, the own-bundle path on Colab (`ARTIFACT_ZIP_PATH`, covered by the CI run above), the
   `upload` dialogs, the activity with another value. Worked answers checked against this run (REL13): they hold.
 
+### Producing run of the pinned sample artifact (2026-10-22)
+
+Colab CLI 0.7.4 `colab exec -f`, fresh Colab Tesla T4, default path (`Sample: Diabetes`) of
+`tutorials/mitra_regressor_colab.ipynb` at `0423aaa4224b6874266d8b32c349dcfbb40612bc` (blob `256708eef85f`), exit code 0,
+148.1 s wall, input notebook unchanged; the run's own fresh reload verified the manifest and provenance before deserialisation and
+matched predictions at `rtol=1e-6, atol=1e-8`. Its exported `outputs/mitra_regressor_predictor.zip` (SHA-256
+`850613f21b303a2f2dca49e54e1c0a736a1fd65cfc31d81fad03a79a841e7a19`, 280,010,179 bytes, printed by the run) was published as the
+release asset `sample-artifact-diabetes-v1/mitra_regressor_predictor.zip`, which Section 10 pins as `SAMPLE_ARTIFACT_URL` /
+`SAMPLE_ARTIFACT_SHA256`. It was written by that revision's `shutil.make_archive`, so its digest is not reproducible by re-running;
+later exports use `deterministic_zip`. This run is evidence for blob `256708eef85f` only, not for the NOTEBOOK_SPEC 3.0 revision.
+Evidence in `docs/execution-evidence/2026-10-22/mitra_regressor_colab_0423aaa/` (byte-exact, `-text`). The local run directory
+was redacted to `<local-run-dir>` before the first commit; SHA-256 captured → committed:
+
+| File | Captured | Committed |
+|---|---|---|
+| `run_summary.json` | `0a9771cb9014c72c5f96ed9891fff11131377defc2bc7171ccec68fea1e9162d` | same (no local path) |
+| `exec.log` | `0eeba7e69ac18669e4e1367c63ddd62357fa206c5755b71038076042bfc3b0cc` | `9b0effa4cd9679c156e9d6c1fbf59182a8e48e99253d63c6a9d55ba1f8fc711b` |
+| `mitra_regressor_colab_0423aaa_colab-cli-t4_output.ipynb` | `353a61fdf205f693a35a6a592337ba3b02a6233ab93b2ce3bd80050971181b2d` | same (no local path) |
+| `suite.log` | `35b63ba626a5e4d6c1936024e2c25dec572f967a37e71115d63b0e692624c66d` | `14155ff1d42610a9edbd255e98486bed832bb63fe58f5ed93b810a64b4fdda05` |
+
+### First hosted run of the migrated notebook (2026-10-22)
+
+Colab CLI 0.7.4 `colab exec -f` on a fresh Colab Tesla T4, default path of `tutorials/mitra_regressor_colab.ipynb` on PR #45 at
+`92c627caee1c005ce4dc82546fff4892f50f24cb` (blob `3261520866b3`, Notebook Spec 3.0; the second pass of §32.2), started
+2026-10-22T03:18:22Z, 171.4 s wall, exit code 0, input notebook unchanged; executed cell sources equal the blob (40 cells). The
+fresh reload of the run's own export passed (predictions equivalent at `rtol=1e-6`; its deterministic export printed
+`zip_sha256` `28f8b9f4b95ce36b4ca6e51f021ccc19800a8fbf5262687b3e3c61e506df2639`). **Section 10 ran end to end on the default
+path:** it downloaded the pinned release asset, verified SHA-256 `850613f21b303a2f2dca49e54e1c0a736a1fd65cfc31d81fad03a79a841e7a19`
+before extraction, rebuilt the Mitra regressor from the bundle (10 features, on CUDA), scored 89 rows and wrote
+`outputs/external_artifact/mitra_regressor_external_predictions.csv` and `..._external_result.json` (verdict `not-measurable`, as
+designed: the section scores rows as new input without targets). Evidence in
+`docs/execution-evidence/2026-10-22/mitra_regressor_colab_92c627c/`; the local run directory was redacted to `<local-run-dir>`
+before the first commit; SHA-256 captured → committed:
+
+| File | Captured | Committed |
+|---|---|---|
+| `run_summary.json` | `db31f2985d1a31b6b25aaf82ffd74751c60f0d00bea569a8f4b61656e39760a5` | same (no local path) |
+| `exec.log` | `6aebde180b8ef29c6dc238b694a5a5094a38914dedb4e1355fa67073daaa35e2` | `92166074a7f5b1d3dcb2e823332a5425b560455f9b558ed5d8ca3fa32898dd7d` |
+| `mitra_regressor_colab_92c627c_colab-cli-t4_output.ipynb` | `22d30709f4a3f12233e87de7f3095d80c0de98cc78520d706e1b5247b739618e` | same (no local path) |
+| `suite.log` | `a9075c968c7652ea327b05c3d651a1cf4bae143b977b5c3ef4fafea1295522a3` | `8b69163cbb3bc6d06c614035bf5a4d8dcd1991e3919c87a3b2f68bfa94445b7e` |
+
 ## Current status
 
-**Generated tutorial pair: Candidate.** The E2E notebook's current blob `256708eef85f` has one recorded execution, the 2026-10-08 Colab CLI T4 run above (default path only); browser Run all, BYOD, the fine-tuning gate and the activity remain unexercised, and promotion is an integrator's decision. The 2026-09-14 Kaggle T4 row above is evidence for the previous E2E blob (`d32d6f6b45c6`) only: an nbclient execution of the default sample path with a `google.colab` shim, not a browser Colab `Run all`. On 2026-10-08 both notebooks were regenerated (generator /2.2 isolated uv environment, DIMER Notebook Specification 2.2, Notebook Review Framework v1 fixes MRC-M1..M2 / MRC-m1..m6), so under NOTEBOOK_SPEC REL14 they return to Candidate until a run of the exact new blobs is recorded; the earlier row stays as history. The ARTIFACT-INFERENCE companion's current blob `8a2ea1c75750` has a recorded Colab CLI T4 run of its default path (the pinned sample bundle) and a CI run of the own-bundle path, both 2026-10-08. Static validation (`tools/validate_release_assets.py`), nbformat validation, a `compile()` sweep over every code
+**Generated E2E tutorial: Candidate.** The NOTEBOOK_SPEC 3.0 revision (Section 10 external-artifact section, pinned release asset `sample-artifact-diabetes-v1`) has no recorded clean-runtime run yet. The previous blob `256708eef85f` has the 2026-10-08 Colab CLI T4 run above (default path only); browser Run all, BYOD, the fine-tuning gate and the activity remain unexercised, and promotion is an integrator's decision. The 2026-09-14 Kaggle T4 row above is evidence for the previous E2E blob (`d32d6f6b45c6`) only: an nbclient execution of the default sample path with a `google.colab` shim, not a browser Colab `Run all`. On 2026-10-08 both notebooks were regenerated (generator /2.2 isolated uv environment, DIMER Notebook Specification 2.2, Notebook Review Framework v1 fixes MRC-M1..M2 / MRC-m1..m6), so under NOTEBOOK_SPEC REL14 they return to Candidate until a run of the exact new blobs is recorded; the earlier row stays as history. The ARTIFACT-INFERENCE companion's current blob `8a2ea1c75750` has a recorded Colab CLI T4 run of its default path (the pinned sample bundle) and a CI run of the own-bundle path, both 2026-10-08. Static validation (`tools/validate_release_assets.py`), nbformat validation, a `compile()` sweep over every code
 cell, and the offline unit suite passed on the tutorial source at the candidate revision, which is necessary but not
 sufficient. The registry status remains **Candidate** until a reviewer confirms a recorded run against the notebook blobs
 under review and an integrator promotes it; promotion is not performed by the builder. Facts a reviewer should weigh:
