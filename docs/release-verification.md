@@ -173,6 +173,26 @@ they are measurements for the stated runtime, not general estimates.
 - **Not exercised:** browser Run all, the own-bundle path on Colab (`ARTIFACT_ZIP_PATH`, covered by the CI run above), the
   `upload` dialogs, the activity with another value. Worked answers checked against this run (REL13): they hold.
 
+### Producing run of the pinned sample artifact (2026-10-22)
+
+Colab CLI 0.7.4 `colab exec -f`, fresh Colab Tesla T4, default path (`Sample: Diabetes`) of
+`tutorials/mitra_regressor_colab.ipynb` at `0423aaa4224b6874266d8b32c349dcfbb40612bc` (blob `256708eef85f`), exit code 0,
+148.1 s wall, input notebook unchanged; the run's own fresh reload verified the manifest and provenance before deserialisation and
+matched predictions at `rtol=1e-6, atol=1e-8`. Its exported `outputs/mitra_regressor_predictor.zip` (SHA-256
+`850613f21b303a2f2dca49e54e1c0a736a1fd65cfc31d81fad03a79a841e7a19`, 280,010,179 bytes, printed by the run) was published as the
+release asset `sample-artifact-diabetes-v1/mitra_regressor_predictor.zip`, which Section 10 pins as `SAMPLE_ARTIFACT_URL` /
+`SAMPLE_ARTIFACT_SHA256`. It was written by that revision's `shutil.make_archive`, so its digest is not reproducible by re-running;
+later exports use `deterministic_zip`. This run is evidence for blob `256708eef85f` only, not for the NOTEBOOK_SPEC 3.0 revision.
+Evidence in `docs/execution-evidence/2026-10-22/mitra_regressor_colab_0423aaa/` (byte-exact, `-text`). The local run directory
+was redacted to `<local-run-dir>` before the first commit; SHA-256 captured → committed:
+
+| File | Captured | Committed |
+|---|---|---|
+| `run_summary.json` | `0a9771cb9014c72c5f96ed9891fff11131377defc2bc7171ccec68fea1e9162d` | same (no local path) |
+| `exec.log` | `0eeba7e69ac18669e4e1367c63ddd62357fa206c5755b71038076042bfc3b0cc` | `9b0effa4cd9679c156e9d6c1fbf59182a8e48e99253d63c6a9d55ba1f8fc711b` |
+| `mitra_regressor_colab_0423aaa_colab-cli-t4_output.ipynb` | `353a61fdf205f693a35a6a592337ba3b02a6233ab93b2ce3bd80050971181b2d` | same (no local path) |
+| `suite.log` | `35b63ba626a5e4d6c1936024e2c25dec572f967a37e71115d63b0e692624c66d` | `14155ff1d42610a9edbd255e98486bed832bb63fe58f5ed93b810a64b4fdda05` |
+
 ## Current status
 
 **Generated E2E tutorial: Candidate.** The NOTEBOOK_SPEC 3.0 revision (Section 10 external-artifact section, pinned release asset `sample-artifact-diabetes-v1`) has no recorded clean-runtime run yet. The previous blob `256708eef85f` has the 2026-10-08 Colab CLI T4 run above (default path only); browser Run all, BYOD, the fine-tuning gate and the activity remain unexercised, and promotion is an integrator's decision. The 2026-09-14 Kaggle T4 row above is evidence for the previous E2E blob (`d32d6f6b45c6`) only: an nbclient execution of the default sample path with a `google.colab` shim, not a browser Colab `Run all`. On 2026-10-08 both notebooks were regenerated (generator /2.2 isolated uv environment, DIMER Notebook Specification 2.2, Notebook Review Framework v1 fixes MRC-M1..M2 / MRC-m1..m6), so under NOTEBOOK_SPEC REL14 they return to Candidate until a run of the exact new blobs is recorded; the earlier row stays as history. The ARTIFACT-INFERENCE companion's current blob `8a2ea1c75750` has a recorded Colab CLI T4 run of its default path (the pinned sample bundle) and a CI run of the own-bundle path, both 2026-10-08. Static validation (`tools/validate_release_assets.py`), nbformat validation, a `compile()` sweep over every code
