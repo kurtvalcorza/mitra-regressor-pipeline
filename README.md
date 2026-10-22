@@ -30,7 +30,7 @@ egress, enable, and monitoring — see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Release status
 
-**Candidate.** Static/unit checks do not constitute clean-runtime notebook evidence. The NOTEBOOK_SPEC 3.0 revision of the E2E notebook (with its Section 10 external-artifact section) has not been executed yet; earlier revisions' runs (including the 2026-10-22 Colab CLI T4 run of blob `256708eef85f` at `0423aaa` that produced the pinned sample artifact) are recorded in `docs/release-verification.md`. Complete `docs/release-verification.md` against the exact release revision before calling the notebook release-grade.
+**Candidate.** Static/unit checks do not constitute clean-runtime notebook evidence. The NOTEBOOK_SPEC 3.0 revision of the E2E notebook (blob `32615208`, commit `92c627c`, with its Section 10 external-artifact section) has one hosted run: a Colab CLI scripted run on a fresh T4 on 2026-10-22 that passed (13/13 code cells, 0 errors). It stays Candidate until a BYOD run (one input accepted, one refused), a browser run of the interactive journeys, a run of the optional activity and a GPU run with `RUN_FINE_TUNING = True` are recorded. Earlier revisions' runs (including the 2026-10-22 Colab CLI T4 run of blob `256708eef85f` at `0423aaa` that produced the pinned sample artifact) are recorded in `docs/release-verification.md`. Complete `docs/release-verification.md` against the exact release revision before calling the notebook release-grade.
 
 ## The model: Mitra
 
