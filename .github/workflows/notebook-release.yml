@@ -40,9 +40,7 @@ jobs:
           sudo mkdir -p /content
           sudo chown -R "$USER":"$USER" /content
           python -m pip install --upgrade pip==26.2.1
-          # scikit-learn / pandas / numpy at the isolated lock's versions: the "Prepare independent inference input" step
-          # runs in the runner's own Python, which the notebook no longer populates (its install moved into the isolated uv environment).
-          python -m pip install psutil==7.1.3 nbconvert==7.17.1 ipykernel==7.3.0 scikit-learn==1.7.2 pandas==2.3.3 numpy==2.3.5
+          python -m pip install psutil==7.1.3 nbconvert==7.17.1 ipykernel==7.3.0
 
       - name: Execute E2E default path from clean state
         id: e2e
@@ -57,83 +55,32 @@ jobs:
             --ExecutePreprocessor.timeout=2400 \
             --ExecutePreprocessor.kernel_name=python3
 
-      - name: Prepare independent inference input and trusted archive digest
-        id: prepare-inference
+      - name: Collect E2E and external-artifact outputs
+        id: collect
         run: |
+          # The E2E notebook's Section 10 (NOTEBOOK_SPEC 3.0 §19.1) scores the pinned release asset on the default path;
+          # the separate ARTIFACT-INFERENCE companion run is gone with the companion notebook.
           mkdir -p /content/mitra-tutorial /content/mitra-inference
           cp /content/outputs/mitra_regressor_predictor.zip /content/mitra-tutorial/mitra-predictor.zip
-          python - <<'PY'
-          import hashlib
-          import json
-          import zipfile
-          from pathlib import Path
+          cp /content/outputs/external_artifact/mitra_regressor_external_predictions.csv /content/mitra-inference/external-predictions.csv
+          cp /content/outputs/external_artifact/mitra_regressor_external_result.json /content/mitra-inference/external-result.json
 
-          from sklearn.datasets import load_diabetes
-          from sklearn.model_selection import train_test_split
-
-          # Genuinely new unlabelled rows (MRP-m6): the E2E run's independent test partition, re-derived with the
-          # seed the bundle records; the target is withheld and no scored row may be one of the bundle's support rows.
-          frame = load_diabetes(as_frame=True).frame
-          zip_meta = zipfile.ZipFile("/content/mitra-tutorial/mitra-predictor.zip").read("tutorial_run_metadata.json")
-          seed = json.loads(zip_meta)["seed"]
-          support, remainder = train_test_split(frame, test_size=0.4, random_state=seed)
-          _, test_rows = train_test_split(remainder, test_size=0.5, random_state=seed)
-          features = [c for c in frame.columns if c != "target"]
-          overlap = set(map(tuple, test_rows[features].to_numpy())) & set(map(tuple, support[features].to_numpy()))
-          if overlap or len(test_rows) == 0:
-              raise RuntimeError(f"inference rows overlap the bundle's support rows: {len(overlap)}")
-          test_rows[features].to_csv("/content/inference.csv", index=False)
-          print(f"Independent inference rows: {len(test_rows)} (overlap with support rows: 0)")
-
-          zip_path = Path("/content/mitra-tutorial/mitra-predictor.zip")
-          digest = hashlib.sha256(zip_path.read_bytes()).hexdigest()
-          # The standalone notebook takes these through its form fields; set them in an executed copy only.
-          fields = {
-              "ARTIFACT_ZIP_PATH = ''": f"ARTIFACT_ZIP_PATH = '{zip_path}'",
-              "EXPECTED_ZIP_SHA256 = ''": f"EXPECTED_ZIP_SHA256 = '{digest}'",
-              "NEW_DATA_PATH = ''": "NEW_DATA_PATH = '/content/inference.csv'",
-          }
-          source = Path("tutorials/mitra_regressor_predictor_inference_colab.ipynb")
-          notebook = json.loads(source.read_text(encoding="utf-8"))
-          for cell in notebook["cells"]:
-              if cell.get("cell_type") != "code":
-                  continue
-              text = "".join(cell["source"]) if isinstance(cell["source"], list) else cell["source"]
-              for marker, value in fields.items():
-                  if marker in text:
-                      text = text.replace(marker, value, 1)
-                      fields[marker] = None
-              cell["source"] = text.splitlines(keepends=True)
-          missing = [marker for marker, value in fields.items() if value is not None]
-          if missing:
-              raise RuntimeError(f"Inference notebook form fields not found: {missing}")
-          Path("/content/mitra_regressor_predictor_inference_colab.ipynb").write_text(json.dumps(notebook, indent=1), encoding="utf-8")
-          print(f"Trusted predictor archive SHA-256: {digest}")
-          PY
-
-      - name: Execute artifact-inference notebook against external producer artifact
-        id: artifact-inference
+      - name: Assert external-artifact section outputs
+        id: assert-outputs
         run: |
-          jupyter nbconvert \
-            --to notebook \
-            --execute /content/mitra_regressor_predictor_inference_colab.ipynb \
-            --output executed-mitra-regressor-artifact-inference.ipynb \
-            --output-dir /content \
-            --ExecutePreprocessor.timeout=1200 \
-            --ExecutePreprocessor.kernel_name=python3
-          cp /content/outputs/mitra_regressor_predictor_inference_predictions.csv /content/mitra-inference/predictions.csv
+          python -c "import json; r = json.load(open('/content/mitra-inference/external-result.json')); assert r['artifact']['trusted_digest'].startswith('verified (pinned'), r['artifact']; assert r['input']['kind'] == 'sample' and r['input']['rows'] > 0; assert r['evaluation_report']['verdict'] == 'not-measurable'; print('external-artifact section:', r['artifact']['zip_sha256'], r['input']['rows'], 'rows')"
 
       - name: Upload executed notebooks and predictor artifact
         id: upload-evidence
-        if: ${{ always() && steps.e2e.outcome == 'success' && steps.prepare-inference.outcome == 'success' && steps.artifact-inference.outcome == 'success' }}
+        if: ${{ always() && steps.e2e.outcome == 'success' && steps.collect.outcome == 'success' && steps.assert-outputs.outcome == 'success' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: mitra-regressor-notebook-release-evidence
           path: |
             /content/executed-mitra-regressor-e2e.ipynb
-            /content/executed-mitra-regressor-artifact-inference.ipynb
             /content/mitra-tutorial/mitra-predictor.zip
-            /content/mitra-inference/predictions.csv
+            /content/mitra-inference/external-predictions.csv
+            /content/mitra-inference/external-result.json
           if-no-files-found: error
           retention-days: 30
 
@@ -141,11 +88,11 @@ jobs:
         if: always()
         env:
           E2E_OUTCOME: ${{ steps.e2e.outcome }}
-          PREPARE_OUTCOME: ${{ steps.prepare-inference.outcome }}
-          INFERENCE_OUTCOME: ${{ steps.artifact-inference.outcome }}
+          COLLECT_OUTCOME: ${{ steps.collect.outcome }}
+          OUTPUT_OUTCOME: ${{ steps.assert-outputs.outcome }}
           UPLOAD_OUTCOME: ${{ steps.upload-evidence.outcome }}
         run: |
-          if [[ "$E2E_OUTCOME" == "success" && "$PREPARE_OUTCOME" == "success" && "$INFERENCE_OUTCOME" == "success" && "$UPLOAD_OUTCOME" == "success" ]]; then
+          if [[ "$E2E_OUTCOME" == "success" && "$COLLECT_OUTCOME" == "success" && "$OUTPUT_OUTCOME" == "success" && "$UPLOAD_OUTCOME" == "success" ]]; then
             RELEASE_STATUS="PASS"
           else
             RELEASE_STATUS="INCOMPLETE/FAIL"
@@ -157,11 +104,11 @@ jobs:
             echo "- Runner: \`${RUNNER_OS}\`"
             echo "- Python: \`$(python --version 2>&1)\`"
             echo "- E2E clean execution outcome: \`${E2E_OUTCOME}\`"
-            echo "- External-artifact preparation outcome: \`${PREPARE_OUTCOME}\`"
-            echo "- Artifact-inference execution outcome: \`${INFERENCE_OUTCOME}\`"
+            echo "- Output collection (E2E + Section 10 external artifact): \`${COLLECT_OUTCOME}\`"
+            echo "- Section 10 output assertions: \`${OUTPUT_OUTCOME}\`"
             echo "- Evidence upload outcome: \`${UPLOAD_OUTCOME}\`"
             echo "- Release evidence status: **${RELEASE_STATUS}**"
-            echo "- A PASS means the inference notebook consumed the externally produced E2E artifact with its trusted SHA-256 and the complete evidence bundle was retained by Actions."
+            echo "- A PASS means the E2E notebook ran end to end, its Section 10 accepted the pinned release asset only at its pinned SHA-256 and scored the sample rows, and the complete evidence bundle was retained by Actions."
             echo "- Static checks are separate and are not treated as execution evidence."
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -169,11 +116,11 @@ jobs:
         if: always()
         env:
           E2E_OUTCOME: ${{ steps.e2e.outcome }}
-          PREPARE_OUTCOME: ${{ steps.prepare-inference.outcome }}
-          INFERENCE_OUTCOME: ${{ steps.artifact-inference.outcome }}
+          COLLECT_OUTCOME: ${{ steps.collect.outcome }}
+          OUTPUT_OUTCOME: ${{ steps.assert-outputs.outcome }}
           UPLOAD_OUTCOME: ${{ steps.upload-evidence.outcome }}
         run: |
           [[ "$E2E_OUTCOME" == "success" ]]
-          [[ "$PREPARE_OUTCOME" == "success" ]]
-          [[ "$INFERENCE_OUTCOME" == "success" ]]
+          [[ "$COLLECT_OUTCOME" == "success" ]]
+          [[ "$OUTPUT_OUTCOME" == "success" ]]
           [[ "$UPLOAD_OUTCOME" == "success" ]]
