@@ -1,0 +1,50 @@
+{
+  "repo": "mitra-regressor-pipeline",
+  "sha": "f294525a0113f7f4f1bc007f4e3c15471cfe026a",
+  "notebook": "tutorials/mitra_regressor_colab.ipynb",
+  "blob": "3261520866b3f92728c916043a934f4f18b0c366",
+  "gpu": "T4",
+  "session": "suite-mitra-f294525-695e",
+  "started_utc": "2026-10-22T13:54:24+00:00",
+  "runner": "Colab CLI `colab exec -f` on a fresh session (not a browser Run all)",
+  "overrides": [
+    {
+      "name": "RUN_FINE_TUNING",
+      "from": "False",
+      "to": "True"
+    }
+  ],
+  "run_copy_blob": "57234ac30a85a442964bda6216f94c279ccefa76",
+  "run_copy_sha256": "01a6bd208009cf320be5d687241adebc7d22973a2dd32928af39344b4e933a2a",
+  "run_copy_note": "the executed copy differs from the committed blob only in the listed assignment literals; input_unchanged compares against that copy",
+  "status": "[suite-mitra-f294525-695e] gpu-t4-s-kkb-usw4b0-1tad7l2jj2i6r | Hardware: T4 | Shape: Standard | Variant: GPU | Status: IDLE",
+  "exec_exit_code": 0,
+  "stopped": true,
+  "wall_s": 361.6,
+  "input_unchanged": true,
+  "executed_file": "mitra_regressor_colab_f294525_colab-cli-t4_output.ipynb",
+  "log_cells": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13
+  ],
+  "log_total": 13,
+  "code_cells": 13,
+  "executed_cells": 12,
+  "errors": [],
+  "execution_counts": [],
+  "sequential": null,
+  "executed_sha256": "2da199d91deb38e7e97c537a84a02a0983ef0517650c7a8397a609378769c778",
+  "log_sequential_complete": true,
+  "verdict": "PASS"
+}
