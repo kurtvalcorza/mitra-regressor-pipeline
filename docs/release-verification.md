@@ -193,6 +193,27 @@ was redacted to `<local-run-dir>` before the first commit; SHA-256 captured → 
 | `mitra_regressor_colab_0423aaa_colab-cli-t4_output.ipynb` | `353a61fdf205f693a35a6a592337ba3b02a6233ab93b2ce3bd80050971181b2d` | same (no local path) |
 | `suite.log` | `35b63ba626a5e4d6c1936024e2c25dec572f967a37e71115d63b0e692624c66d` | `14155ff1d42610a9edbd255e98486bed832bb63fe58f5ed93b810a64b4fdda05` |
 
+### First hosted run of the migrated notebook (2026-10-22)
+
+Colab CLI 0.7.4 `colab exec -f` on a fresh Colab Tesla T4, default path of `tutorials/mitra_regressor_colab.ipynb` on PR #45 at
+`92c627caee1c005ce4dc82546fff4892f50f24cb` (blob `3261520866b3`, Notebook Spec 3.0; the second pass of §32.2), started
+2026-10-22T03:18:22Z, 171.4 s wall, exit code 0, input notebook unchanged; executed cell sources equal the blob (40 cells). The
+fresh reload of the run's own export passed (predictions equivalent at `rtol=1e-6`; its deterministic export printed
+`zip_sha256` `28f8b9f4b95ce36b4ca6e51f021ccc19800a8fbf5262687b3e3c61e506df2639`). **Section 10 ran end to end on the default
+path:** it downloaded the pinned release asset, verified SHA-256 `850613f21b303a2f2dca49e54e1c0a736a1fd65cfc31d81fad03a79a841e7a19`
+before extraction, rebuilt the Mitra regressor from the bundle (10 features, on CUDA), scored 89 rows and wrote
+`outputs/external_artifact/mitra_regressor_external_predictions.csv` and `..._external_result.json` (verdict `not-measurable`, as
+designed: the section scores rows as new input without targets). Evidence in
+`docs/execution-evidence/2026-10-22/mitra_regressor_colab_92c627c/`; the local run directory was redacted to `<local-run-dir>`
+before the first commit; SHA-256 captured → committed:
+
+| File | Captured | Committed |
+|---|---|---|
+| `run_summary.json` | `db31f2985d1a31b6b25aaf82ffd74751c60f0d00bea569a8f4b61656e39760a5` | same (no local path) |
+| `exec.log` | `6aebde180b8ef29c6dc238b694a5a5094a38914dedb4e1355fa67073daaa35e2` | `92166074a7f5b1d3dcb2e823332a5425b560455f9b558ed5d8ca3fa32898dd7d` |
+| `mitra_regressor_colab_92c627c_colab-cli-t4_output.ipynb` | `22d30709f4a3f12233e87de7f3095d80c0de98cc78520d706e1b5247b739618e` | same (no local path) |
+| `suite.log` | `a9075c968c7652ea327b05c3d651a1cf4bae143b977b5c3ef4fafea1295522a3` | `8b69163cbb3bc6d06c614035bf5a4d8dcd1991e3919c87a3b2f68bfa94445b7e` |
+
 ## Current status
 
 **Generated E2E tutorial: Candidate.** The NOTEBOOK_SPEC 3.0 revision (Section 10 external-artifact section, pinned release asset `sample-artifact-diabetes-v1`) has no recorded clean-runtime run yet. The previous blob `256708eef85f` has the 2026-10-08 Colab CLI T4 run above (default path only); browser Run all, BYOD, the fine-tuning gate and the activity remain unexercised, and promotion is an integrator's decision. The 2026-09-14 Kaggle T4 row above is evidence for the previous E2E blob (`d32d6f6b45c6`) only: an nbclient execution of the default sample path with a `google.colab` shim, not a browser Colab `Run all`. On 2026-10-08 both notebooks were regenerated (generator /2.2 isolated uv environment, DIMER Notebook Specification 2.2, Notebook Review Framework v1 fixes MRC-M1..M2 / MRC-m1..m6), so under NOTEBOOK_SPEC REL14 they return to Candidate until a run of the exact new blobs is recorded; the earlier row stays as history. The ARTIFACT-INFERENCE companion's current blob `8a2ea1c75750` has a recorded Colab CLI T4 run of its default path (the pinned sample bundle) and a CI run of the own-bundle path, both 2026-10-08. Static validation (`tools/validate_release_assets.py`), nbformat validation, a `compile()` sweep over every code
