@@ -193,22 +193,28 @@ was redacted to `<local-run-dir>` before the first commit; SHA-256 captured → 
 | `mitra_regressor_colab_0423aaa_colab-cli-t4_output.ipynb` | `353a61fdf205f693a35a6a592337ba3b02a6233ab93b2ce3bd80050971181b2d` | same (no local path) |
 | `suite.log` | `35b63ba626a5e4d6c1936024e2c25dec572f967a37e71115d63b0e692624c66d` | `14155ff1d42610a9edbd255e98486bed832bb63fe58f5ed93b810a64b4fdda05` |
 
-### Serialization scan of the pinned sample artifact (2026-10-23)
+### Serialization scan of the pinned sample artifact (2026-10-23, retroactive)
 
 ARTIFACT_SPEC 2.0 (ml-worker#90) SER9 and SER13: AutoGluon has no faithful non-code-executing format for a `TabularPredictor`,
 so the sample artifact stays pickle-based and needs a recorded trust note (SER6, under "Artifact contract" in
-[`tutorials/README.md`](../tutorials/README.md)) and a static scan before publication. The release asset
-`sample-artifact-diabetes-v1/mitra_regressor_predictor.zip` was downloaded on 2026-10-23 and its SHA-256
-(`850613f21b303a2f2dca49e54e1c0a736a1fd65cfc31d81fad03a79a841e7a19`) matches the pinned value above. It was extracted and
-scanned with picklescan 1.0.5 (`-g`, nested `models/Mitra/model.pt` included); nothing was loaded.
+[`tutorials/README.md`](../tutorials/README.md)) and a static scan. SER13 asks for that scan **before** publication; this
+asset was published on 2026-10-22, before 2.0 existed, so this is a **retroactive** scan of the published bytes, not the
+pre-publication control. The next sample artifact is to be scanned before upload and published only at the digest that passed.
 
-- **Result:** 11 pickle files scanned to the end, **0 dangerous globals**, 93 suspicious globals, exit code 0.
-- **Suspicious globals:** all library classes and functions that rebuild the predictor: AutoGluon (27 distinct), pandas (7),
+The release asset `sample-artifact-diabetes-v1/mitra_regressor_predictor.zip` was downloaded on 2026-10-23; its SHA-256
+(`850613f21b303a2f2dca49e54e1c0a736a1fd65cfc31d81fad03a79a841e7a19`) matches the pinned value above. It was extracted and
+scanned with picklescan 1.0.5 (`-g`); nothing was loaded. `models/Mitra/model.pt` is a PyTorch zip, which picklescan reads in
+place, so it was not extracted and each pickle payload was scanned once.
+
+- **Result:** 10 pickle files scanned to the end, **0 dangerous globals**, 80 suspicious global references (51 distinct),
+  picklescan exit code 0, `scan_status=0`.
+- **Suspicious globals (distinct):** all library classes and functions that rebuild the predictor: AutoGluon (27), pandas (7),
   numpy (5), torch (5, including `torch.nn` modules, because `models/Mitra/model.pt` pickles the whole model object), networkx
   (2), `builtins.list`/`slice`, `__builtin__.set`, `collections.defaultdict`, and `sklearn.metrics.mean_absolute_error`. None
   names an operating-system, process, network, or `eval`/`exec`/`getattr` callable.
-- **Evidence:** `docs/execution-evidence/2026-10-23/ser13-sample-artifact-scan/` holds the report (`scan-report.txt`, local
-  scan paths replaced by `<scan-dir>`) and the two scripts that produced it.
+- **Evidence:** `docs/execution-evidence/2026-10-23/ser13-sample-artifact-scan/` holds `scan-report.txt` exactly as `scan.sh`
+  wrote it except that `make_evidence.py` replaced local scan paths with `<scan-dir>`, plus both scripts. `scan.sh` exits with
+  the scanner's status (0 clean, 1 dangerous, 2 incomplete).
 
 ### First hosted run of the migrated notebook (2026-10-22)
 

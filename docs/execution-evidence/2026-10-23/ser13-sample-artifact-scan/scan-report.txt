@@ -421,131 +421,117 @@ sha256=850613f21b303a2f2dca49e54e1c0a736a1fd65cfc31d81fad03a79a841e7a19
     4 model/data/392
     2 model/version
     40 model/.data/serialization_id
+   (PyTorch zip: scanned in place by picklescan, not extracted)
 -- picklescan 1.0.5
 ----------- SCAN SUMMARY -----------
-Scanned files: 11
+Scanned files: 10
 Infected files: 0
-Suspicious globals: 93
+Suspicious globals: 80
 Dangerous globals: 0
 All globals found:
-  * numpy.int8 - suspicious
   * autogluon.features.generators.drop_unique.DropUniqueFeatureGenerator - suspicious
+  * autogluon.core.data.label_cleaner.LabelCleanerDummy - suspicious
+  * sklearn.metrics._regression.mean_absolute_error - suspicious
+  * autogluon.features.generators.identity.IdentityFeatureGenerator - suspicious
+  * numpy.dtype - innocuous
   * autogluon.core.metrics._PredictScorer - suspicious
   * numpy._core.multiarray.scalar - suspicious
-  * sklearn.metrics._regression.mean_absolute_error - suspicious
-  * autogluon.tabular.learner.default_learner.DefaultLearner - suspicious
-  * autogluon.tabular.trainer.auto_trainer.AutoTrainer - suspicious
-  * numpy._core.multiarray._reconstruct - innocuous
-  * collections.defaultdict - suspicious
-  * autogluon.common.features.feature_metadata.FeatureMetadata - suspicious
-  * autogluon.features.generators.fillna.FillNaFeatureGenerator - suspicious
-  * numpy.ndarray - innocuous
+  * autogluon.features.generators.auto_ml_pipeline.AutoMLPipelineFeatureGenerator - suspicious
   * autogluon.features.generators.astype.AsTypeFeatureGenerator - suspicious
   * autogluon.features.generators.drop_duplicates.DropDuplicatesFeatureGenerator - suspicious
-  * autogluon.features.generators.identity.IdentityFeatureGenerator - suspicious
+  * numpy._core.multiarray._reconstruct - innocuous
+  * autogluon.features.generators.fillna.FillNaFeatureGenerator - suspicious
   * builtins.list - suspicious
-  * autogluon.core.data.label_cleaner.LabelCleanerDummy - suspicious
-  * numpy.dtype - innocuous
+  * autogluon.tabular.learner.default_learner.DefaultLearner - suspicious
+  * autogluon.tabular.trainer.auto_trainer.AutoTrainer - suspicious
   * autogluon.core.data.cleaner.CleanerDummy - suspicious
-  * autogluon.features.generators.auto_ml_pipeline.AutoMLPipelineFeatureGenerator - suspicious
+  * autogluon.common.features.feature_metadata.FeatureMetadata - suspicious
+  * numpy.ndarray - innocuous
+  * numpy.int8 - suspicious
+  * collections.defaultdict - suspicious
   * autogluon.tabular.predictor.predictor.TabularPredictor - suspicious
   * autogluon.tabular.learner.default_learner.DefaultLearner - suspicious
-  * autogluon.core.metrics._PredictScorer - suspicious
   * autogluon.common.features.feature_metadata.FeatureMetadata - suspicious
-  * builtins.list - suspicious
-  * sklearn.metrics._regression.mean_absolute_error - suspicious
   * networkx.classes.digraph.DiGraph - suspicious
-  * autogluon.tabular.trainer.auto_trainer.AutoTrainer - suspicious
   * autogluon.tabular.models.mitra.mitra_model.MitraModel - suspicious
-  * collections.defaultdict - suspicious
-  * networkx.classes.reportviews.NodeView - suspicious
-  * numpy.random._pickle.__bit_generator_ctor - suspicious
-  * autogluon.tabular.models.mitra.mitra_model.MitraModel - suspicious
-  * numpy.random._mt19937.MT19937 - suspicious
-  * numpy.random._pickle.__randomstate_ctor - suspicious
-  * autogluon.core.metrics._PredictScorer - suspicious
-  * numpy._core.multiarray.scalar - suspicious
-  * autogluon.tabular.models.mitra._internal.data.preprocessor.Preprocessor - suspicious
-  * sklearn.metrics._regression.mean_absolute_error - suspicious
-  * numpy._core.multiarray._reconstruct - innocuous
-  * collections.defaultdict - suspicious
-  * autogluon.common.features.feature_metadata.FeatureMetadata - suspicious
-  * autogluon.features.generators.label_encoder.LabelEncoderFeatureGenerator - suspicious
-  * numpy.ndarray - innocuous
-  * autogluon.tabular.models.mitra._internal.core.trainer_finetune.TrainerFinetune - suspicious
-  * autogluon.tabular.models.mitra._internal.config.config_run.ConfigRun - suspicious
   * builtins.list - suspicious
-  * numpy.dtype - innocuous
+  * networkx.classes.reportviews.NodeView - suspicious
+  * collections.defaultdict - suspicious
+  * autogluon.core.metrics._PredictScorer - suspicious
+  * autogluon.tabular.trainer.auto_trainer.AutoTrainer - suspicious
+  * sklearn.metrics._regression.mean_absolute_error - suspicious
+  * autogluon.tabular.models.mitra.mitra_model.MitraModel - suspicious
   * autogluon.core.data.label_cleaner.LabelCleanerDummy - suspicious
+  * sklearn.metrics._regression.mean_absolute_error - suspicious
+  * numpy.random._pickle.__bit_generator_ctor - suspicious
   * autogluon.tabular.models.mitra.sklearn_interface.MitraRegressor - suspicious
   * autogluon.tabular.models.mitra._internal.config.enums.ModelName - suspicious
-  * autogluon.tabular.models.mitra._internal.models.embedding.Tab2DEmbeddingX - suspicious
-  * torch._utils._rebuild_parameter - suspicious
-  * torch.nn.modules.sparse.Embedding - suspicious
-  * torch.FloatStorage - innocuous
-  * torch.nn.modules.normalization.LayerNorm - suspicious
-  * autogluon.tabular.models.mitra._internal.models.tab2d.Tab2D - suspicious
+  * numpy.dtype - innocuous
+  * autogluon.core.metrics._PredictScorer - suspicious
+  * numpy._core.multiarray.scalar - suspicious
+  * numpy.random._mt19937.MT19937 - suspicious
+  * numpy._core.multiarray._reconstruct - innocuous
+  * builtins.list - suspicious
+  * numpy.random._pickle.__randomstate_ctor - suspicious
+  * autogluon.common.features.feature_metadata.FeatureMetadata - suspicious
+  * numpy.ndarray - innocuous
+  * collections.defaultdict - suspicious
+  * autogluon.tabular.models.mitra._internal.core.trainer_finetune.TrainerFinetune - suspicious
+  * autogluon.tabular.models.mitra._internal.config.config_run.ConfigRun - suspicious
+  * autogluon.tabular.models.mitra._internal.data.preprocessor.Preprocessor - suspicious
+  * autogluon.features.generators.label_encoder.LabelEncoderFeatureGenerator - suspicious
   * autogluon.tabular.models.mitra._internal.models.embedding.Tab2DQuantileEmbeddingX - suspicious
+  * torch.FloatStorage - innocuous
   * autogluon.tabular.models.mitra._internal.models.embedding.Tab2DEmbeddingYRegression - suspicious
-  * autogluon.tabular.models.mitra._internal.models.tab2d.MultiheadAttention - suspicious
-  * torch.nn.modules.container.ModuleList - suspicious
   * autogluon.tabular.models.mitra._internal.models.tab2d.Layer - suspicious
+  * autogluon.tabular.models.mitra._internal.models.tab2d.Tab2D - suspicious
   * autogluon.tabular.models.mitra._internal.config.enums.Task - suspicious
+  * torch.nn.modules.linear.Linear - suspicious
+  * torch.nn.modules.container.ModuleList - suspicious
+  * torch.nn.modules.sparse.Embedding - suspicious
+  * __builtin__.set - suspicious
   * collections.OrderedDict - innocuous
   * torch._utils._rebuild_tensor_v2 - innocuous
-  * torch.nn.modules.linear.Linear - suspicious
-  * __builtin__.set - suspicious
-  * autogluon.tabular.models.mitra._internal.models.embedding.Tab2DEmbeddingX - suspicious
-  * torch._utils._rebuild_parameter - suspicious
-  * torch.nn.modules.sparse.Embedding - suspicious
-  * torch.FloatStorage - innocuous
   * torch.nn.modules.normalization.LayerNorm - suspicious
-  * autogluon.tabular.models.mitra._internal.models.tab2d.Tab2D - suspicious
-  * autogluon.tabular.models.mitra._internal.models.embedding.Tab2DQuantileEmbeddingX - suspicious
-  * autogluon.tabular.models.mitra._internal.models.embedding.Tab2DEmbeddingYRegression - suspicious
   * autogluon.tabular.models.mitra._internal.models.tab2d.MultiheadAttention - suspicious
-  * torch.nn.modules.container.ModuleList - suspicious
-  * autogluon.tabular.models.mitra._internal.models.tab2d.Layer - suspicious
-  * autogluon.tabular.models.mitra._internal.config.enums.Task - suspicious
-  * collections.OrderedDict - innocuous
-  * torch._utils._rebuild_tensor_v2 - innocuous
-  * torch.nn.modules.linear.Linear - suspicious
-  * __builtin__.set - suspicious
-  * numpy.dtype - innocuous
+  * torch._utils._rebuild_parameter - suspicious
+  * autogluon.tabular.models.mitra._internal.models.embedding.Tab2DEmbeddingX - suspicious
   * numpy.ndarray - innocuous
-  * numpy._core.multiarray._reconstruct - innocuous
   * numpy.dtype - innocuous
-  * builtins.slice - suspicious
-  * pandas.core.frame.DataFrame - suspicious
-  * pandas.core.indexes.base.Index - suspicious
+  * numpy._core.multiarray._reconstruct - innocuous
+  * numpy.ndarray - innocuous
   * pandas._libs.internals._unpickle_block - suspicious
-  * pandas.core.internals.managers.BlockManager - suspicious
-  * numpy.ndarray - innocuous
-  * numpy._core.multiarray._reconstruct - innocuous
-  * pandas.core.indexes.base._new_Index - suspicious
   * numpy.dtype - innocuous
+  * pandas.core.internals.managers.BlockManager - suspicious
+  * pandas.core.indexes.base.Index - suspicious
+  * pandas.core.indexes.base._new_Index - suspicious
   * builtins.slice - suspicious
+  * numpy._core.multiarray._reconstruct - innocuous
   * pandas.core.frame.DataFrame - suspicious
-  * pandas.core.indexes.base.Index - suspicious
+  * numpy.ndarray - innocuous
   * pandas._libs.internals._unpickle_block - suspicious
+  * numpy.dtype - innocuous
   * pandas.core.internals.managers.BlockManager - suspicious
-  * numpy.ndarray - innocuous
-  * numpy._core.multiarray._reconstruct - innocuous
-  * pandas.core.indexes.base._new_Index - suspicious
-  * numpy.dtype - innocuous
-  * builtins.slice - suspicious
   * pandas.core.indexes.base.Index - suspicious
-  * pandas.core.internals.managers.SingleBlockManager - suspicious
-  * numpy.ndarray - innocuous
-  * pandas.core.series.Series - suspicious
-  * numpy._core.multiarray._reconstruct - innocuous
   * pandas.core.indexes.base._new_Index - suspicious
-  * numpy.dtype - innocuous
   * builtins.slice - suspicious
-  * pandas.core.indexes.base.Index - suspicious
-  * pandas.core.internals.managers.SingleBlockManager - suspicious
-  * numpy.ndarray - innocuous
-  * pandas.core.series.Series - suspicious
   * numpy._core.multiarray._reconstruct - innocuous
+  * pandas.core.frame.DataFrame - suspicious
+  * numpy.ndarray - innocuous
+  * pandas.core.internals.managers.SingleBlockManager - suspicious
+  * numpy.dtype - innocuous
+  * pandas.core.series.Series - suspicious
+  * pandas.core.indexes.base.Index - suspicious
   * pandas.core.indexes.base._new_Index - suspicious
+  * builtins.slice - suspicious
+  * numpy._core.multiarray._reconstruct - innocuous
+  * numpy.ndarray - innocuous
+  * pandas.core.internals.managers.SingleBlockManager - suspicious
+  * numpy.dtype - innocuous
+  * pandas.core.series.Series - suspicious
+  * pandas.core.indexes.base.Index - suspicious
+  * pandas.core.indexes.base._new_Index - suspicious
+  * builtins.slice - suspicious
+  * numpy._core.multiarray._reconstruct - innocuous
 picklescan_exit=0
+scan_status=0
