@@ -160,7 +160,9 @@ def test_mrc_m4_both_mitra_variants_reach_the_table_and_the_gpu_gate_runs_first(
 def _section4_helpers():
     source = _code(E2E, "def byod_payloads(")
     helper = source[source.index("def byod_payloads(") : source.index("test_data = None")]
-    ns = {"os": os, "Path": Path, "TARGET_COLUMN": "target"}
+    from mitra_pipeline.tutorial_api import Refused
+
+    ns = {"os": os, "Path": Path, "TARGET_COLUMN": "target", "Refused": Refused}
     exec(helper, ns)
     return source, ns
 
@@ -169,9 +171,10 @@ def test_mrc_m3_archives_are_refused_with_an_extract_instruction(tmp_path, monke
     _, ns = _section4_helpers()
     archive = tmp_path / "insurance-medical-charges.zip"
     archive.write_bytes(b"PK")
-    with pytest.raises(ValueError, match="is an archive: extract it"):
+    Refused = ns["Refused"]
+    with pytest.raises(Refused, match="^insurance-medical-charges.zip: this is an archive: extract it"):
         ns["byod_payloads"](str(archive))
-    with pytest.raises(ValueError, match="is an archive: extract it"):  # the pre-split option given the ZIP itself
+    with pytest.raises(Refused, match="is an archive: extract it"):  # the pre-split option given the ZIP itself
         ns["byod_payloads"](str(archive), ("train.csv", "val.csv", "test.csv"))
     colab = types.ModuleType("google.colab")
     colab.files = types.SimpleNamespace(upload=lambda: {"insurance-medical-charges.zip": b"PK"})
@@ -179,7 +182,7 @@ def test_mrc_m3_archives_are_refused_with_an_extract_instruction(tmp_path, monke
     google.colab = colab
     monkeypatch.setitem(sys.modules, "google", google)
     monkeypatch.setitem(sys.modules, "google.colab", colab)
-    with pytest.raises(RuntimeError, match="Extract the archive and upload its CSV"):
+    with pytest.raises(Refused, match="^insurance-medical-charges.zip: archives are not read here. Extract the archive and upload its CSV"):
         ns["byod_payloads"]("", ("train.csv", "val.csv", "test.csv"))
 
 
@@ -188,7 +191,7 @@ def test_mrc_m3_wrong_target_column_is_named_in_section_4_and_the_split_is_check
 
     source, ns = _section4_helpers()
     frame = pd.DataFrame({"age": [19], "charges": [16884.9]})
-    with pytest.raises(ValueError, match=r"TARGET_COLUMN 'target' is not a column of train.csv. Set TARGET_COLUMN in this cell \(Section 4\).*'charges'"):
+    with pytest.raises(ns["Refused"], match=r"^train.csv: TARGET_COLUMN 'target' is not a column of train.csv. Set TARGET_COLUMN in this cell \(Section 4\).*'charges'"):
         ns["require_target"](frame, "train.csv")
     ns["TARGET_COLUMN"] = "charges"
     assert ns["require_target"](frame, "train.csv") is frame

@@ -116,6 +116,10 @@ def run_cell(cell: str, uploads: dict[str, bytes] | None = None, **form) -> dict
         "os": os,
         "Path": Path,
         "read_csv_bytes": mp.read_csv_bytes,
+        "validate_inputs": mp.validate_inputs,
+        "validate_labeled_frame": mp.validate_labeled_frame,
+        "MIN_TRAIN_ROWS": mp.MIN_TRAIN_ROWS,
+        "Refused": mp.Refused,
         "display": lambda *args, **kwargs: None,
     }
     with tempfile.TemporaryDirectory() as scratch, mock.patch("urllib.request.urlopen", _offline), \
@@ -161,11 +165,11 @@ class SampleDataTests(unittest.TestCase):
     def test_incomplete_presplit_upload_is_rejected(self) -> None:
         members = archive_members(SAMPLE_DIR / next(iter(self.card)))
         members.pop("test.csv")
-        with self.assertRaisesRegex(RuntimeError, "Missing"):
+        with self.assertRaisesRegex(mp.Refused, "Missing"):
             run_cell(self.cell, uploads=members, DATA_SOURCE=PRESPLIT, USE_BYOD=True)
 
     def test_upload_selector_requires_byod_opt_in(self) -> None:
-        with self.assertRaisesRegex(ValueError, "USE_BYOD"):
+        with self.assertRaisesRegex(mp.Refused, "USE_BYOD"):
             run_cell(self.cell, DATA_SOURCE=PRESPLIT, USE_BYOD=False)
 
 
