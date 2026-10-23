@@ -1,0 +1,551 @@
+repo=mitra-regressor-pipeline tag=sample-artifact-diabetes-v1 asset=mitra_regressor_predictor.zip
+sha256=850613f21b303a2f2dca49e54e1c0a736a1fd65cfc31d81fad03a79a841e7a19
+-- members
+0 models/
+0 utils/
+410 predictor.pkl
+2307 artifact_manifest.json
+6785 learner.pkl
+5 version.txt
+2392 tutorial_run_metadata.json
+2269 metadata.json
+0 models/Mitra/
+2173 models/trainer.pkl
+302787855 models/Mitra/model.pt
+29083 models/Mitra/model.pkl
+0 utils/attr/
+0 utils/data/
+1921 utils/data/y_val.pkl
+5737 utils/data/y.pkl
+5176 utils/data/X_val.pkl
+18055 utils/data/X.pkl
+0 utils/attr/Mitra/
+360 utils/attr/Mitra/y_pred_proba_val.pkl
+-- nested zip: models/Mitra/model.pt
+    92699 model/data.pkl
+    1 model/.format_version
+    2 model/.storage_alignment
+    6 model/byteorder
+    2048 model/data/0
+    2048 model/data/1
+    2048 model/data/2
+    2048 model/data/3
+    2048 model/data/4
+    2048 model/data/5
+    2048 model/data/6
+    1048576 model/data/7
+    2048 model/data/8
+    1048576 model/data/9
+    2048 model/data/10
+    1048576 model/data/11
+    2048 model/data/12
+    1048576 model/data/13
+    2048 model/data/14
+    2048 model/data/15
+    2048 model/data/16
+    4194304 model/data/17
+    8192 model/data/18
+    4194304 model/data/19
+    2048 model/data/20
+    2048 model/data/21
+    2048 model/data/22
+    1048576 model/data/23
+    2048 model/data/24
+    1048576 model/data/25
+    2048 model/data/26
+    1048576 model/data/27
+    2048 model/data/28
+    1048576 model/data/29
+    2048 model/data/30
+    2048 model/data/31
+    2048 model/data/32
+    4194304 model/data/33
+    8192 model/data/34
+    4194304 model/data/35
+    2048 model/data/36
+    2048 model/data/37
+    2048 model/data/38
+    1048576 model/data/39
+    2048 model/data/40
+    1048576 model/data/41
+    2048 model/data/42
+    1048576 model/data/43
+    2048 model/data/44
+    1048576 model/data/45
+    2048 model/data/46
+    2048 model/data/47
+    2048 model/data/48
+    4194304 model/data/49
+    8192 model/data/50
+    4194304 model/data/51
+    2048 model/data/52
+    2048 model/data/53
+    2048 model/data/54
+    1048576 model/data/55
+    2048 model/data/56
+    1048576 model/data/57
+    2048 model/data/58
+    1048576 model/data/59
+    2048 model/data/60
+    1048576 model/data/61
+    2048 model/data/62
+    2048 model/data/63
+    2048 model/data/64
+    4194304 model/data/65
+    8192 model/data/66
+    4194304 model/data/67
+    2048 model/data/68
+    2048 model/data/69
+    2048 model/data/70
+    1048576 model/data/71
+    2048 model/data/72
+    1048576 model/data/73
+    2048 model/data/74
+    1048576 model/data/75
+    2048 model/data/76
+    1048576 model/data/77
+    2048 model/data/78
+    2048 model/data/79
+    2048 model/data/80
+    4194304 model/data/81
+    8192 model/data/82
+    4194304 model/data/83
+    2048 model/data/84
+    2048 model/data/85
+    2048 model/data/86
+    1048576 model/data/87
+    2048 model/data/88
+    1048576 model/data/89
+    2048 model/data/90
+    1048576 model/data/91
+    2048 model/data/92
+    1048576 model/data/93
+    2048 model/data/94
+    2048 model/data/95
+    2048 model/data/96
+    4194304 model/data/97
+    8192 model/data/98
+    4194304 model/data/99
+    2048 model/data/100
+    2048 model/data/101
+    2048 model/data/102
+    1048576 model/data/103
+    2048 model/data/104
+    1048576 model/data/105
+    2048 model/data/106
+    1048576 model/data/107
+    2048 model/data/108
+    1048576 model/data/109
+    2048 model/data/110
+    2048 model/data/111
+    2048 model/data/112
+    4194304 model/data/113
+    8192 model/data/114
+    4194304 model/data/115
+    2048 model/data/116
+    2048 model/data/117
+    2048 model/data/118
+    1048576 model/data/119
+    2048 model/data/120
+    1048576 model/data/121
+    2048 model/data/122
+    1048576 model/data/123
+    2048 model/data/124
+    1048576 model/data/125
+    2048 model/data/126
+    2048 model/data/127
+    2048 model/data/128
+    4194304 model/data/129
+    8192 model/data/130
+    4194304 model/data/131
+    2048 model/data/132
+    2048 model/data/133
+    2048 model/data/134
+    1048576 model/data/135
+    2048 model/data/136
+    1048576 model/data/137
+    2048 model/data/138
+    1048576 model/data/139
+    2048 model/data/140
+    1048576 model/data/141
+    2048 model/data/142
+    2048 model/data/143
+    2048 model/data/144
+    4194304 model/data/145
+    8192 model/data/146
+    4194304 model/data/147
+    2048 model/data/148
+    2048 model/data/149
+    2048 model/data/150
+    1048576 model/data/151
+    2048 model/data/152
+    1048576 model/data/153
+    2048 model/data/154
+    1048576 model/data/155
+    2048 model/data/156
+    1048576 model/data/157
+    2048 model/data/158
+    2048 model/data/159
+    2048 model/data/160
+    4194304 model/data/161
+    8192 model/data/162
+    4194304 model/data/163
+    2048 model/data/164
+    2048 model/data/165
+    2048 model/data/166
+    1048576 model/data/167
+    2048 model/data/168
+    1048576 model/data/169
+    2048 model/data/170
+    1048576 model/data/171
+    2048 model/data/172
+    1048576 model/data/173
+    2048 model/data/174
+    2048 model/data/175
+    2048 model/data/176
+    4194304 model/data/177
+    8192 model/data/178
+    4194304 model/data/179
+    2048 model/data/180
+    2048 model/data/181
+    2048 model/data/182
+    1048576 model/data/183
+    2048 model/data/184
+    1048576 model/data/185
+    2048 model/data/186
+    1048576 model/data/187
+    2048 model/data/188
+    1048576 model/data/189
+    2048 model/data/190
+    2048 model/data/191
+    2048 model/data/192
+    4194304 model/data/193
+    8192 model/data/194
+    4194304 model/data/195
+    2048 model/data/196
+    2048 model/data/197
+    2048 model/data/198
+    1048576 model/data/199
+    2048 model/data/200
+    1048576 model/data/201
+    2048 model/data/202
+    1048576 model/data/203
+    2048 model/data/204
+    1048576 model/data/205
+    2048 model/data/206
+    2048 model/data/207
+    2048 model/data/208
+    4194304 model/data/209
+    8192 model/data/210
+    4194304 model/data/211
+    2048 model/data/212
+    2048 model/data/213
+    2048 model/data/214
+    1048576 model/data/215
+    2048 model/data/216
+    1048576 model/data/217
+    2048 model/data/218
+    1048576 model/data/219
+    2048 model/data/220
+    1048576 model/data/221
+    2048 model/data/222
+    2048 model/data/223
+    2048 model/data/224
+    4194304 model/data/225
+    8192 model/data/226
+    4194304 model/data/227
+    2048 model/data/228
+    2048 model/data/229
+    2048 model/data/230
+    1048576 model/data/231
+    2048 model/data/232
+    1048576 model/data/233
+    2048 model/data/234
+    1048576 model/data/235
+    2048 model/data/236
+    1048576 model/data/237
+    2048 model/data/238
+    2048 model/data/239
+    2048 model/data/240
+    4194304 model/data/241
+    8192 model/data/242
+    4194304 model/data/243
+    2048 model/data/244
+    2048 model/data/245
+    2048 model/data/246
+    1048576 model/data/247
+    2048 model/data/248
+    1048576 model/data/249
+    2048 model/data/250
+    1048576 model/data/251
+    2048 model/data/252
+    1048576 model/data/253
+    2048 model/data/254
+    2048 model/data/255
+    2048 model/data/256
+    4194304 model/data/257
+    8192 model/data/258
+    4194304 model/data/259
+    2048 model/data/260
+    2048 model/data/261
+    2048 model/data/262
+    1048576 model/data/263
+    2048 model/data/264
+    1048576 model/data/265
+    2048 model/data/266
+    1048576 model/data/267
+    2048 model/data/268
+    1048576 model/data/269
+    2048 model/data/270
+    2048 model/data/271
+    2048 model/data/272
+    4194304 model/data/273
+    8192 model/data/274
+    4194304 model/data/275
+    2048 model/data/276
+    2048 model/data/277
+    2048 model/data/278
+    1048576 model/data/279
+    2048 model/data/280
+    1048576 model/data/281
+    2048 model/data/282
+    1048576 model/data/283
+    2048 model/data/284
+    1048576 model/data/285
+    2048 model/data/286
+    2048 model/data/287
+    2048 model/data/288
+    4194304 model/data/289
+    8192 model/data/290
+    4194304 model/data/291
+    2048 model/data/292
+    2048 model/data/293
+    2048 model/data/294
+    1048576 model/data/295
+    2048 model/data/296
+    1048576 model/data/297
+    2048 model/data/298
+    1048576 model/data/299
+    2048 model/data/300
+    1048576 model/data/301
+    2048 model/data/302
+    2048 model/data/303
+    2048 model/data/304
+    4194304 model/data/305
+    8192 model/data/306
+    4194304 model/data/307
+    2048 model/data/308
+    2048 model/data/309
+    2048 model/data/310
+    1048576 model/data/311
+    2048 model/data/312
+    1048576 model/data/313
+    2048 model/data/314
+    1048576 model/data/315
+    2048 model/data/316
+    1048576 model/data/317
+    2048 model/data/318
+    2048 model/data/319
+    2048 model/data/320
+    4194304 model/data/321
+    8192 model/data/322
+    4194304 model/data/323
+    2048 model/data/324
+    2048 model/data/325
+    2048 model/data/326
+    1048576 model/data/327
+    2048 model/data/328
+    1048576 model/data/329
+    2048 model/data/330
+    1048576 model/data/331
+    2048 model/data/332
+    1048576 model/data/333
+    2048 model/data/334
+    2048 model/data/335
+    2048 model/data/336
+    4194304 model/data/337
+    8192 model/data/338
+    4194304 model/data/339
+    2048 model/data/340
+    2048 model/data/341
+    2048 model/data/342
+    1048576 model/data/343
+    2048 model/data/344
+    1048576 model/data/345
+    2048 model/data/346
+    1048576 model/data/347
+    2048 model/data/348
+    1048576 model/data/349
+    2048 model/data/350
+    2048 model/data/351
+    2048 model/data/352
+    4194304 model/data/353
+    8192 model/data/354
+    4194304 model/data/355
+    2048 model/data/356
+    2048 model/data/357
+    2048 model/data/358
+    1048576 model/data/359
+    2048 model/data/360
+    1048576 model/data/361
+    2048 model/data/362
+    1048576 model/data/363
+    2048 model/data/364
+    1048576 model/data/365
+    2048 model/data/366
+    2048 model/data/367
+    2048 model/data/368
+    4194304 model/data/369
+    8192 model/data/370
+    4194304 model/data/371
+    2048 model/data/372
+    2048 model/data/373
+    2048 model/data/374
+    1048576 model/data/375
+    2048 model/data/376
+    1048576 model/data/377
+    2048 model/data/378
+    1048576 model/data/379
+    2048 model/data/380
+    1048576 model/data/381
+    2048 model/data/382
+    2048 model/data/383
+    2048 model/data/384
+    4194304 model/data/385
+    8192 model/data/386
+    4194304 model/data/387
+    2048 model/data/388
+    2048 model/data/389
+    2048 model/data/390
+    2048 model/data/391
+    4 model/data/392
+    2 model/version
+    40 model/.data/serialization_id
+-- picklescan 1.0.5
+----------- SCAN SUMMARY -----------
+Scanned files: 11
+Infected files: 0
+Suspicious globals: 93
+Dangerous globals: 0
+All globals found:
+  * numpy.int8 - suspicious
+  * autogluon.features.generators.drop_unique.DropUniqueFeatureGenerator - suspicious
+  * autogluon.core.metrics._PredictScorer - suspicious
+  * numpy._core.multiarray.scalar - suspicious
+  * sklearn.metrics._regression.mean_absolute_error - suspicious
+  * autogluon.tabular.learner.default_learner.DefaultLearner - suspicious
+  * autogluon.tabular.trainer.auto_trainer.AutoTrainer - suspicious
+  * numpy._core.multiarray._reconstruct - innocuous
+  * collections.defaultdict - suspicious
+  * autogluon.common.features.feature_metadata.FeatureMetadata - suspicious
+  * autogluon.features.generators.fillna.FillNaFeatureGenerator - suspicious
+  * numpy.ndarray - innocuous
+  * autogluon.features.generators.astype.AsTypeFeatureGenerator - suspicious
+  * autogluon.features.generators.drop_duplicates.DropDuplicatesFeatureGenerator - suspicious
+  * autogluon.features.generators.identity.IdentityFeatureGenerator - suspicious
+  * builtins.list - suspicious
+  * autogluon.core.data.label_cleaner.LabelCleanerDummy - suspicious
+  * numpy.dtype - innocuous
+  * autogluon.core.data.cleaner.CleanerDummy - suspicious
+  * autogluon.features.generators.auto_ml_pipeline.AutoMLPipelineFeatureGenerator - suspicious
+  * autogluon.tabular.predictor.predictor.TabularPredictor - suspicious
+  * autogluon.tabular.learner.default_learner.DefaultLearner - suspicious
+  * autogluon.core.metrics._PredictScorer - suspicious
+  * autogluon.common.features.feature_metadata.FeatureMetadata - suspicious
+  * builtins.list - suspicious
+  * sklearn.metrics._regression.mean_absolute_error - suspicious
+  * networkx.classes.digraph.DiGraph - suspicious
+  * autogluon.tabular.trainer.auto_trainer.AutoTrainer - suspicious
+  * autogluon.tabular.models.mitra.mitra_model.MitraModel - suspicious
+  * collections.defaultdict - suspicious
+  * networkx.classes.reportviews.NodeView - suspicious
+  * numpy.random._pickle.__bit_generator_ctor - suspicious
+  * autogluon.tabular.models.mitra.mitra_model.MitraModel - suspicious
+  * numpy.random._mt19937.MT19937 - suspicious
+  * numpy.random._pickle.__randomstate_ctor - suspicious
+  * autogluon.core.metrics._PredictScorer - suspicious
+  * numpy._core.multiarray.scalar - suspicious
+  * autogluon.tabular.models.mitra._internal.data.preprocessor.Preprocessor - suspicious
+  * sklearn.metrics._regression.mean_absolute_error - suspicious
+  * numpy._core.multiarray._reconstruct - innocuous
+  * collections.defaultdict - suspicious
+  * autogluon.common.features.feature_metadata.FeatureMetadata - suspicious
+  * autogluon.features.generators.label_encoder.LabelEncoderFeatureGenerator - suspicious
+  * numpy.ndarray - innocuous
+  * autogluon.tabular.models.mitra._internal.core.trainer_finetune.TrainerFinetune - suspicious
+  * autogluon.tabular.models.mitra._internal.config.config_run.ConfigRun - suspicious
+  * builtins.list - suspicious
+  * numpy.dtype - innocuous
+  * autogluon.core.data.label_cleaner.LabelCleanerDummy - suspicious
+  * autogluon.tabular.models.mitra.sklearn_interface.MitraRegressor - suspicious
+  * autogluon.tabular.models.mitra._internal.config.enums.ModelName - suspicious
+  * autogluon.tabular.models.mitra._internal.models.embedding.Tab2DEmbeddingX - suspicious
+  * torch._utils._rebuild_parameter - suspicious
+  * torch.nn.modules.sparse.Embedding - suspicious
+  * torch.FloatStorage - innocuous
+  * torch.nn.modules.normalization.LayerNorm - suspicious
+  * autogluon.tabular.models.mitra._internal.models.tab2d.Tab2D - suspicious
+  * autogluon.tabular.models.mitra._internal.models.embedding.Tab2DQuantileEmbeddingX - suspicious
+  * autogluon.tabular.models.mitra._internal.models.embedding.Tab2DEmbeddingYRegression - suspicious
+  * autogluon.tabular.models.mitra._internal.models.tab2d.MultiheadAttention - suspicious
+  * torch.nn.modules.container.ModuleList - suspicious
+  * autogluon.tabular.models.mitra._internal.models.tab2d.Layer - suspicious
+  * autogluon.tabular.models.mitra._internal.config.enums.Task - suspicious
+  * collections.OrderedDict - innocuous
+  * torch._utils._rebuild_tensor_v2 - innocuous
+  * torch.nn.modules.linear.Linear - suspicious
+  * __builtin__.set - suspicious
+  * autogluon.tabular.models.mitra._internal.models.embedding.Tab2DEmbeddingX - suspicious
+  * torch._utils._rebuild_parameter - suspicious
+  * torch.nn.modules.sparse.Embedding - suspicious
+  * torch.FloatStorage - innocuous
+  * torch.nn.modules.normalization.LayerNorm - suspicious
+  * autogluon.tabular.models.mitra._internal.models.tab2d.Tab2D - suspicious
+  * autogluon.tabular.models.mitra._internal.models.embedding.Tab2DQuantileEmbeddingX - suspicious
+  * autogluon.tabular.models.mitra._internal.models.embedding.Tab2DEmbeddingYRegression - suspicious
+  * autogluon.tabular.models.mitra._internal.models.tab2d.MultiheadAttention - suspicious
+  * torch.nn.modules.container.ModuleList - suspicious
+  * autogluon.tabular.models.mitra._internal.models.tab2d.Layer - suspicious
+  * autogluon.tabular.models.mitra._internal.config.enums.Task - suspicious
+  * collections.OrderedDict - innocuous
+  * torch._utils._rebuild_tensor_v2 - innocuous
+  * torch.nn.modules.linear.Linear - suspicious
+  * __builtin__.set - suspicious
+  * numpy.dtype - innocuous
+  * numpy.ndarray - innocuous
+  * numpy._core.multiarray._reconstruct - innocuous
+  * numpy.dtype - innocuous
+  * builtins.slice - suspicious
+  * pandas.core.frame.DataFrame - suspicious
+  * pandas.core.indexes.base.Index - suspicious
+  * pandas._libs.internals._unpickle_block - suspicious
+  * pandas.core.internals.managers.BlockManager - suspicious
+  * numpy.ndarray - innocuous
+  * numpy._core.multiarray._reconstruct - innocuous
+  * pandas.core.indexes.base._new_Index - suspicious
+  * numpy.dtype - innocuous
+  * builtins.slice - suspicious
+  * pandas.core.frame.DataFrame - suspicious
+  * pandas.core.indexes.base.Index - suspicious
+  * pandas._libs.internals._unpickle_block - suspicious
+  * pandas.core.internals.managers.BlockManager - suspicious
+  * numpy.ndarray - innocuous
+  * numpy._core.multiarray._reconstruct - innocuous
+  * pandas.core.indexes.base._new_Index - suspicious
+  * numpy.dtype - innocuous
+  * builtins.slice - suspicious
+  * pandas.core.indexes.base.Index - suspicious
+  * pandas.core.internals.managers.SingleBlockManager - suspicious
+  * numpy.ndarray - innocuous
+  * pandas.core.series.Series - suspicious
+  * numpy._core.multiarray._reconstruct - innocuous
+  * pandas.core.indexes.base._new_Index - suspicious
+  * numpy.dtype - innocuous
+  * builtins.slice - suspicious
+  * pandas.core.indexes.base.Index - suspicious
+  * pandas.core.internals.managers.SingleBlockManager - suspicious
+  * numpy.ndarray - innocuous
+  * pandas.core.series.Series - suspicious
+  * numpy._core.multiarray._reconstruct - innocuous
+  * pandas.core.indexes.base._new_Index - suspicious
+picklescan_exit=0
