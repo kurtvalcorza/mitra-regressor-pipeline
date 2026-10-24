@@ -328,6 +328,23 @@ The 2026-10-23 refusal-display fix (branch `fix/refusal-display`, NOTEBOOK_SPEC 
 
 Promotion is an integrator decision; the builder does not change the status.
 
+**Load-path trust note for `models/Mitra/model.pt` (2026-10-24, static trace, no code executed against a bundle).** AutoGluon 1.5.0
+reads a saved bundle's `models/Mitra/model.pt` with `torch.load(weights_only=False)` (`autogluon/tabular/models/mitra/mitra_model.py:239`,
+`_load_model_artifact`); the file is a `torch.save` of the whole Mitra model, so loading it can execute code. It is reached only after
+`TabularPredictor.load` has already unpickled `predictor.pkl`, `learner.pkl`, `models/trainer.pkl` and `models/Mitra/model.pkl` from
+the same directory, so it adds no trust boundary beyond SER9, and the notebook's Section 10 trust-boundary text and glossary now name it
+next to `predictor.pkl`. On the default path the whole sample-artifact ZIP is pinned by `SAMPLE_ARTIFACT_SHA256` and checked before
+extraction; on the own-ZIP path, safety rests on the user's `EXPECTED_ZIP_SHA256` (none with `ALLOW_UNVERIFIED_ARTIFACT`). The other
+`torch.load(weights_only=False)` site, the CPU branch of `Tab2D.__init__` (`_internal/models/tab2d.py:91`), is unreachable in 1.5.0:
+`sklearn_interface.py:56` hard-codes `USE_HF = True`, so fit builds the model with `Tab2D.from_pretrained`, which reads the verified
+snapshot's `model.safetensors` with `safetensors.load_file`. `tests/test_mitra_load_path_guard.py` keeps it unreachable, without
+network: it asserts `USE_HF is True` on import (skipped without a full AutoGluon install), checks the installed wheel's source (CI
+installs `autogluon.tabular==1.5.0` with `--no-deps` and fails if it is missing or differs from the pin) for a single module-level
+`USE_HF = True`, a safetensors-only `from_pretrained`, and no `Tab2D(..., use_pretrained_weights=True)` outside the `else` of
+`if USE_HF:`, and fails if this repository's code, configuration or notebooks (`docs/` and Markdown excluded) mention `USE_HF`,
+`state_dict_classification`, `state_dict_regression`, `hf_cls_model` or `hf_reg_model`. The SER13 static scan of the pinned asset's pickles, including the `data.pkl` inside `model.pt`, is
+recorded separately in the *Serialization scan of the pinned sample artifact* subsection (PR #50) and is not repeated here.
+
 **History (the 2.2 pair, superseded; not evidence for `32615208`, REL14).** The previous blob `256708eef85f` has the 2026-10-08 Colab CLI T4 run above (default path only). The 2026-09-14 Kaggle T4 row above is evidence for the previous E2E blob (`d32d6f6b45c6`) only: an nbclient execution of the default sample path with a `google.colab` shim, not a browser Colab `Run all`. On 2026-10-08 both notebooks were regenerated (generator /2.2 isolated uv environment, DIMER Notebook Specification 2.2, Notebook Review Framework v1 fixes MRC-M1..M2 / MRC-m1..m6), so under NOTEBOOK_SPEC REL14 they return to Candidate until a run of the exact new blobs is recorded; the earlier row stays as history. The ARTIFACT-INFERENCE companion's then-current blob `8a2ea1c75750` (deleted with the companion) has a recorded Colab CLI T4 run of its default path (the pinned sample bundle) and a CI run of the own-bundle path, both 2026-10-08. Static validation (`tools/validate_release_assets.py`), nbformat validation, a `compile()` sweep over every code
 cell, and the offline unit suite passed on the tutorial source at the candidate revision, which is necessary but not
 sufficient. The registry status remains **Candidate** until a reviewer confirms a recorded run against the notebook blobs
