@@ -319,14 +319,110 @@ The fresh reload and Section 10 passed as on the default path. Evidence in `docs
 | `run_summary.json` | `e0686f33c2272daea1663c343f865bf818604288840389edfff492c709cbcc34` | same (no local path) |
 | `run_copy.ipynb` | `37397606ad600cba4d684c161000e1eb8b4ded42986b39fffe36ad2792f5a9c4` | same (no local path) |
 
+### Default-path run of `b939ad02` (2026-10-24)
+
+`b139f3f` / committed blob `b939ad02`, default path. Colab CLI `colab exec -f` (a scripted run, not a browser Run all), fresh Colab
+Tesla T4, PR #51 branch `docs/mitra-model-pt-trust` at `b139f3fdb8b039c8f19a2d0b7cd4e233391ebbdd` (blob
+`b939ad024483654f234c93259370fca01c9e0f33`), started 2026-10-24T12:49:48Z, 186.0 s wall, exit code 0, input notebook unchanged,
+13/13 code cells in the executor log (12 with output), 0 errors, verdict PASS. The weights stage fetched `model.safetensors` and
+`config.json`. The notebook printed pretrained holdout MAE 40.1328 / RMSE 50.4991 / R² 0.5576 beside the training-mean baseline's
+MAE 67.5162, and independent test MAE 44.4957 / RMSE 54.7465 / R² 0.4819 (the same values to four decimals as the `191e631`
+default-path run of blob `1269d721`); the export printed `zip_sha256`
+`ad8fdc0c267107cfcd77c599d684cfb8aeb0928e469df56c6ce3dad0ba2d8edb`; the fresh reload printed "PASS: artifact manifest/provenance
+verified before deserialisation; predictor reloaded from fresh files; predictions equivalent (rtol=1e-6, atol=1e-8)."; Section 10
+verified the pinned asset before extraction (`trusted_digest: verified (pinned SAMPLE_ARTIFACT_SHA256)`, SHA-256
+`850613f21b303a2f2dca49e54e1c0a736a1fd65cfc31d81fad03a79a841e7a19`) and rebuilt the Mitra regressor from the bundle (10 features,
+on CUDA). PR #51 changes the notebook's trust-boundary text, not its code; the hosted run does not exercise the
+new offline guard (`tests/test_mitra_load_path_guard.py`). Evidence in
+`docs/execution-evidence/2026-10-24/mitra_regressor_colab_b139f3f/`. The local run directory was redacted to `<local-run-dir>`
+before the first commit; SHA-256 of the executed notebook equals `run_summary.json` `executed_sha256`; SHA-256 captured → committed:
+
+| File | Captured | Committed |
+|---|---|---|
+| `mitra_regressor_colab_b139f3f_colab-cli-t4.ipynb` | `f5d90f9797d457fa7e9dba5eafa16b12cfd3f7f648cb27edb4b45913d861a299` | same (no local path) |
+| `exec.log` | `94150d5151bd32fc2a26933a92ad2fae1b68ba647511eca49745aea1f0335d02` | `63bff914a97ff0a289674b2daea9a84cac83358e567e23a7a244a53a4542543e` (2 replacements) |
+| `run_summary.json` | `9cca980e8d68f6390ad00db6bdfe58f25045bf8576078f4d68dc4b0f2e7b520e` | same (no local path) |
+
+### Optional-activity run of `b939ad02` (2026-10-24)
+
+`b139f3f` / committed blob `b939ad02`, `SEED = 7`. A run copy of committed blob `b939ad02` with one override, `SEED = 42` → `7`
+(run copy blob `3f0120ba3226`, SHA-256 `6ebf8df889fc55f18d41e2554c595aa5010aa875100b42cb7391cc50d3497c9c`; it differs from the
+committed blob only in that assignment literal and is committed beside the evidence as `run_copy.ipynb`). Colab CLI
+`colab exec -f` (a scripted run, not a browser Run all), fresh Colab Tesla T4, at `b139f3f`, started 2026-10-24T12:53:07Z,
+170.4 s wall, exit code 0, input (the run copy) unchanged, 13/13 code cells in the executor log (12 with output), 0 errors, verdict
+PASS. With the seed-7 split the notebook printed pretrained holdout MAE 45.4541 / RMSE 55.6893 / R² 0.5111 beside the
+training-mean baseline's MAE 68.5416, and independent test MAE 41.8734 / RMSE 53.8821 / R² 0.4749 (equal to four decimals to the
+`191e631` activity run of blob `1269d721`); the export printed `zip_sha256` `e0a811c8b1b3ba5e891174bfb3c2cb0f540fba734e48a4dd530b13dc64d2b193`;
+the fresh reload printed PASS and Section 10 verified the pinned asset (`trusted_digest: verified (pinned SAMPLE_ARTIFACT_SHA256)`).
+Evidence in `docs/execution-evidence/2026-10-24/mitra_regressor_colab_b139f3f-activity/`. The local run directory was redacted to
+`<local-run-dir>` before the first commit; SHA-256 of the executed notebook equals `run_summary.json` `executed_sha256`, and of the
+run copy equals `run_copy_sha256`; SHA-256 captured → committed:
+
+| File | Captured | Committed |
+|---|---|---|
+| `mitra_regressor_colab_b139f3f_colab-cli-t4_activity.ipynb` | `c38067d4f38ea1f651087be2e3c394083d39c62d5c536e0a6e2cdac840b969d0` | same (no local path) |
+| `exec.log` | `6d019508db6d5bd338b06e1f91a907858448eeb7df35f6f312e1f1728b2b1e9d` | `c8dff755dc07e71a188e4554233f4e86c208f57747424f25127ee73db7b26f41` (2 replacements) |
+| `run_summary.json` | `bdb09d723445933e1db6511d10b37d959981c048f9b59c3ac4598c0580bd3463` | same (no local path) |
+| `run_copy.ipynb` | `6ebf8df889fc55f18d41e2554c595aa5010aa875100b42cb7391cc50d3497c9c` | same (no local path) |
+
 ## Current status
 
-The 2026-10-23 refusal-display fix (branch `fix/refusal-display`, NOTEBOOK_SPEC 3.0 DAT19/DAT20: a refused user input is shown as one `Refused: <file name>: <rule>` line with no traceback, and the run stops at that cell) changed the notebook blob from `32615208` to `1269d721`. **Generated E2E tutorial: Candidate (2026-10-23).** The current E2E notebook blob is `1269d721` (`tutorials/mitra_regressor_colab.ipynb` at `191e631` on `fix/refusal-display`, PR #49; Notebook Spec 3.0 with the Section 10 external-artifact section and the pinned release asset `sample-artifact-diabetes-v1`). It has three recorded hosted runs, the 2026-10-23 records above, all Colab CLI `colab exec -f` (scripted, not a browser Run all) on a fresh Colab Tesla T4, exit 0, 13/13 code cells in the executor log, 0 errors, input unchanged, verdict PASS: the default path (270.9 s; the fresh reload passed and Section 10 verified the pinned asset before extraction), the Section 11 activity (`SEED = 7` run copy, 153.4 s) and the `RUN_FINE_TUNING` branch (`RUN_FINE_TUNING = True` run copy, 225.9 s; the fine-tuned holdout MAE 40.1924 was worse than the pretrained 40.1328, so the pretrained model was kept). The owner's 2026-10-22 ruling (the optional activity and the `RUN_FINE_TUNING` branch run once on the current blob before promotion) is satisfied for `1269d721` by the last two. Under REL14 the `92c627c` default-path run and the `f294525` activity and fine-tune runs are history for blob `32615208`, not evidence for `1269d721`. The notebook stays **Candidate** until these two are recorded for this blob:
+### `RUN_FINE_TUNING` run of `b939ad02` (2026-10-24)
+
+`3527e4a` / committed blob `b939ad02`, `RUN_FINE_TUNING = True`. A run copy of committed blob `b939ad02` with one override,
+`RUN_FINE_TUNING = False` → `True` (run copy blob `1dbfe744f249`, SHA-256
+`c302de4482684adf6ee9f70d953a90791f298d53c6829beba78a5ae99c248ff3`; it differs from the committed blob only in that assignment
+literal and is committed beside the evidence as `run_copy.ipynb`). Colab CLI `colab exec -f` (a scripted run, not a browser Run
+all), fresh Colab Tesla T4, PR #51 branch `docs/mitra-model-pt-trust` at `3527e4a94cbd21e72fd02925e8db76b505b65105` (the notebook
+blob is unchanged from `b139f3f`), started 2026-10-24T14:03:34Z, 222.2 s wall, exit code 0, input (the run copy) unchanged, 13/13 code
+cells in the executor log (12 with output), 0 errors, verdict PASS. On the default diabetes sample (265 / 88 / 89 rows) the GPU
+fine-tune ran on cuda. The notebook printed pretrained holdout `{'mae': 40.13276811079545, 'rmse': 50.499065903849804, 'r2':
+0.5576422770557667}` and fine-tuned holdout `{'mae': 40.1923828125, 'rmse': 50.563189571165275, 'r2': 0.5565181529454093}`: the
+fine-tuned model is worse on the holdout on all three metrics (MAE 40.1924 against 40.1328), not an improvement. It also printed
+"WARNING independent-test metrics worsened after fine-tuning: ['mae', 'rmse', 'r2'] (evidence only; never used for selection)"
+(independent test MAE 44.6101 fine-tuned against 44.4957 pretrained). Selection stayed on the holdout and kept the pretrained model
+(`'recommended_for_export': 'pretrained', 'selection_basis': 'holdout:mean_absolute_error'`); the exported bundle (`zip_sha256`
+`16edb265ca902b245a4e93e1f3b9e5fa7c352be9207acd1cc2911fbf7d89d770`, manifest under `mitra-pretrained/`) and the fresh reload ("PASS:
+artifact manifest/provenance verified before deserialisation; predictor reloaded from fresh files; predictions equivalent
+(rtol=1e-6, atol=1e-8).") are of `mitra-pretrained`. `mitra-finetuned` appears in the outputs listing beside `mitra-pretrained` but
+was not exported. Section 10 verified the pinned asset before extraction (`trusted_digest: verified (pinned SAMPLE_ARTIFACT_SHA256)`,
+`850613f2…`) and scored 89 rows (verdict `not-measurable`, as designed). These values equal, to four decimals, the `1269d721`
+fine-tune run (fine-tuned holdout MAE 40.1924 against pretrained 40.1328). Evidence in `docs/execution-evidence/2026-10-24/mitra_regressor_colab_3527e4a-finetune/`. The local run directory was redacted
+to `<local-run-dir>` before the first commit; the executed notebook and the run copy were checked against `run_summary.json`
+(`executed_sha256`, `run_copy_sha256`) before any edit. SHA-256 captured → committed:
+
+| File | Captured | Committed |
+|---|---|---|
+| `mitra_regressor_colab_3527e4a_colab-cli-t4_finetune.ipynb` | `19d4868e10a48dd6a088889c68d7f27f945eb610043e0505ad70ea4b361ccf91` | same (no local path) |
+| `exec.log` | `968766b618be250242f98017bc9a7ddc740db7fb731a4b5797b248e74c6ccbe8` | `b81c7b0c86ccf3518add160fde5bce9a5baf52b581bf4d7577bde1ec5d06bfc1` (2 replacements) |
+| `run_summary.json` | `c654ec2a33dce9e4431d005b09f9a36137d894837fbf33cddc99623e4c52a8f6` | same (no local path) |
+| `run_copy.ipynb` | `c302de4482684adf6ee9f70d953a90791f298d53c6829beba78a5ae99c248ff3` | same (no local path) |
+
+**Current blob `b939ad02` (2026-10-24): Candidate.** The current E2E notebook blob is `b939ad02` (regenerated from code commit `dd306a9`, branch `docs/mitra-model-pt-trust`): the Section 10 trust-boundary text and glossary now name `models/Mitra/model.pt` as code-capable next to `predictor.pkl` (AutoGluon 1.5.0 loads it with `torch.load(weights_only=False)`; ARTIFACT_SPEC SER9), and no code path changed. Under REL14 the 2026-10-23 hosted runs of blob `1269d721` described below are history for that blob, not evidence for `b939ad02`; at `b139f3f` (the PR #51 head) the default path and the optional `SEED = 7` activity of `b939ad02` each ran once on a fresh hosted Colab T4 (2026-10-24, PASS, 13/13 code cells in the executor log, 0 errors; the two 2026-10-24 records above), and at `3527e4a` the `RUN_FINE_TUNING = True` branch ran once the same way (2026-10-24, PASS, 13/13 code cells, 0 errors; the record above: the fine-tuned holdout MAE 40.1924 was worse than the pretrained 40.1328, and the pretrained model was kept and exported). The runs of this PR therefore cover the default path, the activity and the fine-tune branch, and the owner's 2026-10-22 ruling (the optional activity and the `RUN_FINE_TUNING` branch each run once on a blob before promotion) is met for `b939ad02`. The remaining gates are only REL12 and REL2 (below). 
+
+**Previous blob `1269d721` (history under REL14).** The 2026-10-23 refusal-display fix (branch `fix/refusal-display`, NOTEBOOK_SPEC 3.0 DAT19/DAT20: a refused user input is shown as one `Refused: <file name>: <rule>` line with no traceback, and the run stops at that cell) changed the notebook blob from `32615208` to `1269d721`. **Generated E2E tutorial: Candidate (2026-10-23).** The E2E notebook blob was then `1269d721` (`tutorials/mitra_regressor_colab.ipynb` at `191e631` on `fix/refusal-display`, PR #49; Notebook Spec 3.0 with the Section 10 external-artifact section and the pinned release asset `sample-artifact-diabetes-v1`). It has three recorded hosted runs, the 2026-10-23 records above, all Colab CLI `colab exec -f` (scripted, not a browser Run all) on a fresh Colab Tesla T4, exit 0, 13/13 code cells in the executor log, 0 errors, input unchanged, verdict PASS: the default path (270.9 s; the fresh reload passed and Section 10 verified the pinned asset before extraction), the Section 11 activity (`SEED = 7` run copy, 153.4 s) and the `RUN_FINE_TUNING` branch (`RUN_FINE_TUNING = True` run copy, 225.9 s; the fine-tuned holdout MAE 40.1924 was worse than the pretrained 40.1328, so the pretrained model was kept). The owner's 2026-10-22 ruling (the optional activity and the `RUN_FINE_TUNING` branch run once on a blob before promotion) is satisfied for `1269d721` by the last two. Under REL14 the `92c627c` default-path run and the `f294525` activity and fine-tune runs are history for blob `32615208`, not evidence for `1269d721`. The notebook stays **Candidate** until these two are recorded for this blob:
 
 - **REL12:** a BYOD run in which one representative input is accepted through the downstream stages and one incompatible input is refused;
 - **REL2:** a browser run of the interactive journeys (BYOD upload dialog, optional-stage checkboxes, own-artifact ZIP); the scripted CLI runs count for the default path, the activity and the fine-tune branch only.
 
 Promotion is an integrator decision; the builder does not change the status.
+
+**Load-path trust note for `models/Mitra/model.pt` (2026-10-24, static trace, no code executed against a bundle).** AutoGluon 1.5.0
+reads a saved bundle's `models/Mitra/model.pt` with `torch.load(weights_only=False)` (`autogluon/tabular/models/mitra/mitra_model.py:239`,
+`_load_model_artifact`); the file is a `torch.save` of the whole Mitra model, so loading it can execute code. It is reached only after
+`TabularPredictor.load` has already unpickled `predictor.pkl`, `learner.pkl`, `models/trainer.pkl` and `models/Mitra/model.pkl` from
+the same directory, so it adds no trust boundary beyond SER9, and the notebook's Section 10 trust-boundary text and glossary now name it
+next to `predictor.pkl`. On the default path the whole sample-artifact ZIP is pinned by `SAMPLE_ARTIFACT_SHA256` and checked before
+extraction; on the own-ZIP path, safety rests on the user's `EXPECTED_ZIP_SHA256` (none with `ALLOW_UNVERIFIED_ARTIFACT`). The other
+`torch.load(weights_only=False)` site, the CPU branch of `Tab2D.__init__` (`_internal/models/tab2d.py:91`), is unreachable in 1.5.0:
+`sklearn_interface.py:56` hard-codes `USE_HF = True`, so fit builds the model with `Tab2D.from_pretrained`, which reads the verified
+snapshot's `model.safetensors` with `safetensors.load_file`. `tests/test_mitra_load_path_guard.py` keeps it unreachable, without
+network: it asserts `USE_HF is True` on import (skipped without a full AutoGluon install), checks the installed wheel's source (CI
+installs `autogluon.tabular==1.5.0` with `--no-deps` and fails if it is missing or differs from the pin) for a single module-level
+`USE_HF = True`, a safetensors-only `from_pretrained`, and no `Tab2D(..., use_pretrained_weights=True)` outside the `else` of
+`if USE_HF:`, and fails if this repository's code, configuration or notebooks (`docs/` and Markdown excluded) mention `USE_HF`,
+`state_dict_classification`, `state_dict_regression`, `hf_cls_model` or `hf_reg_model`. The SER13 static scan of the pinned asset's pickles, including the `data.pkl` inside `model.pt`, is
+recorded separately in the *Serialization scan of the pinned sample artifact* subsection (PR #50) and is not repeated here.
 
 **History (the 2.2 pair, superseded; not evidence for `32615208`, REL14).** The previous blob `256708eef85f` has the 2026-10-08 Colab CLI T4 run above (default path only). The 2026-09-14 Kaggle T4 row above is evidence for the previous E2E blob (`d32d6f6b45c6`) only: an nbclient execution of the default sample path with a `google.colab` shim, not a browser Colab `Run all`. On 2026-10-08 both notebooks were regenerated (generator /2.2 isolated uv environment, DIMER Notebook Specification 2.2, Notebook Review Framework v1 fixes MRC-M1..M2 / MRC-m1..m6), so under NOTEBOOK_SPEC REL14 they return to Candidate until a run of the exact new blobs is recorded; the earlier row stays as history. The ARTIFACT-INFERENCE companion's then-current blob `8a2ea1c75750` (deleted with the companion) has a recorded Colab CLI T4 run of its default path (the pinned sample bundle) and a CI run of the own-bundle path, both 2026-10-08. Static validation (`tools/validate_release_assets.py`), nbformat validation, a `compile()` sweep over every code
 cell, and the offline unit suite passed on the tutorial source at the candidate revision, which is necessary but not
