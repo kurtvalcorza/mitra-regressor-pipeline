@@ -229,7 +229,9 @@ def test_mrc_m2_guided_elements_and_memory_troubleshooting_are_present():
 
 def test_rel13_quoted_counts_are_labelled_with_their_source_revision():
     markdown = _markdown(E2E)
-    assert "previous notebook revision (blob `d32d6f6`)" in markdown
+    # Tier C T49-3: the counts name the hosted run of the current blob (and the earlier Kaggle blob).
+    assert "the recorded Colab T4 run of blob `b939ad02`" in markdown and "blob `d32d6f6`" in markdown
+    assert "previous notebook revision (blob `d32d6f6`)" not in markdown
     assert "the recorded hosted run of the previous version needed one" not in markdown
     assert "the recorded run printed `PASS`" not in markdown
 
