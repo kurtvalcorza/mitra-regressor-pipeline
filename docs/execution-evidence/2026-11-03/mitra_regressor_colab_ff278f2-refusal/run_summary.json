@@ -1,0 +1,69 @@
+{
+  "repo": "mitra-regressor-pipeline",
+  "sha": "ff278f2648374c65bc9439fe8a83cb28023f2b65",
+  "notebook": "tutorials/mitra_regressor_colab.ipynb",
+  "blob": "d0d449e3040acff492866d35ea812708eda55888",
+  "gpu": "T4",
+  "session": "suite-mitra-ff278f2-695e",
+  "started_utc": "2026-11-03T01:14:25+00:00",
+  "runner": "Colab CLI `colab exec -f` on a fresh session (not a browser Run all)",
+  "overrides": [
+    {
+      "name": "USE_BYOD",
+      "from": "False",
+      "to": "True"
+    },
+    {
+      "name": "BYOD_PATH",
+      "from": "''",
+      "to": "'/etc/hostname'"
+    }
+  ],
+  "run_copy_blob": "e960e64a7c8c95f11445a991832775669b65322d",
+  "run_copy_sha256": "de3399769bc73764a613a97575f70403a3cf74c001188670b6a0064662445758",
+  "run_copy_note": "refusal run: the run copy is the committed notebook with the listed assignment overrides, cut immediately after the refusal cell and re-serialised (nbformat layout); input_unchanged compares against that copy",
+  "truncated_after_cell": "mitra_regressor-13",
+  "refusal_cell_ref": "mitra_regressor-13",
+  "refusal_cell_index": 5,
+  "cells_dropped": 26,
+  "code_cells_dropped": 8,
+  "original_sha256": "45d5157ebf23ebbad66be511e1a4e91906fb7c67f4c25a0dc062d396afadf18c",
+  "status": "[suite-mitra-ff278f2-695e] gpu-t4-s-euw4c0-1w0cav62yfyzh | Hardware: T4 | Shape: Standard | Variant: GPU | Status: IDLE",
+  "exec_exit_code": 0,
+  "stopped": true,
+  "stop_verified": true,
+  "wall_s": 139.8,
+  "input_unchanged": true,
+  "executed_file": "mitra_regressor_colab_ff278f2_colab-cli-t4_output.ipynb",
+  "log_cells": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "log_total": 5,
+  "code_cells": 5,
+  "executed_cells": 4,
+  "errors": [
+    {
+      "cell": "mitra_regressor-13",
+      "ename": "InputRefused",
+      "evalue": "USE_BYOD: USE_BYOD=True requires an Upload DATA_SOURCE. Choose an Upload option, or untick USE_BYOD, and run this cell again."
+    }
+  ],
+  "execution_counts": [],
+  "sequential": null,
+  "executed_sha256": "bbda830c6339cb941778a6ed606297465f4d7f53feab19a4afceacb21ed1ff25",
+  "log_sequential_complete": true,
+  "mode": "expect_refusal",
+  "refusal_line": "Refused: USE_BYOD: USE_BYOD=True requires an Upload DATA_SOURCE. Choose an Upload option, or untick USE_BYOD, and run this cell again.",
+  "halting_cell_index": 5,
+  "halting_cell_id": "mitra_regressor-13",
+  "error_cells": [
+    5
+  ],
+  "refusal_fail_reasons": [],
+  "refusal_ok": true,
+  "verdict": "PASS"
+}
